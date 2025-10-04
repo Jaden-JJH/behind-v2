@@ -202,39 +202,31 @@ function IssueCard({ issue, onOpenIssue, onOpenChat }) {
 
   return (
     <Card className="hover:border-muted-foreground/20 transition-all overflow-hidden">
-      <div className="flex gap-0">
-        {/* 투표 영역 */}
-        <div className="flex flex-col items-center gap-1 p-3 bg-muted/30 border-r">
-          <button 
-            onClick={() => handleVote('up')}
-            className={`p-1 rounded hover:bg-background transition-colors ${voted === 'up' ? 'text-orange-600' : 'text-muted-foreground'}`}
-          >
-            <ArrowUp className="w-5 h-5" />
-          </button>
-          <span className={`text-sm tabular-nums ${voted === 'up' ? 'text-orange-600' : voted === 'down' ? 'text-blue-600' : ''}`}>
-            {upvotes}
-          </span>
-          <button 
-            onClick={() => handleVote('down')}
-            className={`p-1 rounded hover:bg-background transition-colors ${voted === 'down' ? 'text-blue-600' : 'text-muted-foreground'}`}
-          >
-            <ArrowDown className="w-5 h-5" />
-          </button>
-        </div>
+      <div className="flex gap-4 p-4">
+        {/* 썸네일 */}
+        {issue.thumbnail && (
+          <div className="w-48 h-32 flex-shrink-0 rounded-lg overflow-hidden bg-muted cursor-pointer" onClick={() => onOpenIssue(issue.id)}>
+            <ImageWithFallback
+              src={issue.thumbnail}
+              alt={issue.title}
+              className="w-full h-full object-cover hover:scale-105 transition-transform"
+            />
+          </div>
+        )}
 
         {/* 콘텐츠 영역 */}
-        <div className="flex-1 flex gap-4 p-4">
-          <div className="flex-1 space-y-3">
-            <div>
-              <h3 
-                className="cursor-pointer hover:text-indigo-700 transition-colors mb-2"
-                onClick={() => onOpenIssue(issue.id)}
-              >
-                {issue.title}
-              </h3>
-              <p className="text-muted-foreground">{issue.preview}</p>
-            </div>
+        <div className="flex-1 flex flex-col justify-between">
+          <div className="space-y-2">
+            <h3
+              className="text-lg font-semibold cursor-pointer hover:text-indigo-700 transition-colors"
+              onClick={() => onOpenIssue(issue.id)}
+            >
+              {issue.title}
+            </h3>
+            <p className="text-muted-foreground text-sm line-clamp-2">{issue.preview}</p>
+          </div>
 
+          <div className="flex items-center justify-between mt-4">
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
               <span className="flex items-center gap-1">
                 <MessageCircle className="w-4 h-4" />
@@ -245,12 +237,14 @@ function IssueCard({ issue, onOpenIssue, onOpenChat }) {
                 {issue.participants}/{issue.capacity}
               </span>
               {issue.liveViewers && (
-                <Badge variant="secondary" className="gap-1 text-xs">
-                  <Eye className="w-3 h-3" />
-                  {issue.liveViewers}명 시청중
-                </Badge>
+                <span className="flex items-center gap-1 text-xs">
+                  <Eye className="w-3.5 h-3.5" />
+                  조회수 {issue.liveViewers}
+                </span>
               )}
-              <div className="flex-1" />
+            </div>
+
+            <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" onClick={() => onOpenIssue(issue.id)}>
                 자세히
               </Button>
@@ -259,17 +253,6 @@ function IssueCard({ issue, onOpenIssue, onOpenChat }) {
               </Button>
             </div>
           </div>
-
-          {/* 썸네일 */}
-          {issue.thumbnail && (
-            <div className="w-32 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-muted">
-              <ImageWithFallback 
-                src={issue.thumbnail} 
-                alt={issue.title}
-                className="w-full h-full object-cover"
-              />
-            </div>
-          )}
         </div>
       </div>
     </Card>
@@ -434,10 +417,10 @@ function IssueDetailPage({ issue, onBack, onJoinChat }) {
                 {issue.liveViewers && (
                   <>
                     <Separator orientation="vertical" className="h-4" />
-                    <Badge variant="secondary" className="gap-1">
-                      <Eye className="w-3 h-3" />
-                      {issue.liveViewers}명 시청중
-                    </Badge>
+                    <span className="flex items-center gap-1 text-sm">
+                      <Eye className="w-3.5 h-3.5" />
+                      조회수 {issue.liveViewers}
+                    </span>
                   </>
                 )}
               </div>
@@ -635,18 +618,20 @@ function LandingPage({ issues, onOpenIssue, onOpenChat, onOpenPollIssue }) {
   const [showAllReported, setShowAllReported] = useState(false);
   
   const reported = [
-    { id: "corp-reorg", title: "대기업 C 구조조정", meta: "익명 제보", time: Date.now() - 3600000 * 2 },
-    { id: "politician-private", title: "정치인 D의 사적 모임", meta: "익명 제보", time: Date.now() - 3600000 * 5 },
-    { id: "celeb-scandal", title: "연예인 E 스캔들 증거", meta: "익명 제보", time: Date.now() - 3600000 * 8 },
-    { id: "tech-leak", title: "IT기업 F 신제품 유출", meta: "익명 제보", time: Date.now() - 3600000 * 12 },
+    { id: "corp-reorg", title: "대기업 C 구조조정", time: Date.now() - 3600000 * 2, curious: 127, threshold: 200 },
+    { id: "politician-private", title: "정치인 D의 사적 모임", time: Date.now() - 3600000 * 5, curious: 89, threshold: 150 },
+    { id: "celeb-scandal", title: "연예인 E 스캔들 증거", time: Date.now() - 3600000 * 8, curious: 215, threshold: 300 },
+    { id: "tech-leak", title: "IT기업 F 신제품 유출", time: Date.now() - 3600000 * 12, curious: 56, threshold: 100 },
+    { id: "startup-culture", title: "스타트업 G 직장 문화", time: Date.now() - 3600000 * 15, curious: 42, threshold: 80 },
+    { id: "influencer-fake", title: "인플루언서 H 허위 광고", time: Date.now() - 3600000 * 18, curious: 98, threshold: 150 },
   ];
 
   const pastIssues = [
-    { id: "past-1", title: "2024 연말 K-POP 시상식 뒷얘기", date: "2024.12.30", participants: 1250 },
-    { id: "past-2", title: "대기업 신입 공채 내부 정보", date: "2024.12.15", participants: 890 },
-    { id: "past-3", title: "유명 유튜버 협찬 논란", date: "2024.12.01", participants: 2100 },
-    { id: "past-4", title: "배달앱 수수료 인상 사태", date: "2024.11.20", participants: 1560 },
-    { id: "past-5", title: "부동산 시장 급변 예측", date: "2024.11.10", participants: 980 },
+    { id: "past-1", title: "2024 연말 K-POP 시상식 뒷얘기", date: "2024.12.30", participants: 1250, views: 3420, comments: 156 },
+    { id: "past-2", title: "대기업 신입 공채 내부 정보", date: "2024.12.15", participants: 890, views: 2100, comments: 78 },
+    { id: "past-3", title: "유명 유튜버 협찬 논란", date: "2024.12.01", participants: 2100, views: 5600, comments: 289 },
+    { id: "past-4", title: "배달앱 수수료 인상 사태", date: "2024.11.20", participants: 1560, views: 4200, comments: 203 },
+    { id: "past-5", title: "부동산 시장 급변 예측", date: "2024.11.10", participants: 980, views: 2800, comments: 92 },
   ];
 
   return (
@@ -655,7 +640,7 @@ function LandingPage({ issues, onOpenIssue, onOpenChat, onOpenPollIssue }) {
       <header className="border-b bg-card sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between gap-4">
-            <h1 className="text-indigo-700">비하인드</h1>
+            <h1 className="text-blue-700">비하인드</h1>
             <nav className="hidden md:flex items-center gap-1">
               <Button variant="ghost">인기 이슈</Button>
               <Button variant="ghost">최근 대화</Button>
@@ -669,8 +654,8 @@ function LandingPage({ issues, onOpenIssue, onOpenChat, onOpenPollIssue }) {
       <main className="max-w-6xl mx-auto px-4 py-6 grid md:grid-cols-3 gap-6">
         {/* 메인 컨텐츠 */}
         <section className="md:col-span-2 space-y-6">
-          <div className="flex items-center justify-between">
-            <h2>지금 가장 뜨거운 토픽</h2>
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-2xl font-bold">지금 가장 뜨거운 토픽</h2>
           </div>
 
           {/* 이슈 목록 */}
@@ -713,28 +698,40 @@ function LandingPage({ issues, onOpenIssue, onOpenChat, onOpenPollIssue }) {
             </div>
           </div>
 
-          {/* 지나간 이슈 타임라인 */}
+          {/* 지나간 이슈 */}
           <Card className="mt-8">
             <CardHeader>
-              <CardTitle>지나간 이슈</CardTitle>
-              <p className="text-sm text-muted-foreground">이미 종료된 토론을 둘러보세요</p>
+              <CardTitle className="text-2xl font-bold">지나간 이슈</CardTitle>
+              <p className="text-sm text-muted-foreground">과거 화제가 되었던 이슈들을 다시 살펴보세요</p>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {pastIssues.map((issue) => (
-                  <div key={issue.id} className="relative pl-6 pb-4 border-l-2 border-border last:border-0 last:pb-0">
-                    <div className="absolute -left-2 top-0 w-4 h-4 rounded-full bg-muted border-2 border-border" />
-                    <div className="space-y-1">
-                      <div className="flex items-start justify-between gap-2">
-                        <p className="hover:text-indigo-700 cursor-pointer transition-colors flex-1">
+              <div className="space-y-3">
+                {pastIssues.map((issue, idx) => (
+                  <div
+                    key={issue.id}
+                    className="p-3 rounded-lg border border-border hover:border-indigo-300 hover:bg-indigo-50/50 transition-all cursor-pointer group"
+                  >
+                    <div className="flex items-start justify-between gap-4 mb-2">
+                      <div className="flex items-start gap-3 flex-1 min-w-0">
+                        <span className="text-sm text-muted-foreground font-medium flex-shrink-0 mt-0.5">
+                          {idx + 1}.
+                        </span>
+                        <p className="group-hover:text-indigo-700 transition-colors flex-1 font-medium">
                           {issue.title}
                         </p>
-                        <Badge variant="secondary" className="flex-shrink-0 text-xs">
-                          {issue.participants.toLocaleString()}
-                        </Badge>
                       </div>
-                      <p className="text-sm text-muted-foreground">{issue.date}</p>
+                      <div className="flex items-center gap-3 flex-shrink-0 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <Eye className="w-3.5 h-3.5" />
+                          {issue.views.toLocaleString()}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <MessageCircle className="w-3.5 h-3.5" />
+                          {issue.comments.toLocaleString()}
+                        </span>
+                      </div>
                     </div>
+                    <p className="text-sm text-muted-foreground ml-7">{issue.date}</p>
                   </div>
                 ))}
               </div>
@@ -755,17 +752,39 @@ function LandingPage({ issues, onOpenIssue, onOpenChat, onOpenPollIssue }) {
             <CardContent>
               <ol className="space-y-2.5">
                 {[
-                  "SKT·KT 해킹 사건",
-                  "아이돌 A 계약 해지설",
-                  "정치인 B 발언 논란",
-                  "대기업 C 구조조정 루머",
-                  "게임사 D 신작 유출"
-                ].map((item, idx) => (
-                  <li key={idx} className="flex items-start gap-2 hover:text-indigo-700 cursor-pointer transition-colors">
-                    <span className="text-muted-foreground flex-shrink-0">{idx + 1}.</span>
-                    <span>{item}</span>
-                  </li>
-                ))}
+                  { title: "SKT·KT 해킹 사건", change: 2, changeAmount: 1200 },
+                  { title: "아이돌 A 계약 해지설", change: 1, changeAmount: 850 },
+                  { title: "정치인 B 발언 논란", change: 0, changeAmount: 0 },
+                  { title: "대기업 C 구조조정 루머", change: -1, changeAmount: 620 },
+                  { title: "게임사 D 신작 유출", change: -3, changeAmount: 1500 }
+                ].map((item, idx) => {
+                  const formatChange = (num) => {
+                    if (num >= 1000) return `${(num / 1000).toFixed(1)}k`;
+                    return num.toString();
+                  };
+
+                  return (
+                    <li key={idx} className="flex items-start gap-2 hover:text-indigo-700 cursor-pointer transition-colors group">
+                      <span className="text-muted-foreground flex-shrink-0 font-medium w-4">{idx + 1}.</span>
+                      <span className="flex-1">{item.title}</span>
+                      {item.change !== 0 && (
+                        <div className={`flex items-center gap-0.5 flex-shrink-0 text-xs font-medium ${
+                          item.change > 0 ? 'text-red-600' : 'text-blue-600'
+                        }`}>
+                          {item.change > 0 ? (
+                            <TrendingUp className="w-3.5 h-3.5" />
+                          ) : (
+                            <ArrowDown className="w-3.5 h-3.5" />
+                          )}
+                          <span>{formatChange(item.changeAmount)}</span>
+                        </div>
+                      )}
+                      {item.change === 0 && (
+                        <span className="text-xs text-muted-foreground flex-shrink-0">-</span>
+                      )}
+                    </li>
+                  );
+                })}
               </ol>
             </CardContent>
           </Card>
@@ -774,34 +793,66 @@ function LandingPage({ issues, onOpenIssue, onOpenChat, onOpenPollIssue }) {
           <Card className="border-orange-200 bg-orange-50/50">
             <CardHeader>
               <CardTitle>제보된 이슈</CardTitle>
-              <p className="text-xs text-muted-foreground">검증 대기중</p>
+              <p className="text-xs text-muted-foreground">궁금해요 수가 목표치에 도달하면 공개됩니다</p>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                {reported.slice(0, showAllReported ? reported.length : 3).map((r) => (
-                  <div 
-                    key={r.id} 
-                    className="p-2.5 rounded-lg bg-white border border-orange-100 hover:border-orange-300 hover:bg-orange-50 transition-all cursor-pointer group"
-                  >
-                    <p className="text-sm group-hover:text-orange-700 transition-colors">{r.title}</p>
-                    <div className="flex items-center justify-between mt-1">
-                      <p className="text-xs text-muted-foreground">{r.meta}</p>
-                      <p className="text-xs text-muted-foreground">{formatTime(r.time)}</p>
+                {reported.slice(0, showAllReported ? reported.length : 3).map((r) => {
+                  const progress = Math.min((r.curious / r.threshold) * 100, 100);
+
+                  return (
+                    <div
+                      key={r.id}
+                      className="p-2.5 rounded-lg bg-white border border-orange-100 hover:border-orange-300 hover:bg-orange-50 transition-all group"
+                    >
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <p className="text-sm group-hover:text-orange-700 transition-colors flex-1">{r.title}</p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 text-xs border-orange-300 text-orange-700 hover:bg-orange-100 hover:border-orange-400 flex-shrink-0"
+                        >
+                          궁금해요
+                        </Button>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-muted-foreground">{formatTime(r.time)}</span>
+                          <span className="text-orange-700 font-medium">{r.curious}/{r.threshold}</span>
+                        </div>
+                        <div className="h-1.5 bg-orange-100 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-orange-500 rounded-full transition-all duration-300"
+                            style={{ width: `${progress}%` }}
+                          />
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
-              {reported.length > 3 && (
-                <Button 
-                  variant="ghost" 
+
+              <div className="flex gap-2 mt-3">
+                {reported.length > 3 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="flex-1 text-orange-700 hover:text-orange-800 hover:bg-orange-100"
+                    onClick={() => setShowAllReported(!showAllReported)}
+                  >
+                    {showAllReported ? "접기" : `${reported.length - 3}개 더보기`}
+                    <ChevronDown className={`w-4 h-4 ml-1 transition-transform ${showAllReported ? "rotate-180" : ""}`} />
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
                   size="sm"
-                  className="w-full mt-3 text-orange-700 hover:text-orange-800 hover:bg-orange-100"
-                  onClick={() => setShowAllReported(!showAllReported)}
+                  className={`${reported.length > 3 ? 'flex-1' : 'w-full'} border-orange-300 text-orange-700 hover:bg-orange-100 hover:border-orange-400`}
                 >
-                  {showAllReported ? "접기" : `${reported.length - 3}개 더보기`}
-                  <ChevronDown className={`w-4 h-4 ml-1 transition-transform ${showAllReported ? "rotate-180" : ""}`} />
+                  전체보기
                 </Button>
-              )}
+              </div>
             </CardContent>
           </Card>
         </aside>
