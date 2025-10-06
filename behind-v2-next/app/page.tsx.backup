@@ -1,35 +1,19 @@
 'use client'
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MessageCircle, Eye, TrendingUp, ArrowDown, ChevronDown, Flame } from "lucide-react";
 import { IssueCard } from "@/components/issue-card";
 import { QuickVote } from "@/components/quick-vote";
-import { fetchIssues } from "@/lib/api-client";
+import { allIssues } from "@/lib/data/issues";
 import { formatTime } from "@/lib/utils";
 
 export default function LandingPage() {
   const [showAllReported, setShowAllReported] = useState(false);
 
-  const [issues, setIssues] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function loadIssues() {
-      try {
-        const response = await fetchIssues();
-        const activeIssues = response.data.filter(issue => issue.status === "active").slice(0, 2);
-        setIssues(activeIssues);
-      } catch (err) {
-        console.error("Failed to load issues:", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadIssues();
-  }, []);
+  const issues = allIssues.filter(issue => issue.isActive).slice(0, 2);
 
   const reported = [
     { id: "corp-reorg", title: "대기업 C 구조조정", time: Date.now() - 3600000 * 2, curious: 127, threshold: 200 },
@@ -79,24 +63,14 @@ export default function LandingPage() {
 
           {/* 이슈 목록 */}
           <div className="space-y-4">
-            {loading ? (
-              <div className="text-center py-8">로딩 중...</div>
-            ) : issues.length === 0 ? (
-              <div className="text-center py-8">표시할 이슈가 없습니다.</div>
-            ) : (
-              issues.map((issue) => (
-                <IssueCard
-                  key={issue.id}
-                  issue={{
-                    ...issue,
-                    commentCount: issue.comment_count,
-                    viewCount: issue.view_count
-                  }}
-                  onOpenIssue={(id) => window.location.href = `/issues/${id}`}
-                  onOpenChat={(id) => window.location.href = `/chat/${id}`}
-                />
-              ))
-            )}
+            {issues.map((issue) => (
+              <IssueCard
+                key={issue.id}
+                issue={issue}
+                onOpenIssue={(id) => window.location.href = `/issues/${id}`}
+                onOpenChat={(id) => window.location.href = `/chat/${id}`}
+              />
+            ))}
           </div>
 
           {/* 실시간 투표 */}

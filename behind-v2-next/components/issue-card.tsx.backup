@@ -15,9 +15,9 @@ interface Issue {
   thumbnail?: string;
   upvotes?: number;
   commentCount?: number;
-  viewCount?: number; 
   participants: number;
   capacity: number;
+  liveViewers?: number;
 }
 
 interface IssueCardProps {
@@ -67,10 +67,10 @@ export function IssueCard({ issue, onOpenIssue, onOpenChat }: IssueCardProps) {
                 <Users className="w-4 h-4" />
                 <span className="font-medium">{issue.participants}/{issue.capacity}</span>
               </span>
-              {issue.viewCount && (
+              {issue.liveViewers && (
                 <span className="flex items-center gap-1.5">
                   <Eye className="w-4 h-4" />
-                  <span className="font-medium">{issue.viewCount.toLocaleString()}</span>
+                  <span className="font-medium">{issue.liveViewers}</span>
                 </span>
               )}
             </div>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, MessageCircle, Users, Eye, Clock } from "lucide-react";
 import { ImageWithFallback } from "@/components/figma/ImageWithFallback";
-import { allIssues } from "@/lib/data/issues";
+import { fetchIssues } from "@/lib/api-client";
 import { formatTime } from "@/lib/utils";
 
 export default function AllIssuesPage() {
@@ -16,15 +16,36 @@ export default function AllIssuesPage() {
   const [category, setCategory] = useState("all");
   const [sortBy, setSortBy] = useState("latest");
   const [status, setStatus] = useState("all");
+  const [issues, setIssues] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // API에서 이슈 데이터 가져오기
+  useEffect(() => {
+    async function loadIssues() {
+      try {
+        setLoading(true);
+        const response = await fetchIssues();
+        setIssues(response.data);
+        setError(null);
+      } catch (err) {
+        console.error('Failed to load issues:', err);
+        setError('이슈를 불러오는데 실패했습니다.');
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadIssues();
+  }, []);
 
   const categories = [
     { value: "all", label: "전체" },
-    { value: "politics", label: "정치" },
-    { value: "economy", label: "경제" },
-    { value: "entertainment", label: "연예" },
-    { value: "tech", label: "IT/테크" },
-    { value: "sports", label: "스포츠" },
-    { value: "society", label: "사회" },
+    { value: "정치", label: "정치" },
+    { value: "경제", label: "경제" },
+    { value: "연예", label: "연예" },
+    { value: "IT/테크", label: "IT/테크" },
+    { value: "스포츠", label: "스포츠" },
+    { value: "사회", label: "사회" },
   ];
 
   const sortOptions = [
@@ -40,211 +61,165 @@ export default function AllIssuesPage() {
   ];
 
   // 필터링 로직
-  let filteredIssues = [...allIssues];
-
+  let filteredIssues = [...issues];
+  
   if (category !== "all") {
     filteredIssues = filteredIssues.filter((issue) => issue.category === category);
   }
-
+  
   if (status === "active") {
-    filteredIssues = filteredIssues.filter((issue) => issue.isActive);
+    filteredIssues = filteredIssues.filter((issue) => issue.status === 'active');
   } else if (status === "closed") {
-    filteredIssues = filteredIssues.filter((issue) => !issue.isActive);
+    filteredIssues = filteredIssues.filter((issue) => issue.status !== 'active');
   }
 
-  // 정렬 로직
-  if (sortBy === "latest") {
-    filteredIssues.sort((a, b) => b.createdAt - a.createdAt);
-  } else if (sortBy === "popular") {
-    filteredIssues.sort((a, b) => (b.upvotes || 0) - (a.upvotes || 0));
-  } else if (sortBy === "comments") {
-    filteredIssues.sort((a, b) => (b.commentCount || 0) - (a.commentCount || 0));
+  // 로딩 상태
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-lg">로딩 중...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // 에러 상태
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-lg text-red-500">{error}</div>
+          <Button onClick={() => window.location.reload()} className="mt-4">
+            다시 시도
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-slate-200 bg-white sticky top-0 z-10 shadow-sm">
-        <div className="max-w-6xl mx-auto px-4 py-4">
-          <Button variant="ghost" onClick={() => router.push('/')} className="mb-3 -ml-2">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            홈으로
-          </Button>
-          <div className="mb-4">
-            <h1 className="text-3xl font-bold tracking-tight text-slate-900 mb-1">전체 이슈</h1>
-            <p className="text-sm text-slate-600">모든 이슈를 카테고리별, 시간별로 탐색하세요</p>
+      <header className="border-b bg-card sticky top-0 z-10">
+        <div className="max-w-4xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between mb-4">
+            <Button variant="ghost" onClick={() => router.push('/')} className="-ml-2">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              홈으로
+            </Button>
+            <h1 className="text-xl font-bold">전체 이슈</h1>
+            <div className="w-20" />
+          </div>
+
+          {/* Filters */}
+          <div className="flex flex-col gap-3">
+            {/* Category Filter */}
+            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+              {categories.map((cat) => (
+                <Button
+                  key={cat.value}
+                  variant={category === cat.value ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setCategory(cat.value)}
+                  className="whitespace-nowrap"
+                >
+                  {cat.label}
+                </Button>
+              ))}
+            </div>
+
+            {/* Sort and Status */}
+            <div className="flex gap-2">
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="flex-1 px-3 py-2 border rounded-md text-sm"
+              >
+                {sortOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+                className="flex-1 px-3 py-2 border rounded-md text-sm"
+              >
+                {statusOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 py-6">
-        {/* 필터바 */}
-        <Card className="mb-6 bg-white border-slate-200 shadow-sm">
-          <CardContent className="p-4">
-            <div className="space-y-4">
-              {/* 카테고리 칩 */}
-              <div>
-                <label className="text-sm font-medium text-slate-700 mb-2 block">카테고리</label>
-                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                  {categories.map((cat) => (
-                    <button
-                      key={cat.value}
-                      onClick={() => setCategory(cat.value)}
-                      className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors flex-shrink-0 ${
-                        category === cat.value
-                          ? "bg-indigo-600 text-white"
-                          : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                      }`}
-                    >
-                      {cat.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* 정렬 & 상태 */}
-              <div className="flex flex-col sm:flex-row gap-4">
-                {/* 정렬 드롭다운 */}
-                <div className="flex-1">
-                  <label className="text-sm font-medium text-slate-700 mb-2 block">정렬</label>
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  >
-                    {sortOptions.map((sort) => (
-                      <option key={sort.value} value={sort.value}>
-                        {sort.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* 상태 탭 */}
-                <div className="flex-1">
-                  <label className="text-sm font-medium text-slate-700 mb-2 block">상태</label>
-                  <div className="inline-flex bg-slate-100 rounded-lg p-1 w-full">
-                    {statusOptions.map((st) => (
-                      <button
-                        key={st.value}
-                        onClick={() => setStatus(st.value)}
-                        className={`flex-1 px-4 py-1.5 rounded-md text-sm font-medium transition-all ${
-                          status === st.value
-                            ? "bg-white text-slate-900 shadow-sm"
-                            : "text-slate-600 hover:text-slate-900"
-                        }`}
-                      >
-                        {st.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* 이슈 리스트 */}
+      {/* Issue List */}
+      <main className="max-w-4xl mx-auto px-4 py-6">
         <div className="space-y-4">
           {filteredIssues.length === 0 ? (
-            <Card className="bg-white border-slate-200">
-              <CardContent className="p-12 text-center">
-                <p className="text-slate-500">해당 조건에 맞는 이슈가 없습니다.</p>
-              </CardContent>
-            </Card>
+            <div className="text-center py-12 text-muted-foreground">
+              해당하는 이슈가 없습니다.
+            </div>
           ) : (
             filteredIssues.map((issue) => (
-              <Card key={issue.id} className="bg-white border-slate-200 hover:border-slate-300 hover:shadow-md transition-all overflow-hidden">
-                <div className="flex flex-col sm:flex-row gap-4 p-4">
-                  {/* 썸네일 */}
-                  {issue.thumbnail && (
-                    <Link href={`/issues/${issue.id}`}>
-                      <div className="w-full sm:w-48 h-48 sm:h-32 flex-shrink-0 rounded-lg overflow-hidden bg-slate-100 cursor-pointer">
-                        <ImageWithFallback
-                          src={issue.thumbnail}
-                          alt={issue.title}
-                          className="w-full h-full object-cover hover:scale-105 transition-transform"
-                        />
+              <Card
+                key={issue.id}
+                className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                onClick={() => router.push(`/issues/${issue.slug}`)}
+              >
+                <CardContent className="p-0">
+                  <div className="flex gap-4 p-4">
+                    {/* Thumbnail */}
+                    <div className="w-32 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-muted">
+                      <ImageWithFallback
+                        src={issue.thumbnail || ''}
+                        alt={issue.title}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+
+                    {/* Content */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <h3 className="font-semibold text-base line-clamp-1">
+                          {issue.title}
+                        </h3>
+                        <Badge variant={issue.status === 'active' ? 'default' : 'secondary'}>
+                          {issue.category}
+                        </Badge>
                       </div>
-                    </Link>
-                  )}
-
-                  {/* 콘텐츠 영역 */}
-                  <div className="flex-1 flex flex-col justify-between min-w-0">
-                    <div className="space-y-2">
-                      {/* 제목과 상태 배지 */}
-                      <div className="flex items-start gap-2">
-                        <Link href={`/issues/${issue.id}`}>
-                          <h3 className="text-lg font-bold text-slate-900 cursor-pointer hover:text-indigo-600 transition-colors leading-snug line-clamp-2 flex-1">
-                            {issue.title}
-                          </h3>
-                        </Link>
-                        {!issue.isActive && (
-                          <Badge variant="secondary" className="flex-shrink-0 text-xs bg-slate-200 text-slate-600">입장 불가</Badge>
-                        )}
-                      </div>
-
-                      {/* 미리보기 */}
-                      <p className="text-slate-600 text-sm leading-relaxed line-clamp-2">{issue.preview}</p>
-
-                      {/* 메타 정보 */}
-                      <div className="flex flex-wrap items-center gap-3 text-sm text-slate-500 pt-1">
-                        <span className="flex items-center gap-1.5">
-                          <MessageCircle className="w-4 h-4" />
-                          <span className="font-medium text-slate-700">{issue.commentCount || 0}</span>
+                      <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+                        {issue.preview}
+                      </p>
+                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <Users className="w-3.5 h-3.5" />
+                          {issue.capacity}
                         </span>
-                        <span className="flex items-center gap-1.5">
-                          <Users className="w-4 h-4" />
-                          <span className="font-medium text-slate-700">{issue.participants}/{issue.capacity}</span>
+                        <span className="flex items-center gap-1">
+                          <MessageCircle className="w-3.5 h-3.5" />
+                          {issue.comment_count || 0}
                         </span>
-                        {issue.liveViewers && issue.liveViewers > 0 && (
-                          <span className="flex items-center gap-1.5">
-                            <Eye className="w-4 h-4" />
-                            <span className="font-medium text-slate-700">{issue.liveViewers}</span>
+                        {issue.view_count > 0 && (
+                          <span className="flex items-center gap-1">
+                            <Eye className="w-3.5 h-3.5" />
+                            {issue.view_count.toLocaleString()}
                           </span>
                         )}
-                        <span className="flex items-center gap-1.5">
-                          <Clock className="w-4 h-4" />
-                          <span className="text-xs">{formatTime(issue.createdAt)}</span>
-                        </span>
                       </div>
                     </div>
-
-                    {/* 버튼 영역 */}
-                    <div className="flex items-center gap-2 mt-4 pt-2 border-t border-slate-100">
-                      <Link href={`/issues/${issue.id}`}>
-                        <Button variant="outline" size="sm" className="border-slate-300 text-slate-700 hover:bg-slate-100 flex-1 sm:flex-initial">
-                          자세히
-                        </Button>
-                      </Link>
-                      {issue.isActive && (
-                        <Link href={`/chat/${issue.id}`}>
-                          <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white flex-1 sm:flex-initial">
-                            채팅 입장
-                          </Button>
-                        </Link>
-                      )}
-                    </div>
                   </div>
-                </div>
+                </CardContent>
               </Card>
             ))
           )}
         </div>
-
-        {/* 페이지네이션 (추후 구현 가능) */}
-        {filteredIssues.length > 0 && (
-          <div className="mt-8 flex justify-center">
-            <Button variant="outline" className="border-slate-300 text-slate-700 hover:bg-slate-100">
-              더 보기
-            </Button>
-          </div>
-        )}
       </main>
-
-      <footer className="py-6 text-center text-slate-500 border-t border-slate-200 bg-white mt-8">
-        © 2025 비하인드. 모두의 뒷얘기 살롱.
-      </footer>
     </div>
   );
 }
