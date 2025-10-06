@@ -45,3 +45,4 @@ export async function createComment(issueId: string, body: string, userNick: str
     body: JSON.stringify({ issueId, body, userNick }),
   })
 }
+
