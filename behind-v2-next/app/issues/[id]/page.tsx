@@ -257,7 +257,7 @@ export default function IssueDetailPage() {
             pollId={`poll_${issue.id}`}
             question={poll.question}
             options={poll.options.map(opt => ({
-              label: opt.text,
+              label: opt.label,
               count: opt.vote_count
             }))}
             ctaLabel="댓글 보러가기"
