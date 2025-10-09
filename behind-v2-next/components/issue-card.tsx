@@ -10,12 +10,13 @@ import { ImageWithFallback } from "@/components/figma/ImageWithFallback";
  *  ========================= */
 interface Issue {
   id: string;
+  display_id: number;
   title: string;
   preview: string;
   thumbnail?: string;
   upvotes?: number;
   commentCount?: number;
-  viewCount?: number; 
+  viewCount?: number;
   participants: number;
   capacity: number;
 }
@@ -36,7 +37,7 @@ export function IssueCard({ issue, onOpenIssue, onOpenChat }: IssueCardProps) {
       <div className="flex gap-4 p-4">
         {/* 썸네일 */}
         {issue.thumbnail && (
-          <div className="w-48 h-32 flex-shrink-0 rounded-lg overflow-hidden bg-slate-100 cursor-pointer" onClick={() => onOpenIssue(issue.id)}>
+          <div className="w-48 h-32 flex-shrink-0 rounded-lg overflow-hidden bg-slate-100 cursor-pointer" onClick={() => onOpenIssue(String(issue.display_id))}>
             <ImageWithFallback
               src={issue.thumbnail}
               alt={issue.title}
@@ -50,7 +51,7 @@ export function IssueCard({ issue, onOpenIssue, onOpenChat }: IssueCardProps) {
           <div className="space-y-2">
             <h3
               className="text-lg font-bold text-slate-900 cursor-pointer hover:text-indigo-600 transition-colors leading-snug"
-              onClick={() => onOpenIssue(issue.id)}
+              onClick={() => onOpenIssue(String(issue.display_id))}
             >
               {issue.title}
             </h3>
@@ -76,7 +77,7 @@ export function IssueCard({ issue, onOpenIssue, onOpenChat }: IssueCardProps) {
             </div>
 
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" className="border-slate-300 text-slate-700 hover:bg-slate-100" onClick={() => onOpenIssue(issue.id)}>
+              <Button variant="outline" size="sm" className="border-slate-300 text-slate-700 hover:bg-slate-100" onClick={() => onOpenIssue(String(issue.display_id))}>
                 자세히
               </Button>
               <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white" onClick={() => onOpenChat(issue.id)}>

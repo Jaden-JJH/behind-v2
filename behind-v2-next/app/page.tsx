@@ -92,7 +92,7 @@ export default function LandingPage() {
                     commentCount: issue.comment_count,
                     viewCount: issue.view_count
                   }}
-                  onOpenIssue={(id) => window.location.href = `/issues/${id}`}
+                  onOpenIssue={(display_id) => window.location.href = `/issues/${display_id}`}
                   onOpenChat={(id) => window.location.href = `/chat/${id}`}
                 />
               ))
@@ -288,7 +288,7 @@ export default function LandingPage() {
       </main>
 
       <footer className="py-6 text-center text-slate-500 border-t border-slate-200 bg-white mt-8">
-        © 2025 비하인드. 모두의 뒷얘기 살롱.
+        Copyright © 2025 by Behind
       </footer>
     </div>
   );

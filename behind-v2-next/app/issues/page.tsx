@@ -170,7 +170,7 @@ export default function AllIssuesPage() {
               <Card
                 key={issue.id}
                 className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
-                onClick={() => router.push(`/issues/${issue.slug}`)}
+                onClick={() => router.push(`/issues/${issue.display_id}`)}
               >
                 <CardContent className="p-0">
                   <div className="flex gap-4 p-4">

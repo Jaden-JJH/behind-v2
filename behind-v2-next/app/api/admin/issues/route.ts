@@ -85,7 +85,7 @@ export async function POST(request: Request) {
         .insert(
           options.map((text: string) => ({
             poll_id: poll.id,
-            option_text: text
+            label: text
           }))
         )
 

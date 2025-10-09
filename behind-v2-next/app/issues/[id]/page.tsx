@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -12,16 +12,59 @@ import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, Eye, ThumbsUp, ThumbsDown, Flag, ExternalLink } from "lucide-react";
 import { ImageWithFallback } from "@/components/figma/ImageWithFallback";
 import { QuickVote } from "@/components/quick-vote";
-import { allIssues } from "@/lib/data/issues";
 import { formatTime } from "@/lib/utils";
+
+// API 응답 타입 정의
+interface IssueDetail {
+  id: number;
+  slug: string;
+  title: string;
+  preview: string;
+  thumbnail?: string;
+  media_embed?: {
+    youtube?: string;
+    news?: Array<{
+      title: string;
+      source: string;
+      url: string;
+    }>;
+  };
+  view_count: number;
+  capacity: number;
+  category: string;
+  status: string;
+  comment_count: number;
+  created_at: string;
+  summary?: string;
+  behind_story?: string;
+}
+
+interface Poll {
+  id: number;
+  question: string;
+  options: Array<{
+    id: number;
+    text: string;
+    vote_count: number;
+  }>;
+}
+
+interface ApiResponse {
+  issue: IssueDetail;
+  poll: Poll | null;
+}
 
 export default function IssueDetailPage() {
   const params = useParams();
   const router = useRouter();
   const issueId = params.id as string;
 
-  const issue = allIssues.find((i) => i.id === issueId) || allIssues[0];
+  const [issue, setIssue] = useState<IssueDetail | null>(null);
+  const [poll, setPoll] = useState<Poll | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
+  // 댓글 데이터 (하드코딩 유지 - 추후 API 구현 예정)
   const comments = [
     { id: 1, author: "익명1", time: Date.now() - 600000, text: "내부자 개입 가능성 높다고 봅니다. 권한이 없으면 저런 로그가 안 남아요.", up: 24, down: 3 },
     { id: 2, author: "익명2", time: Date.now() - 1500000, text: "외부 피싱에서 시작됐다는 얘기도 있어요. 연쇄로 확장됐을 듯.", up: 17, down: 5 },
@@ -29,6 +72,64 @@ export default function IssueDetailPage() {
   ];
 
   const [sortBy, setSortBy] = useState("popular");
+
+  // API 호출
+  useEffect(() => {
+    const fetchIssueDetail = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const response = await fetch(`/api/issues/${issueId}`);
+
+        if (!response.ok) {
+          if (response.status === 404) {
+            setError('이슈를 찾을 수 없습니다');
+          } else {
+            setError('오류가 발생했습니다');
+          }
+          return;
+        }
+
+        const data: ApiResponse = await response.json();
+        setIssue(data.issue);
+        setPoll(data.poll);
+      } catch (err) {
+        console.error('Failed to fetch issue:', err);
+        setError('오류가 발생했습니다');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchIssueDetail();
+  }, [issueId]);
+
+  // 로딩 상태
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-lg text-muted-foreground">로딩 중...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // 에러 상태
+  if (error || !issue) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-lg text-muted-foreground mb-4">{error || '이슈를 찾을 수 없습니다'}</div>
+          <Button onClick={() => router.push('/')}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            홈으로 돌아가기
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -42,13 +143,13 @@ export default function IssueDetailPage() {
             <div className="flex-1">
               <h1 className="mb-2">{issue.title}</h1>
               <div className="flex items-center gap-3 text-muted-foreground flex-wrap">
-                <span>{issue.participants}/{issue.capacity} 참여중</span>
-                {issue.liveViewers && (
+                <span>{issue.capacity}명 정원</span>
+                {issue.view_count > 0 && (
                   <>
                     <Separator orientation="vertical" className="h-4" />
                     <span className="flex items-center gap-1 text-sm">
                       <Eye className="w-3.5 h-3.5" />
-                      조회수 {issue.liveViewers}
+                      조회수 {issue.view_count}
                     </span>
                   </>
                 )}
@@ -81,25 +182,27 @@ export default function IssueDetailPage() {
             <CardTitle>사건 요약</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-muted-foreground leading-relaxed">{issue.preview}</p>
+            <p className="text-muted-foreground leading-relaxed">
+              {issue.summary || issue.preview}
+            </p>
           </CardContent>
         </Card>
 
         {/* 관련 미디어 */}
-        {issue.mediaEmbed && (
+        {issue.media_embed && (
           <Card>
             <CardHeader>
               <CardTitle>관련 미디어</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {/* 유튜브 임베드 */}
-              {issue.mediaEmbed.youtube && (
+              {issue.media_embed.youtube && (
                 <div>
                   <div className="aspect-video rounded-lg overflow-hidden bg-muted">
                     <iframe
                       width="100%"
                       height="100%"
-                      src={`https://www.youtube.com/embed/${issue.mediaEmbed.youtube}`}
+                      src={`https://www.youtube.com/embed/${issue.media_embed.youtube}`}
                       title="YouTube video"
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                       allowFullScreen
@@ -110,10 +213,10 @@ export default function IssueDetailPage() {
               )}
 
               {/* 뉴스 링크 */}
-              {issue.mediaEmbed.news && issue.mediaEmbed.news.length > 0 && (
+              {issue.media_embed.news && issue.media_embed.news.length > 0 && (
                 <div className="space-y-2">
                   <h4 className="text-sm text-muted-foreground">관련 뉴스</h4>
-                  {issue.mediaEmbed.news.map((article, idx) => (
+                  {issue.media_embed.news.map((article, idx) => (
                     <a
                       key={idx}
                       href={article.url}
@@ -135,31 +238,41 @@ export default function IssueDetailPage() {
         )}
 
         {/* 비하인드 */}
-        <Card>
-          <CardHeader>
-            <CardTitle>비하인드</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground leading-relaxed">
-              일부 전문가들은 내부자 개입 가능성을 제기했으며, 추가 제보가 이어지고 있습니다.
-            </p>
-          </CardContent>
-        </Card>
+        {issue.behind_story && (
+          <Card>
+            <CardHeader>
+              <CardTitle>비하인드</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground leading-relaxed">
+                {issue.behind_story}
+              </p>
+            </CardContent>
+          </Card>
+        )}
 
-        {/* 투표 */}
-        <QuickVote
-          pollId={`poll_${issue.id}_detail`}
-          question="내부자 개입 가능성, 어떻게 생각하십니까?"
-          options={[
-            { label: "높다", count: 600 },
-            { label: "낮다", count: 480 },
-          ]}
-          ctaLabel="댓글 보러가기"
-          onCta={() => {
-            const el = document.getElementById("comments");
-            if (el) el.scrollIntoView({ behavior: "smooth" });
-          }}
-        />
+        {/* 투표 - poll 데이터가 있을 때만 표시 */}
+        {poll && poll.options && poll.options.length >= 2 ? (
+          <QuickVote
+            pollId={`poll_${issue.id}`}
+            question={poll.question}
+            options={poll.options.map(opt => ({
+              label: opt.text,
+              count: opt.vote_count
+            }))}
+            ctaLabel="댓글 보러가기"
+            onCta={() => {
+              const el = document.getElementById("comments");
+              if (el) el.scrollIntoView({ behavior: "smooth" });
+            }}
+          />
+        ) : (
+          <Card>
+            <CardContent className="p-6 text-center text-muted-foreground">
+              투표가 없습니다
+            </CardContent>
+          </Card>
+        )}
 
         {/* 댓글 */}
         <div id="comments" className="space-y-4">
