@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { createClient } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase'
 
 export async function POST(request: Request) {
   // 인증 확인
@@ -8,8 +8,6 @@ export async function POST(request: Request) {
   if (authCookie?.value !== 'true') {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
-
-  const supabase = createClient()
   const {
     title,
     preview,
@@ -22,7 +20,9 @@ export async function POST(request: Request) {
     mediaNewsUrl,
     behindStory,
     pollQuestion,
-    options
+    options,
+    showInMainHot,
+    showInMainPoll
   } = await request.json()
 
   try {
@@ -59,7 +59,9 @@ export async function POST(request: Request) {
         category: 'general',
         status: 'active',
         media_embed: Object.keys(mediaEmbed).length > 0 ? mediaEmbed : null,
-        behind_story: behindStory || null
+        behind_story: behindStory || null,
+        show_in_main_hot: showInMainHot || false,
+        show_in_main_poll: showInMainPoll || false
       })
       .select()
       .single()

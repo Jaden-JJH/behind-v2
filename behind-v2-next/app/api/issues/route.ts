@@ -14,10 +14,12 @@ export async function GET(request: Request) {
     const limit = parseInt(searchParams.get('limit') || '10')
     const offset = parseInt(searchParams.get('offset') || '0')
 
-    // Supabase에서 이슈 조회
+    // Supabase에서 메인 노출 이슈만 조회
     const { data: issues, error } = await supabase
       .from('issues')
       .select('*')
+      .or('show_in_main_hot.eq.true,show_in_main_poll.eq.true')
+      .order('show_in_main_hot', { ascending: false, nullsFirst: false })
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1)
 
