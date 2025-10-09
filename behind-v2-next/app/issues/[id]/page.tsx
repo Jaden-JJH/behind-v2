@@ -14,6 +14,28 @@ import { ImageWithFallback } from "@/components/figma/ImageWithFallback";
 import { QuickVote } from "@/components/quick-vote";
 import { formatTime } from "@/lib/utils";
 
+// 유튜브 video ID 추출 함수
+function extractYouTubeId(url: string): string | null {
+  // 이미 ID만 있으면 그대로 반환
+  if (!url.includes('youtube.com') && !url.includes('youtu.be')) {
+    return url;
+  }
+
+  // watch?v= 형식
+  const watchMatch = url.match(/[?&]v=([^&]+)/);
+  if (watchMatch) return watchMatch[1];
+
+  // youtu.be/ 형식
+  const shortMatch = url.match(/youtu\.be\/([^?]+)/);
+  if (shortMatch) return shortMatch[1];
+
+  // embed/ 형식
+  const embedMatch = url.match(/embed\/([^?]+)/);
+  if (embedMatch) return embedMatch[1];
+
+  return null;
+}
+
 // API 응답 타입 정의
 interface IssueDetail {
   id: number;
@@ -196,21 +218,26 @@ export default function IssueDetailPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               {/* 유튜브 임베드 */}
-              {issue.media_embed.youtube && (
-                <div>
-                  <div className="aspect-video rounded-lg overflow-hidden bg-muted">
-                    <iframe
-                      width="100%"
-                      height="100%"
-                      src={`https://www.youtube.com/embed/${issue.media_embed.youtube}`}
-                      title="YouTube video"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                      className="w-full h-full"
-                    />
+              {issue.media_embed.youtube && (() => {
+                const videoId = extractYouTubeId(issue.media_embed.youtube);
+                if (!videoId) return null;
+
+                return (
+                  <div>
+                    <div className="aspect-video rounded-lg overflow-hidden bg-muted">
+                      <iframe
+                        width="100%"
+                        height="100%"
+                        src={`https://www.youtube.com/embed/${videoId}`}
+                        title="YouTube video"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        className="w-full h-full"
+                      />
+                    </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
 
               {/* 뉴스 링크 */}
               {issue.media_embed.news && issue.media_embed.news.length > 0 && (
