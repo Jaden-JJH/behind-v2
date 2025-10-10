@@ -140,6 +140,7 @@ export default function LandingPage() {
                       pollId={poll.id}
                       question={poll.question || issue.title}
                       options={poll.options.map((opt: any) => ({
+                        id: opt.id,
                         label: opt.label,
                         count: opt.vote_count
                       }))}

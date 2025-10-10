@@ -37,6 +37,16 @@ function extractYouTubeId(url: string): string | null {
 }
 
 // API 응답 타입 정의
+interface Poll {
+  id: number;
+  question: string;
+  options: Array<{
+    id: number;
+    text: string;
+    vote_count: number;
+  }>;
+}
+
 interface IssueDetail {
   id: number;
   slug: string;
@@ -59,16 +69,7 @@ interface IssueDetail {
   created_at: string;
   summary?: string;
   behind_story?: string;
-}
-
-interface Poll {
-  id: number;
-  question: string;
-  options: Array<{
-    id: number;
-    text: string;
-    vote_count: number;
-  }>;
+  poll?: Poll;
 }
 
 interface ApiResponse {
@@ -82,7 +83,6 @@ export default function IssueDetailPage() {
   const issueId = params.id as string;
 
   const [issue, setIssue] = useState<IssueDetail | null>(null);
-  const [poll, setPoll] = useState<Poll | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -114,8 +114,7 @@ export default function IssueDetailPage() {
         }
 
         const data: ApiResponse = await response.json();
-        setIssue(data.issue);
-        setPoll(data.poll);
+        setIssue({ ...data.issue, poll: data.poll || undefined });
       } catch (err) {
         console.error('Failed to fetch issue:', err);
         setError('오류가 발생했습니다');
@@ -284,11 +283,12 @@ export default function IssueDetailPage() {
         )}
 
         {/* 투표 - poll 데이터가 있을 때만 표시 */}
-        {poll && poll.options && poll.options.length >= 2 ? (
+        {issue.poll && issue.poll.options && issue.poll.options.length >= 2 ? (
           <QuickVote
-            pollId={`poll_${issue.id}`}
-            question={poll.question}
-            options={poll.options.map(opt => ({
+            pollId={String(issue.poll.id)}
+            question={issue.poll.question}
+            options={issue.poll.options.map((opt: any) => ({
+              id: opt.id,
               label: opt.label,
               count: opt.vote_count
             }))}

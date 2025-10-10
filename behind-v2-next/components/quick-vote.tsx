@@ -12,10 +12,10 @@ const toSafeNumber = (v: unknown): number => {
   return Number.isFinite(n) ? n : 0;
 };
 
-const normalizeOptions = (options: Array<{label?: string, count?: number}>): Array<{label: string, count: number}> => {
+const normalizeOptions = (options: Array<{id?: string, label?: string, count?: number}>): Array<{id: string, label: string, count: number}> => {
   const arr = Array.isArray(options) ? options.filter(Boolean) : [];
-  const filled = arr.map((o, i) => ({ label: o.label ?? `옵션 ${i + 1}`, count: toSafeNumber(o.count) }));
-  while (filled.length < 2) filled.push({ label: `옵션 ${filled.length + 1}`, count: 0 });
+  const filled = arr.map((o, i) => ({ id: o.id ?? `temp-${i}`, label: o.label ?? `옵션 ${i + 1}`, count: toSafeNumber(o.count) }));
+  while (filled.length < 2) filled.push({ id: `temp-${filled.length}`, label: `옵션 ${filled.length + 1}`, count: 0 });
   return filled.slice(0, 2);
 };
 
@@ -49,13 +49,24 @@ const setStoredVote = (pollId: string, idx: number): void => {
   } catch {}
 };
 
+// Device hash 생성
+const getDeviceHash = (): string => {
+  if (typeof window === "undefined") return "";
+  let hash = localStorage.getItem('bh_device_hash');
+  if (!hash) {
+    hash = crypto.randomUUID();
+    localStorage.setItem('bh_device_hash', hash);
+  }
+  return hash;
+};
+
 /** =========================
  *  QuickVote - 투표 컴포넌트
  *  ========================= */
 interface QuickVoteProps {
   pollId: string;
   question: string;
-  options: Array<{label: string, count: number}>;
+  options: Array<{id: string, label: string, count: number}>;
   ctaLabel?: string;
   onCta?: () => void;
 }
@@ -76,12 +87,52 @@ export function QuickVote({ pollId, question, options, ctaLabel = "댓글 토론
 
   const total = (Array.isArray(counts) ? counts : []).reduce((a, b) => toSafeNumber(a) + toSafeNumber(b), 0);
 
-  const handleVote = (idx: number) => {
+  const handleVote = async (idx: number) => {
     if (voted) return;
-    setCounts((prev) => incrementAtIndex(prev, idx));
-    setSelected(idx);
-    setVoted(true);
-    setStoredVote(pollId || question || "", idx);
+
+    const selectedOption = safeOptions[idx];
+    const cleanPollId = pollId.replace(/^poll_/, '');
+
+    // 디버깅 로그 추가
+    console.log('=== 투표 디버깅 ===');
+    console.log('pollId:', cleanPollId);
+    console.log('selectedOption:', selectedOption);
+    console.log('optionId:', selectedOption?.id);
+    console.log('모든 options:', safeOptions);
+    console.log('==================');
+
+    try {
+      // API 호출
+      const response = await fetch('/api/vote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          pollId: cleanPollId,
+          optionId: selectedOption?.id,
+          deviceHash: getDeviceHash()
+        })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        if (result.code === 'DUPLICATE_VOTE') {
+          console.log('이미 투표하셨습니다');
+        } else {
+          console.error('투표 실패:', result.error);
+          return;
+        }
+      }
+
+      // 성공 시 로컬 상태 업데이트
+      setCounts((prev) => incrementAtIndex(prev, idx));
+      setSelected(idx);
+      setVoted(true);
+      setStoredVote(pollId || question || "", idx);
+
+    } catch (error) {
+      console.error('투표 API 오류:', error);
+    }
   };
 
   return (
