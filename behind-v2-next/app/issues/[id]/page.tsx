@@ -13,6 +13,7 @@ import { ArrowLeft, Eye, ThumbsUp, ThumbsDown, Flag, ExternalLink } from "lucide
 import { ImageWithFallback } from "@/components/figma/ImageWithFallback";
 import { QuickVote } from "@/components/quick-vote";
 import { formatTime } from "@/lib/utils";
+import { showSuccess, showError, handleApiResponse } from '@/lib/toast-utils';
 
 // deviceHash 생성/가져오기 함수
 function getDeviceHash(): string {
@@ -107,6 +108,40 @@ export default function IssueDetailPage() {
   const [submitting, setSubmitting] = useState(false);
   const [votingCommentId, setVotingCommentId] = useState<string | null>(null);
 
+  // 댓글 투표 상태 관리
+  const [voteStates, setVoteStates] = useState<Record<string, 'up' | 'down' | null>>({});
+  const [lastVoteCommentId, setLastVoteCommentId] = useState<string | null>(null);
+  const [lastVoteTime, setLastVoteTime] = useState(0);
+
+  // 로컬 스토리지에 투표 상태 저장/불러오기
+  const saveVoteState = (commentId: string, voteType: 'up' | 'down' | null) => {
+    if (typeof window === 'undefined') return;
+    const key = `comment_vote_${commentId}`;
+    if (voteType === null) {
+      localStorage.removeItem(key);
+    } else {
+      localStorage.setItem(key, voteType);
+    }
+  };
+
+  const loadVoteState = (commentId: string): 'up' | 'down' | null => {
+    if (typeof window === 'undefined') return null;
+    const key = `comment_vote_${commentId}`;
+    const saved = localStorage.getItem(key);
+    return saved as 'up' | 'down' | null;
+  };
+
+  // 댓글 로드 시 투표 상태 복원
+  useEffect(() => {
+    if (comments.length > 0) {
+      const states: Record<string, 'up' | 'down' | null> = {};
+      comments.forEach((comment) => {
+        states[comment.id] = loadVoteState(comment.id);
+      });
+      setVoteStates(states);
+    }
+  }, [comments.length]);
+
   // API 호출
   useEffect(() => {
     const fetchIssueDetail = async () => {
@@ -168,6 +203,7 @@ export default function IssueDetailPage() {
     } catch (err: any) {
       setCommentsError(err.message);
       setComments([]);
+      showError(err);
     } finally {
       setCommentsLoading(false);
     }
@@ -176,12 +212,12 @@ export default function IssueDetailPage() {
   // 댓글 작성
   async function handleSubmitComment() {
     if (!commentBody.trim()) {
-      alert('댓글 내용을 입력해주세요');
+      showError('댓글 내용을 입력해주세요');
       return;
     }
 
     if (commentBody.length < 2 || commentBody.length > 500) {
-      alert('댓글은 2자 이상 500자 이하로 작성해주세요');
+      showError('댓글은 2자 이상 500자 이하로 작성해주세요');
       return;
     }
 
@@ -194,20 +230,20 @@ export default function IssueDetailPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          issueId: issue.id,
+          issueId: issue?.id,
           body: commentBody,
           userNick: nick
         })
       });
 
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || '댓글 작성에 실패했습니다');
+      await handleApiResponse(response);
 
       // 성공 시 초기화 및 새로고침
       setCommentBody('');
+      showSuccess('댓글이 등록되었습니다');
       loadComments();
     } catch (err: any) {
-      alert(err.message);
+      showError(err);
     } finally {
       setSubmitting(false);
     }
@@ -215,41 +251,54 @@ export default function IssueDetailPage() {
 
   // 댓글 투표
   async function handleVote(commentId: string, voteType: 'up' | 'down') {
-    if (votingCommentId) return // 이미 투표 처리 중
+    if (votingCommentId) return
+
+    // 다른 댓글로 이동 시 2초 제한 유지
+    if (lastVoteCommentId && lastVoteCommentId !== commentId) {
+      const timeSinceLastVote = Date.now() - lastVoteTime
+      if (timeSinceLastVote < 2000) {
+        showError('잠시 후 다시 시도해주세요')
+        return
+      }
+    }
 
     try {
       setVotingCommentId(commentId)
       const deviceHash = getDeviceHash()
+      const currentVote = voteStates[commentId] // 'up' | 'down' | null
 
       const response = await fetch(`/api/comments/${commentId}/vote`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ voteType, deviceHash })
+        body: JSON.stringify({ voteType, deviceHash }),
       })
 
-      const data = await response.json()
+      // 공통 응답 핸들러 (토스트 포함)
+      const result = await handleApiResponse<{ up: number; down: number }>(response)
+      // 서버에서 { success:true, data:{ up, down } } 형태
+      const { up, down } = result
 
-      if (!response.ok) {
-        if (response.status === 409) {
-          alert('이미 투표하셨습니다')
-        } else {
-          throw new Error(data.error)
-        }
-        return
-      }
+      // 프론트의 투표상태는 기존 로직 유지 (현재 클릭 = 취소, 아니면 전환)
+      const newState = currentVote === voteType ? null : voteType
 
-      // 댓글 목록에서 해당 댓글의 카운트 업데이트
-      setComments(prev => prev.map(c =>
-        c.id === commentId
-          ? { ...c, up: data.data.up, down: data.data.down }
-          : c
-      ))
+      setVoteStates(prev => ({ ...prev, [commentId]: newState }))
+      saveVoteState(commentId, newState)
+
+      // 카운트는 서버 값으로 덮어쓰기 (싱크 보장)
+      setComments(prev =>
+        prev.map(c => (c.id === commentId ? { ...c, up, down } : c))
+      )
+
+      // rate limit 기록
+      setLastVoteCommentId(commentId)
+      setLastVoteTime(Date.now())
     } catch (err: any) {
-      alert(err.message || '투표 처리 중 오류가 발생했습니다')
+      showError(err)
     } finally {
       setVotingCommentId(null)
     }
   }
+
 
   // 로딩 상태
   if (loading) {
@@ -505,7 +554,7 @@ export default function IssueDetailPage() {
                     <p className="text-muted-foreground leading-relaxed mb-3">{c.body}</p>
                     <div className="flex items-center gap-2">
                       <Button
-                        variant="outline"
+                        variant={voteStates[c.id] === 'up' ? 'default' : 'outline'}
                         size="sm"
                         onClick={() => handleVote(c.id, 'up')}
                         disabled={votingCommentId === c.id}
@@ -514,7 +563,7 @@ export default function IssueDetailPage() {
                         {c.up}
                       </Button>
                       <Button
-                        variant="outline"
+                        variant={voteStates[c.id] === 'down' ? 'default' : 'outline'}
                         size="sm"
                         onClick={() => handleVote(c.id, 'down')}
                         disabled={votingCommentId === c.id}

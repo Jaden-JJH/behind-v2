@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { createErrorResponse, createSuccessResponse, ErrorCode } from '@/lib/api-error'
 
 // 서버에서만 사용하는 Supabase 클라이언트
 const supabase = createClient(
@@ -39,22 +39,12 @@ export async function GET(request: Request) {
 
     if (error) {
       console.error('Supabase error:', error)
-      return NextResponse.json(
-        { error: 'Failed to fetch issues' },
-        { status: 500 }
-      )
+      return createErrorResponse(ErrorCode.ISSUE_FETCH_FAILED, 500, error.message)
     }
 
-    return NextResponse.json({
-      success: true,
-      data: issues,
-      count: issues.length
-    })
+    return createSuccessResponse(issues, 200, issues.length)
   } catch (error) {
     console.error('API error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return createErrorResponse(ErrorCode.INTERNAL_ERROR, 500)
   }
 }

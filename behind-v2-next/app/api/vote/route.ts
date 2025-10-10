@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { createErrorResponse, createSuccessResponse, ErrorCode, validateRequired } from '@/lib/api-error'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -12,11 +12,9 @@ export async function POST(request: Request) {
     const { pollId, optionId, deviceHash } = body
 
     // 입력 검증
-    if (!pollId || !optionId || !deviceHash) {
-      return NextResponse.json(
-        { error: 'Missing required fields: pollId, optionId, deviceHash' },
-        { status: 400 }
-      )
+    const missing = validateRequired({ pollId, optionId, deviceHash })
+    if (missing.length > 0) {
+      return createErrorResponse(ErrorCode.MISSING_FIELDS, 400, { missing })
     }
 
     // Supabase RPC 함수 호출
@@ -29,36 +27,21 @@ export async function POST(request: Request) {
     if (error) {
       // 중복 투표 처리
       if (error.message.includes('DUPLICATE_VOTE')) {
-        return NextResponse.json(
-          { error: 'Already voted', code: 'DUPLICATE_VOTE' },
-          { status: 409 }
-        )
+        return createErrorResponse(ErrorCode.DUPLICATE_VOTE, 409)
       }
-      
+
       // 잘못된 옵션 처리
       if (error.message.includes('INVALID_OPTION')) {
-        return NextResponse.json(
-          { error: 'Invalid poll option', code: 'INVALID_OPTION' },
-          { status: 400 }
-        )
+        return createErrorResponse(ErrorCode.INVALID_OPTION, 404)
       }
 
       console.error('Vote error:', error)
-      return NextResponse.json(
-        { error: 'Failed to vote' },
-        { status: 500 }
-      )
+      return createErrorResponse(ErrorCode.VOTE_FAILED, 500, error.message)
     }
 
-    return NextResponse.json({
-      success: true,
-      data: data
-    })
+    return createSuccessResponse(data)
   } catch (error) {
     console.error('API error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return createErrorResponse(ErrorCode.INTERNAL_ERROR, 500)
   }
 }
