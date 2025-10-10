@@ -14,6 +14,18 @@ import { ImageWithFallback } from "@/components/figma/ImageWithFallback";
 import { QuickVote } from "@/components/quick-vote";
 import { formatTime } from "@/lib/utils";
 
+// deviceHash 생성/가져오기 함수
+function getDeviceHash(): string {
+  if (typeof window === 'undefined') return ''
+
+  let hash = localStorage.getItem('deviceHash')
+  if (!hash) {
+    hash = crypto.randomUUID()
+    localStorage.setItem('deviceHash', hash)
+  }
+  return hash
+}
+
 // 유튜브 video ID 추출 함수
 function extractYouTubeId(url: string): string | null {
   // 이미 ID만 있으면 그대로 반환
@@ -93,6 +105,7 @@ export default function IssueDetailPage() {
   const [sortBy, setSortBy] = useState<'recent' | 'popular'>('recent');
   const [commentBody, setCommentBody] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [votingCommentId, setVotingCommentId] = useState<string | null>(null);
 
   // API 호출
   useEffect(() => {
@@ -197,6 +210,44 @@ export default function IssueDetailPage() {
       alert(err.message);
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  // 댓글 투표
+  async function handleVote(commentId: string, voteType: 'up' | 'down') {
+    if (votingCommentId) return // 이미 투표 처리 중
+
+    try {
+      setVotingCommentId(commentId)
+      const deviceHash = getDeviceHash()
+
+      const response = await fetch(`/api/comments/${commentId}/vote`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ voteType, deviceHash })
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        if (response.status === 409) {
+          alert('이미 투표하셨습니다')
+        } else {
+          throw new Error(data.error)
+        }
+        return
+      }
+
+      // 댓글 목록에서 해당 댓글의 카운트 업데이트
+      setComments(prev => prev.map(c =>
+        c.id === commentId
+          ? { ...c, up: data.data.up, down: data.data.down }
+          : c
+      ))
+    } catch (err: any) {
+      alert(err.message || '투표 처리 중 오류가 발생했습니다')
+    } finally {
+      setVotingCommentId(null)
     }
   }
 
@@ -384,7 +435,7 @@ export default function IssueDetailPage() {
         <div id="comments" className="space-y-4">
           <div className="flex items-center justify-between">
             <h2>댓글</h2>
-            <Tabs value={sortBy} onValueChange={setSortBy}>
+            <Tabs value={sortBy} onValueChange={(value) => setSortBy(value as 'recent' | 'popular')}>
               <TabsList>
                 <TabsTrigger value="popular">인기순</TabsTrigger>
                 <TabsTrigger value="recent">최신순</TabsTrigger>
@@ -453,11 +504,21 @@ export default function IssueDetailPage() {
                     </div>
                     <p className="text-muted-foreground leading-relaxed mb-3">{c.body}</p>
                     <div className="flex items-center gap-2">
-                      <Button variant="outline" size="sm">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleVote(c.id, 'up')}
+                        disabled={votingCommentId === c.id}
+                      >
                         <ThumbsUp className="w-3.5 h-3.5 mr-1.5" />
                         {c.up}
                       </Button>
-                      <Button variant="outline" size="sm">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleVote(c.id, 'down')}
+                        disabled={votingCommentId === c.id}
+                      >
                         <ThumbsDown className="w-3.5 h-3.5 mr-1.5" />
                         {c.down}
                       </Button>
