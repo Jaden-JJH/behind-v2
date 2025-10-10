@@ -86,14 +86,13 @@ export default function IssueDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // 댓글 데이터 (하드코딩 유지 - 추후 API 구현 예정)
-  const comments = [
-    { id: 1, author: "익명1", time: Date.now() - 600000, text: "내부자 개입 가능성 높다고 봅니다. 권한이 없으면 저런 로그가 안 남아요.", up: 24, down: 3 },
-    { id: 2, author: "익명2", time: Date.now() - 1500000, text: "외부 피싱에서 시작됐다는 얘기도 있어요. 연쇄로 확장됐을 듯.", up: 17, down: 5 },
-    { id: 3, author: "익명3", time: Date.now() - 3600000, text: "통신사 보안 체계 개선안 누가 책임질지 궁금.", up: 9, down: 1 },
-  ];
-
-  const [sortBy, setSortBy] = useState("popular");
+  // 댓글 관련 state
+  const [comments, setComments] = useState<any[]>([]);
+  const [commentsLoading, setCommentsLoading] = useState(true);
+  const [commentsError, setCommentsError] = useState('');
+  const [sortBy, setSortBy] = useState<'recent' | 'popular'>('recent');
+  const [commentBody, setCommentBody] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   // API 호출
   useEffect(() => {
@@ -125,6 +124,81 @@ export default function IssueDetailPage() {
 
     fetchIssueDetail();
   }, [issueId]);
+
+  // 댓글 불러오기
+  useEffect(() => {
+    if (issue?.id) {
+      loadComments();
+    }
+  }, [issue?.id, sortBy]);
+
+  async function loadComments() {
+    if (!issue?.id) return;
+    try {
+      setCommentsLoading(true);
+      setCommentsError('');
+      const response = await fetch(`/api/comments?issueId=${issue.id}`);
+      const data = await response.json();
+
+      if (!response.ok) throw new Error(data.error || '댓글을 불러오지 못했습니다');
+
+      let sortedComments = data.data || [];
+
+      // 정렬
+      if (sortBy === 'popular') {
+        sortedComments = sortedComments.sort((a: any, b: any) =>
+          (b.up - b.down) - (a.up - a.down)
+        );
+      }
+
+      setComments(sortedComments);
+    } catch (err: any) {
+      setCommentsError(err.message);
+      setComments([]);
+    } finally {
+      setCommentsLoading(false);
+    }
+  }
+
+  // 댓글 작성
+  async function handleSubmitComment() {
+    if (!commentBody.trim()) {
+      alert('댓글 내용을 입력해주세요');
+      return;
+    }
+
+    if (commentBody.length < 2 || commentBody.length > 500) {
+      alert('댓글은 2자 이상 500자 이하로 작성해주세요');
+      return;
+    }
+
+    // 익명 닉네임 자동 생성
+    const nick = `익명${Math.floor(Math.random() * 10000)}`;
+
+    try {
+      setSubmitting(true);
+      const response = await fetch('/api/comments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          issueId: issue.id,
+          body: commentBody,
+          userNick: nick
+        })
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || '댓글 작성에 실패했습니다');
+
+      // 성공 시 초기화 및 새로고침
+      setCommentBody('');
+      loadComments();
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
   // 로딩 상태
   if (loading) {
@@ -322,61 +396,80 @@ export default function IssueDetailPage() {
           <Card>
             <CardContent className="p-4">
               <Textarea
+                value={commentBody}
+                onChange={(e) => setCommentBody(e.target.value)}
                 placeholder="익명으로 댓글을 남겨보세요"
                 className="min-h-[100px] mb-3 resize-none"
+                disabled={submitting}
               />
               <div className="flex items-center justify-between">
                 <p className="text-sm text-muted-foreground">익명 · 커뮤니티 가이드라인 준수</p>
-                <Button>등록</Button>
+                <Button onClick={handleSubmitComment} disabled={submitting}>
+                  {submitting ? '등록 중...' : '등록'}
+                </Button>
               </div>
             </CardContent>
           </Card>
 
           {/* 댓글 목록 */}
-          <div className="space-y-3">
-            {comments.map((c) => (
-              <Card key={c.id}>
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="w-8 h-8">
-                        <AvatarFallback>{c.author.slice(-1)}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="text-sm">{c.author}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {formatTime(c.time)}
-                        </p>
-                      </div>
-                    </div>
-                    <Button variant="ghost" size="sm">
-                      <Flag className="w-4 h-4" />
-                    </Button>
-                  </div>
-                  <p className="text-muted-foreground leading-relaxed mb-3">{c.text}</p>
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm">
-                      <ThumbsUp className="w-3.5 h-3.5 mr-1.5" />
-                      {c.up}
-                    </Button>
-                    <Button variant="outline" size="sm">
-                      <ThumbsDown className="w-3.5 h-3.5 mr-1.5" />
-                      {c.down}
-                    </Button>
-                    <Button variant="ghost" size="sm">
-                      답글
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          {commentsLoading && (
+            <div className="text-center py-8 text-muted-foreground">
+              댓글을 불러오는 중...
+            </div>
+          )}
 
-          <div className="flex justify-center">
-            <Button variant="outline">
-              더 보기
-            </Button>
-          </div>
+          {commentsError && (
+            <div className="text-center py-8 text-red-500">
+              {commentsError}
+            </div>
+          )}
+
+          {!commentsLoading && !commentsError && comments.length === 0 && (
+            <div className="text-center py-8 text-muted-foreground">
+              첫 댓글을 남겨보세요!
+            </div>
+          )}
+
+          {!commentsLoading && !commentsError && comments.length > 0 && (
+            <div className="space-y-3">
+              {comments.map((c) => (
+                <Card key={c.id}>
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="w-8 h-8">
+                          <AvatarFallback>{c.user_nick.slice(-1)}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="text-sm">{c.user_nick}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {formatTime(c.created_at)}
+                          </p>
+                        </div>
+                      </div>
+                      <Button variant="ghost" size="sm">
+                        <Flag className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    <p className="text-muted-foreground leading-relaxed mb-3">{c.body}</p>
+                    <div className="flex items-center gap-2">
+                      <Button variant="outline" size="sm">
+                        <ThumbsUp className="w-3.5 h-3.5 mr-1.5" />
+                        {c.up}
+                      </Button>
+                      <Button variant="outline" size="sm">
+                        <ThumbsDown className="w-3.5 h-3.5 mr-1.5" />
+                        {c.down}
+                      </Button>
+                      <Button variant="ghost" size="sm">
+                        답글
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       </main>
 
