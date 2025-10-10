@@ -115,7 +115,7 @@ export default function AllIssuesPage() {
           {/* Filters */}
           <div className="flex flex-col gap-3">
             {/* Category Filter */}
-            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+            <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4">
               {categories.map((cat) => (
                 <Button
                   key={cat.value}
@@ -173,9 +173,9 @@ export default function AllIssuesPage() {
                 onClick={() => router.push(`/issues/${issue.display_id}`)}
               >
                 <CardContent className="p-0">
-                  <div className="flex gap-4 p-4">
+                  <div className="flex gap-3 p-3 md:p-4">
                     {/* Thumbnail */}
-                    <div className="w-32 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-muted">
+                    <div className="w-24 h-16 md:w-32 md:h-24 flex-shrink-0 rounded-lg overflow-hidden bg-muted">
                       <ImageWithFallback
                         src={issue.thumbnail || ''}
                         alt={issue.title}
@@ -186,17 +186,17 @@ export default function AllIssuesPage() {
                     {/* Content */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2 mb-2">
-                        <h3 className="font-semibold text-base line-clamp-1">
+                        <h3 className="font-semibold text-sm md:text-base line-clamp-1">
                           {issue.title}
                         </h3>
                         <Badge variant={issue.status === 'active' ? 'default' : 'secondary'}>
                           {issue.category}
                         </Badge>
                       </div>
-                      <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+                      <p className="text-xs md:text-sm text-muted-foreground line-clamp-2 mb-2 md:mb-3">
                         {issue.preview}
                       </p>
-                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-2 md:gap-4 text-xs text-muted-foreground">
                         <span className="flex items-center gap-1">
                           <Users className="w-3.5 h-3.5" />
                           {issue.capacity}

@@ -329,7 +329,7 @@ export default function IssueDetailPage() {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-4 py-4">
+        <div className="max-w-4xl mx-auto px-3 md:px-4 py-3 md:py-4">
           <Button variant="ghost" onClick={() => router.push('/')} className="mb-3 -ml-2">
             <ArrowLeft className="w-4 h-4 mr-2" />
             목록으로
@@ -359,7 +359,7 @@ export default function IssueDetailPage() {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 py-8 space-y-6">
+      <main className="max-w-4xl mx-auto px-3 md:px-4 py-4 md:py-8 space-y-4 md:space-y-6">
         {/* 썸네일 이미지 */}
         {issue.thumbnail && (
           <div className="relative w-full aspect-video bg-muted rounded-xl overflow-hidden">
@@ -494,12 +494,12 @@ export default function IssueDetailPage() {
 
           {/* 댓글 작성 */}
           <Card>
-            <CardContent className="p-4">
+            <CardContent className="p-3 md:p-4">
               <Textarea
                 value={commentBody}
                 onChange={(e) => setCommentBody(e.target.value)}
                 placeholder="익명으로 댓글을 남겨보세요"
-                className="min-h-[100px] mb-3 resize-none"
+                className="min-h-[80px] md:min-h-[100px] mb-2 md:mb-3 resize-none"
                 disabled={submitting}
               />
               <div className="flex items-center justify-between">
@@ -534,7 +534,7 @@ export default function IssueDetailPage() {
             <div className="space-y-3">
               {comments.map((c) => (
                 <Card key={c.id}>
-                  <CardContent className="p-4">
+                  <CardContent className="p-3 md:p-4">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-3">
                         <Avatar className="w-8 h-8">
@@ -551,8 +551,8 @@ export default function IssueDetailPage() {
                         <Flag className="w-4 h-4" />
                       </Button>
                     </div>
-                    <p className="text-muted-foreground leading-relaxed mb-3">{c.body}</p>
-                    <div className="flex items-center gap-2">
+                    <p className="text-sm md:text-base text-muted-foreground leading-relaxed mb-2 md:mb-3">{c.body}</p>
+                    <div className="flex items-center gap-1.5 md:gap-2">
                       <Button
                         variant={voteStates[c.id] === 'up' ? 'default' : 'outline'}
                         size="sm"

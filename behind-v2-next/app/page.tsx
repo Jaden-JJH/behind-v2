@@ -70,7 +70,7 @@ export default function LandingPage() {
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
       <header className="border-b border-slate-200 bg-white sticky top-0 z-10 shadow-sm">
-        <div className="max-w-6xl mx-auto px-4 py-4">
+        <div className="max-w-6xl mx-auto px-3 md:px-4 py-3 md:py-4">
           <div className="flex items-center justify-between gap-4">
             <Link href="/">
               <h1 className="text-3xl font-bold tracking-tight text-slate-700 cursor-pointer">비하인드</h1>
@@ -87,9 +87,9 @@ export default function LandingPage() {
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 py-6 grid md:grid-cols-3 gap-6">
+      <main className="max-w-6xl mx-auto px-3 md:px-4 py-4 md:py-6 grid md:grid-cols-3 gap-4 md:gap-6">
         {/* 메인 컨텐츠 */}
-        <section className="md:col-span-2 space-y-6">
+        <section className="md:col-span-2 space-y-4 md:space-y-6">
           <div className="mb-4">
             <h2 className="text-2xl font-bold tracking-tight text-slate-800 mb-1">지금 가장 뜨거운 토픽</h2>
             <p className="text-sm text-slate-600">실시간으로 가장 많은 관심을 받고 있는 이슈를 확인하세요</p>
@@ -119,12 +119,12 @@ export default function LandingPage() {
 
           {/* 실시간 투표 */}
           {polls.length > 0 && (
-            <div className="relative mt-8 p-6 rounded-2xl bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 border border-indigo-200/50 shadow-sm">
+            <div className="relative mt-6 md:mt-8 p-4 md:p-6 rounded-2xl bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 border border-indigo-200/50 shadow-sm">
               <div className="absolute -top-3 left-6 px-4 py-1.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-medium rounded-full shadow-md flex items-center gap-2 animate-pulse">
                 <Flame className="w-4 h-4" />
                 <span>실시간 투표 참여하기</span>
               </div>
-              <div className="grid md:grid-cols-2 gap-4 mt-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 mt-3">
                 {polls.map((issue) => {
                   // poll이 배열로 온 경우 첫 번째 요소 사용
                   const poll = Array.isArray(issue.poll) ? issue.poll[0] : issue.poll;

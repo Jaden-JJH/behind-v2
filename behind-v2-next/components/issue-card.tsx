@@ -34,10 +34,10 @@ export function IssueCard({ issue, onOpenIssue, onOpenChat }: IssueCardProps) {
 
   return (
     <Card className="bg-white border-slate-200 hover:border-slate-300 hover:shadow-md transition-all overflow-hidden">
-      <div className="flex gap-4 p-4">
+      <div className="flex gap-2 md:gap-4 p-3 md:p-4">
         {/* 썸네일 */}
         {issue.thumbnail && (
-          <div className="w-48 h-32 flex-shrink-0 rounded-lg overflow-hidden bg-slate-100 cursor-pointer" onClick={() => onOpenIssue(String(issue.display_id))}>
+          <div className="w-24 h-16 md:w-48 md:h-32 flex-shrink-0 rounded-lg overflow-hidden bg-slate-100 cursor-pointer" onClick={() => onOpenIssue(String(issue.display_id))}>
             <ImageWithFallback
               src={issue.thumbnail}
               alt={issue.title}
@@ -50,16 +50,16 @@ export function IssueCard({ issue, onOpenIssue, onOpenChat }: IssueCardProps) {
         <div className="flex-1 flex flex-col justify-between">
           <div className="space-y-2">
             <h3
-              className="text-lg font-bold text-slate-900 cursor-pointer hover:text-indigo-600 transition-colors leading-snug"
+              className="text-base md:text-lg font-bold text-slate-900 cursor-pointer hover:text-indigo-600 transition-colors leading-snug"
               onClick={() => onOpenIssue(String(issue.display_id))}
             >
               {issue.title}
             </h3>
-            <p className="text-slate-600 text-base leading-relaxed line-clamp-2">{issue.preview}</p>
+            <p className="text-slate-600 text-sm md:text-base leading-relaxed line-clamp-2">{issue.preview}</p>
           </div>
 
           <div className="flex items-center justify-between mt-4">
-            <div className="flex items-center gap-4 text-sm text-slate-600">
+            <div className="flex items-center gap-2 md:gap-4 text-xs md:text-sm text-slate-600">
               <span className="flex items-center gap-1.5">
                 <MessageCircle className="w-4 h-4" />
                 <span className="font-medium">{issue.commentCount || 0}</span>
@@ -76,7 +76,7 @@ export function IssueCard({ issue, onOpenIssue, onOpenChat }: IssueCardProps) {
               )}
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 md:gap-2">
               <Button variant="outline" size="sm" className="border-slate-300 text-slate-700 hover:bg-slate-100" onClick={() => onOpenIssue(String(issue.display_id))}>
                 자세히
               </Button>
