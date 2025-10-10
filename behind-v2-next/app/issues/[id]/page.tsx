@@ -45,11 +45,11 @@ interface IssueDetail {
   thumbnail?: string;
   media_embed?: {
     youtube?: string;
-    news?: Array<{
+    news?: {
       title: string;
       source: string;
       url: string;
-    }>;
+    };
   };
   view_count: number;
   capacity: number;
@@ -189,7 +189,7 @@ export default function IssueDetailPage() {
       <main className="max-w-4xl mx-auto px-4 py-8 space-y-6">
         {/* 썸네일 이미지 */}
         {issue.thumbnail && (
-          <div className="w-full h-64 rounded-xl overflow-hidden bg-muted">
+          <div className="relative w-full aspect-video bg-muted rounded-xl overflow-hidden">
             <ImageWithFallback
               src={issue.thumbnail}
               alt={issue.title}
@@ -239,25 +239,30 @@ export default function IssueDetailPage() {
                 );
               })()}
 
-              {/* 뉴스 링크 */}
-              {issue.media_embed.news && issue.media_embed.news.length > 0 && (
-                <div className="space-y-2">
-                  <h4 className="text-sm text-muted-foreground">관련 뉴스</h4>
-                  {issue.media_embed.news.map((article, idx) => (
-                    <a
-                      key={idx}
-                      href={article.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-start gap-3 p-3 rounded-lg border hover:bg-accent transition-colors group"
-                    >
-                      <div className="flex-1">
-                        <p className="group-hover:text-indigo-700 transition-colors">{article.title}</p>
-                        <p className="text-sm text-muted-foreground mt-1">{article.source}</p>
-                      </div>
-                      <ExternalLink className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-1" />
-                    </a>
-                  ))}
+              {/* 뉴스 기사 */}
+              {issue.media_embed.news && 'url' in issue.media_embed.news && (
+                <div className="border rounded-lg p-4 bg-card hover:bg-accent/50 transition-colors">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <p className="text-sm text-muted-foreground mb-1">
+                        {issue.media_embed.news.source}
+                      </p>
+                      <h3 className="font-semibold text-base mb-2 line-clamp-2">
+                        {issue.media_embed.news.title}
+                      </h3>
+                      <a
+                        href={issue.media_embed.news.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-primary hover:underline inline-flex items-center gap-1"
+                      >
+                        기사 전문 보기
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                      </a>
+                    </div>
+                  </div>
                 </div>
               )}
             </CardContent>

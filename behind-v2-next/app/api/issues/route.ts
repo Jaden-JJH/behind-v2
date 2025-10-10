@@ -17,7 +17,21 @@ export async function GET(request: Request) {
     // Supabase에서 메인 노출 이슈만 조회
     const { data: issues, error } = await supabase
       .from('issues')
-      .select('*')
+      .select(`
+        *,
+        poll:polls(
+          id,
+          question,
+          seed_total,
+          batch_min,
+          batch_max,
+          options:poll_options(
+            id,
+            label,
+            vote_count
+          )
+        )
+      `)
       .or('show_in_main_hot.eq.true,show_in_main_poll.eq.true')
       .order('show_in_main_hot', { ascending: false, nullsFirst: false })
       .order('created_at', { ascending: false })

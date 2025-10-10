@@ -14,6 +14,7 @@ export default function LandingPage() {
   const [showAllReported, setShowAllReported] = useState(false);
 
   const [issues, setIssues] = useState<any[]>([]);
+  const [polls, setPolls] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -22,6 +23,23 @@ export default function LandingPage() {
         const response = await fetchIssues();
         const activeIssues = response.data.filter(issue => issue.status === "active").slice(0, 2);
         setIssues(activeIssues);
+
+        // 투표 데이터 로드
+        const pollIssues = response.data.filter(issue => {
+          console.log('Issue check:', {
+            display_id: issue.display_id,
+            status: issue.status,
+            show_in_main_poll: issue.show_in_main_poll,
+            has_poll: !!issue.poll
+          });
+
+          return issue.status === "active" &&
+                 issue.show_in_main_poll === true &&
+                 issue.poll;
+        }).slice(0, 2);
+
+        console.log('Filtered poll issues:', pollIssues);
+        setPolls(pollIssues);
       } catch (err) {
         console.error("Failed to load issues:", err);
       } finally {
@@ -100,32 +118,38 @@ export default function LandingPage() {
           </div>
 
           {/* 실시간 투표 */}
-          <div className="relative mt-8 p-6 rounded-2xl bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 border border-indigo-200/50 shadow-sm">
-            <div className="absolute -top-3 left-6 px-4 py-1.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-medium rounded-full shadow-md flex items-center gap-2 animate-pulse">
-              <Flame className="w-4 h-4" />
-              <span>실시간 투표 참여하기</span>
+          {polls.length > 0 && (
+            <div className="relative mt-8 p-6 rounded-2xl bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 border border-indigo-200/50 shadow-sm">
+              <div className="absolute -top-3 left-6 px-4 py-1.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-medium rounded-full shadow-md flex items-center gap-2 animate-pulse">
+                <Flame className="w-4 h-4" />
+                <span>실시간 투표 참여하기</span>
+              </div>
+              <div className="grid md:grid-cols-2 gap-4 mt-3">
+                {polls.map((issue) => {
+                  // poll이 배열로 온 경우 첫 번째 요소 사용
+                  const poll = Array.isArray(issue.poll) ? issue.poll[0] : issue.poll;
+
+                  // poll이나 options가 없으면 null 반환
+                  if (!poll || !poll.options || !Array.isArray(poll.options)) {
+                    return null;
+                  }
+
+                  return (
+                    <QuickVote
+                      key={poll.id}
+                      pollId={poll.id}
+                      question={poll.question || issue.title}
+                      options={poll.options.map((opt: any) => ({
+                        label: opt.label,
+                        count: opt.vote_count
+                      }))}
+                      onCta={() => window.location.href = `/issues/${issue.display_id}`}
+                    />
+                  );
+                })}
+              </div>
             </div>
-            <div className="grid md:grid-cols-2 gap-4 mt-3">
-              <QuickVote
-                pollId="poll_sktkt_inside"
-                question="SKT·KT 해킹, 내부자 개입이 있었을까?"
-                options={[
-                  { label: "그렇다", count: 600 },
-                  { label: "아니다", count: 480 },
-                ]}
-                onCta={() => window.location.href = `/issues/skt-kt-hack`}
-              />
-              <QuickVote
-                pollId="poll_idol_contract"
-                question="아이돌 A 계약 해지, 소속사 책임이 더 클까?"
-                options={[
-                  { label: "그렇다", count: 620 },
-                  { label: "아니다", count: 410 },
-                ]}
-                onCta={() => window.location.href = `/issues/idol-a-contract`}
-              />
-            </div>
-          </div>
+          )}
 
           {/* 지나간 이슈 */}
           <Card className="mt-8 bg-white border-slate-200 shadow-sm">
