@@ -93,14 +93,6 @@ export function QuickVote({ pollId, question, options, ctaLabel = "댓글 토론
     const selectedOption = safeOptions[idx];
     const cleanPollId = pollId.replace(/^poll_/, '');
 
-    // 디버깅 로그 추가
-    console.log('=== 투표 디버깅 ===');
-    console.log('pollId:', cleanPollId);
-    console.log('selectedOption:', selectedOption);
-    console.log('optionId:', selectedOption?.id);
-    console.log('모든 options:', safeOptions);
-    console.log('==================');
-
     try {
       // API 호출
       const response = await fetch('/api/vote', {
