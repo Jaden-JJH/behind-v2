@@ -3,10 +3,41 @@ import type { NextRequest } from 'next/server'
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
+  const origin = request.headers.get('origin')
+  
+  // 환경별 허용 오리진
+  const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [
+    'http://localhost:3000',
+    'http://localhost:3001'
+  ]
+  
+  // CORS 헤더 설정
+  const response = NextResponse.next()
+  
+  if (origin && allowedOrigins.includes(origin)) {
+    response.headers.set('Access-Control-Allow-Origin', origin)
+    response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+    response.headers.set('Access-Control-Allow-Credentials', 'true')
+    response.headers.set('Access-Control-Max-Age', '86400') // 24시간
+  }
+  
+  // OPTIONS 프리플라이트 처리
+  if (request.method === 'OPTIONS') {
+    return new Response(null, {
+      status: 204,
+      headers: {
+        'Access-Control-Allow-Origin': origin && allowedOrigins.includes(origin) ? origin : '',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        'Access-Control-Max-Age': '86400',
+      }
+    })
+  }
   
   // /admin/login은 접근 허용
   if (pathname === '/admin/login') {
-    return NextResponse.next()
+    return response
   }
   
   // /admin/* 경로 보호
@@ -14,14 +45,13 @@ export function middleware(request: NextRequest) {
     const authCookie = request.cookies.get('admin-auth')
     
     if (authCookie?.value !== 'true') {
-      // 인증되지 않았으면 로그인 페이지로 리다이렉트
       return NextResponse.redirect(new URL('/admin/login', request.url))
     }
   }
   
-  return NextResponse.next()
+  return response
 }
 
 export const config = {
-  matcher: '/admin/:path*'
+  matcher: ['/admin/:path*', '/api/:path*']
 }
