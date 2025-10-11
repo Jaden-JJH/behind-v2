@@ -1,6 +1,8 @@
+import { NextResponse } from 'next/server' 
 import { createClient } from '@supabase/supabase-js'
 import { createErrorResponse, createSuccessResponse, ErrorCode, validateRequired } from '@/lib/api-error'
 import { sanitizeHtml } from '@/lib/sanitize'
+import { commentLimiter, getClientIp } from '@/lib/rate-limiter'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -39,6 +41,27 @@ export async function GET(request: Request) {
 // 댓글 작성 (POST)
 export async function POST(request: Request) {
   try {
+    const ip = getClientIp(request)
+    const { success, limit, remaining, reset } = await commentLimiter.limit(ip)
+    
+    if (!success) {
+      return NextResponse.json(
+        { 
+          error: 'Too many requests',
+          code: 'RATE_LIMIT_EXCEEDED',
+          retryAfter: Math.ceil((reset - Date.now()) / 1000)
+        },
+        { 
+          status: 429,
+          headers: {
+            'X-RateLimit-Limit': limit.toString(),
+            'X-RateLimit-Remaining': remaining.toString(),
+            'X-RateLimit-Reset': reset.toString(),
+          }
+        }
+      )
+    }
+    
     const body = await request.json()
     const { issueId, body: commentBody, userNick } = body
 

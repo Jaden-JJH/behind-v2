@@ -1,5 +1,5 @@
 'use client'
-
+import { handleApiResponse, showError } from '@/lib/toast-utils';
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -105,16 +105,8 @@ export function QuickVote({ pollId, question, options, ctaLabel = "댓글 토론
         })
       });
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        if (result.code === 'DUPLICATE_VOTE') {
-          console.log('이미 투표하셨습니다');
-        } else {
-          console.error('투표 실패:', result.error);
-          return;
-        }
-      }
+      // 공통 응답 핸들러 사용 (429 에러 자동 처리)
+      await handleApiResponse(response);
 
       // 성공 시 로컬 상태 업데이트
       setCounts((prev) => incrementAtIndex(prev, idx));
@@ -122,7 +114,9 @@ export function QuickVote({ pollId, question, options, ctaLabel = "댓글 토론
       setVoted(true);
       setStoredVote(pollId || question || "", idx);
 
-    } catch (error) {
+    } catch (error: any) {
+      // handleApiResponse에서 이미 토스트 표시됨
+      // 중복 투표는 409 에러로 처리됨
       console.error('투표 API 오류:', error);
     }
   };

@@ -61,7 +61,14 @@ export async function handleApiResponse<T>(
   const data = await response.json()
 
   if (!response.ok) {
-    showError(data)
+    // Rate Limit 에러 특별 처리
+    if (response.status === 429 && data.retryAfter) {
+      const seconds = data.retryAfter
+      showError(`요청이 너무 많습니다. ${seconds}초 후 다시 시도해주세요.`)
+    } else {
+      showError(data)
+    }
+    
     throw new Error(data.error?.message || 'API 요청 실패')
   }
 

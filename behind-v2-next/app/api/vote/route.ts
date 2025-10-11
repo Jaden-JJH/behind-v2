@@ -1,5 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { createErrorResponse, createSuccessResponse, ErrorCode, validateRequired } from '@/lib/api-error'
+import { voteLimiter, getClientIp } from '@/lib/rate-limiter'
+import { NextResponse } from 'next/server'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -8,6 +10,27 @@ const supabase = createClient(
 
 export async function POST(request: Request) {
   try {
+    const ip = getClientIp(request)
+    const { success, limit, remaining, reset } = await voteLimiter.limit(ip)
+    
+    if (!success) {
+      return NextResponse.json(
+        { 
+          error: 'Too many requests',
+          code: 'RATE_LIMIT_EXCEEDED',
+          retryAfter: Math.ceil((reset - Date.now()) / 1000)
+        },
+        { 
+          status: 429,
+          headers: {
+            'X-RateLimit-Limit': limit.toString(),
+            'X-RateLimit-Remaining': remaining.toString(),
+            'X-RateLimit-Reset': reset.toString(),
+          }
+        }
+      )
+    }
+    
     const body = await request.json()
     const { pollId, optionId, deviceHash } = body
 

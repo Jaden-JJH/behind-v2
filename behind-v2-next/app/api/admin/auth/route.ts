@@ -1,7 +1,30 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
+import { adminAuthLimiter, getClientIp } from '@/lib/rate-limiter'
 
 export async function POST(request: Request) {
+  // Rate Limiting 체크
+  const ip = getClientIp(request)
+  const { success, limit, remaining, reset } = await adminAuthLimiter.limit(ip)
+  
+  if (!success) {
+    return NextResponse.json(
+      { 
+        error: 'Too many requests',
+        code: 'RATE_LIMIT_EXCEEDED',
+        retryAfter: Math.ceil((reset - Date.now()) / 1000)
+      },
+      { 
+        status: 429,
+        headers: {
+          'X-RateLimit-Limit': limit.toString(),
+          'X-RateLimit-Remaining': remaining.toString(),
+          'X-RateLimit-Reset': reset.toString(),
+        }
+      }
+    )
+  }
+  
   const { password } = await request.json()
   
   if (password === process.env.ADMIN_PASSWORD) {
