@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { supabase } from '@/lib/supabase'
+import { sanitizeFields, sanitizeHtml } from '@/lib/sanitize'
 
 export async function POST(request: Request) {
   // 인증 확인
@@ -25,9 +26,26 @@ export async function POST(request: Request) {
     showInMainPoll
   } = await request.json()
 
+  // XSS 방어: 텍스트 필드 정제
+  const sanitized = sanitizeFields(
+    {
+      title,
+      preview,
+      summary,
+      mediaNewsTitle,
+      mediaNewsSource,
+      behindStory,
+      pollQuestion
+    },
+    ['title', 'preview', 'summary', 'mediaNewsTitle', 'mediaNewsSource', 'behindStory', 'pollQuestion']
+  )
+
+  // 투표 옵션도 정제
+  const sanitizedOptions = options?.map((opt: string) => sanitizeHtml(opt))
+
   try {
     // 1. slug 생성 (제목을 URL-friendly하게 변환)
-    const slug = title
+    const slug = sanitized.title
       .toLowerCase()
       .replace(/[^a-z0-9가-힣\s-]/g, '')
       .replace(/\s+/g, '-')
@@ -38,10 +56,10 @@ export async function POST(request: Request) {
     if (mediaYoutube) {
       mediaEmbed.youtube = mediaYoutube
     }
-    if (mediaNewsTitle && mediaNewsUrl) {
+    if (sanitized.mediaNewsTitle && mediaNewsUrl) {
       mediaEmbed.news = {
-        title: mediaNewsTitle,
-        source: mediaNewsSource || '',
+        title: sanitized.mediaNewsTitle,
+        source: sanitized.mediaNewsSource || '',
         url: mediaNewsUrl
       }
     }
@@ -51,15 +69,15 @@ export async function POST(request: Request) {
       .from('issues')
       .insert({
         slug,
-        title,
-        preview,
-        summary: summary || null,
+        title: sanitized.title,
+        preview: sanitized.preview,
+        summary: sanitized.summary || null,
         thumbnail: thumbnail || null,
         capacity,
         category: 'general',
         status: 'active',
         media_embed: Object.keys(mediaEmbed).length > 0 ? mediaEmbed : null,
-        behind_story: behindStory || null,
+        behind_story: sanitized.behindStory || null,
         show_in_main_hot: showInMainHot || false,
         show_in_main_poll: showInMainPoll || false
       })
@@ -69,12 +87,12 @@ export async function POST(request: Request) {
     if (issueError) throw issueError
 
     // 4. 투표 생성 (선택 사항)
-    if (pollQuestion && options && options.length >= 2) {
+    if (sanitized.pollQuestion && sanitizedOptions && sanitizedOptions.length >= 2) {
       const { data: poll, error: pollError } = await supabase
         .from('polls')
         .insert({
           issue_id: issue.id,
-          question: pollQuestion
+          question: sanitized.pollQuestion
         })
         .select()
         .single()
@@ -85,7 +103,7 @@ export async function POST(request: Request) {
       const { error: optionsError } = await supabase
         .from('poll_options')
         .insert(
-          options.map((text: string) => ({
+          sanitizedOptions.map((text: string) => ({
             poll_id: poll.id,
             label: text
           }))

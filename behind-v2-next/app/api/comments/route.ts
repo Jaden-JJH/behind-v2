@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { createErrorResponse, createSuccessResponse, ErrorCode, validateRequired } from '@/lib/api-error'
+import { sanitizeHtml } from '@/lib/sanitize'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -41,25 +42,29 @@ export async function POST(request: Request) {
     const body = await request.json()
     const { issueId, body: commentBody, userNick } = body
 
+    // XSS 방어: 입력 정제
+    const sanitizedBody = sanitizeHtml(commentBody)
+    const sanitizedNick = sanitizeHtml(userNick)
+
     // 입력 검증
-    const missing = validateRequired({ issueId, body: commentBody, userNick })
+    const missing = validateRequired({ issueId, body: sanitizedBody, userNick: sanitizedNick })
     if (missing.length > 0) {
       return createErrorResponse(ErrorCode.MISSING_FIELDS, 400, { missing })
     }
 
     // 댓글 길이 검증
-    if (commentBody.length < 2) {
+    if (sanitizedBody.length < 2) {
       return createErrorResponse(ErrorCode.COMMENT_TOO_SHORT, 400)
     }
-    if (commentBody.length > 500) {
+    if (sanitizedBody.length > 500) {
       return createErrorResponse(ErrorCode.COMMENT_TOO_LONG, 400)
     }
 
     // 닉네임 검증
-    if (userNick.length < 2) {
+    if (sanitizedNick.length < 2) {
       return createErrorResponse(ErrorCode.NICKNAME_TOO_SHORT, 400)
     }
-    if (userNick.length > 20) {
+    if (sanitizedNick.length > 20) {
       return createErrorResponse(ErrorCode.NICKNAME_TOO_LONG, 400)
     }
 
@@ -68,8 +73,8 @@ export async function POST(request: Request) {
       .from('comments')
       .insert({
         issue_id: issueId,
-        body: commentBody,
-        user_nick: userNick
+        body: sanitizedBody,
+        user_nick: sanitizedNick
       })
       .select()
       .single()
