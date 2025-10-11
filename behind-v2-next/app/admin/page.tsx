@@ -32,6 +32,7 @@ export default function AdminPage() {
       })
   }, [router])
 
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -95,7 +96,10 @@ export default function AdminPage() {
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold">이슈 등록</h1>
           <button
-            onClick={() => router.push('/admin/login')}
+            onClick={async () => {
+              await fetch('/api/admin/logout', { method: 'POST' })
+              router.push('/admin/login')
+            }}
             className="text-sm text-gray-600 hover:text-gray-800"
           >
             로그아웃
