@@ -73,6 +73,21 @@ export default function AllIssuesPage() {
     filteredIssues = filteredIssues.filter((issue) => issue.status !== 'active');
   }
 
+  // 정렬 로직 추가
+  if (sortBy === "latest") {
+    filteredIssues.sort((a, b) =>
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+  } else if (sortBy === "popular") {
+    filteredIssues.sort((a, b) =>
+      (b.view_count || 0) - (a.view_count || 0)
+    );
+  } else if (sortBy === "comments") {
+    filteredIssues.sort((a, b) =>
+      (b.comment_count || 0) - (a.comment_count || 0)
+    );
+  }
+
   // 로딩 상태
   if (loading) {
     return (
