@@ -12,10 +12,10 @@ import { formatTime, formatDate } from "@/lib/utils";
 
 export default function LandingPage() {
   const [showAllReported, setShowAllReported] = useState(false);
-
   const [issues, setIssues] = useState<any[]>([]);
   const [polls, setPolls] = useState<any[]>([]);
   const [pastIssues, setPastIssues] = useState<any[]>([]);
+  const [trendingIssues, setTrendingIssues] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -52,6 +52,19 @@ export default function LandingPage() {
           comments: issue.comment_count || 0
         }));
         setPastIssues(pastData);
+        // 실시간 인기 이슈 (조회수 상위 5개)
+        const trendingResponse = await fetchIssues({ includeAll: true, limit: 100 });
+        const trendingData = trendingResponse.data
+          .filter(issue => issue.status === 'active')
+          .sort((a, b) => (b.view_count || 0) - (a.view_count || 0))
+          .slice(0, 5)
+          .map(issue => ({
+            id: String(issue.display_id),
+            title: issue.title,
+            change: 0,
+            changeAmount: 0
+          }));
+        setTrendingIssues(trendingData);
       } catch (err) {
         console.error("Failed to load issues:", err);
       } finally {
@@ -211,20 +224,18 @@ export default function LandingPage() {
             </CardHeader>
             <CardContent>
               <ol className="space-y-2.5">
-                {[
-                  { title: "SKT·KT 해킹 사건", change: 2, changeAmount: 1200 },
-                  { title: "아이돌 A 계약 해지설", change: 1, changeAmount: 850 },
-                  { title: "정치인 B 발언 논란", change: 0, changeAmount: 0 },
-                  { title: "대기업 C 구조조정 루머", change: -1, changeAmount: 620 },
-                  { title: "게임사 D 신작 유출", change: -3, changeAmount: 1500 }
-                ].map((item, idx) => {
+                {trendingIssues.map((item, idx) => {
                   const formatChange = (num: number) => {
                     if (num >= 1000) return `${(num / 1000).toFixed(1)}k`;
                     return num.toString();
                   };
 
                   return (
-                    <li key={idx} className="flex items-start gap-2.5 text-slate-700 hover:text-indigo-600 cursor-pointer transition-colors group">
+                    <li
+                      key={item.id}
+                      onClick={() => window.location.href = `/issues/${item.id}`}
+                      className="flex items-start gap-2.5 text-slate-700 hover:text-indigo-600 cursor-pointer transition-colors group"
+                    >
                       <span className="text-slate-500 flex-shrink-0 font-bold w-6 text-base">{idx + 1}.</span>
                       <span className="flex-1 text-sm font-medium">{item.title}</span>
                       {item.change !== 0 && (
