@@ -6,6 +6,12 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
+// 조회수 업데이트용 (관리자 권한)
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -65,6 +71,24 @@ export async function GET(
         )
       }
       throw issueError
+    }
+
+    // 조회수 증가 (에러 무시)
+    console.log('[DEBUG] 조회수 증가 시작:', { issueId: issue.id, currentCount: issue.view_count })
+    try {
+      const { error: updateError } = await supabaseAdmin
+        .from('issues')
+        .update({ view_count: issue.view_count + 1 })
+        .eq('id', issue.id)
+
+      if (updateError) {
+        console.error('[ERROR] view_count 업데이트 실패:', updateError)
+      } else {
+        console.log('[SUCCESS] view_count 업데이트 성공')
+      }
+    } catch (error) {
+      // 조회수 증가 실패해도 이슈는 반환
+      console.error('Failed to update view_count:', error)
     }
 
     // Poll 데이터 처리 (polls는 배열로 반환되므로 첫 번째 요소 사용)
