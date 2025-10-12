@@ -29,6 +29,13 @@ export const adminAuthLimiter = new Ratelimit({
   prefix: 'ratelimit:admin-auth',
 })
 
+export const curiousLimiter = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(3, '1 m'), // 1분당 3회
+  analytics: true,
+  prefix: 'ratelimit:curious',
+})
+
 // IP 주소 추출 헬퍼 함수
 export function getClientIp(request: Request): string {
   // Vercel 환경에서 IP 추출
