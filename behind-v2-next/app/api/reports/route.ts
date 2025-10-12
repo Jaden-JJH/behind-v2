@@ -1,5 +1,8 @@
 import { createClient } from '@supabase/supabase-js'
-import { createErrorResponse, createSuccessResponse, ErrorCode } from '@/lib/api-error'
+import { cookies } from 'next/headers'
+import { NextResponse } from 'next/server'
+import { createErrorResponse, createSuccessResponse, ErrorCode, validateRequired } from '@/lib/api-error'
+import { sanitizeHtml } from '@/lib/sanitize'
 
 // 서버에서만 사용하는 Supabase 클라이언트
 const supabase = createClient(
@@ -103,6 +106,91 @@ export async function GET(request: Request) {
 
     // 6. 응답
     return createSuccessResponse(finalData, 200, finalData.length)
+  } catch (error) {
+    console.error('API error:', error)
+    return createErrorResponse(ErrorCode.INTERNAL_ERROR, 500)
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    // 1. 어드민 인증 확인
+    const adminAuth = cookies().get('admin-auth')
+    if (!adminAuth || adminAuth.value !== 'true') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // 2. 요청 바디 파싱
+    const body = await request.json()
+    const { title, reporterName, description, threshold } = body
+
+    // 3. XSS 방어 (sanitize)
+    const sanitizedTitle = sanitizeHtml(title)
+    const sanitizedReporterName = sanitizeHtml(reporterName)
+    const sanitizedDescription = sanitizeHtml(description)
+
+    // 4. 필수 필드 검증
+    const missing = validateRequired({
+      title: sanitizedTitle,
+      reporterName: sanitizedReporterName,
+      description: sanitizedDescription,
+      threshold
+    })
+    if (missing.length > 0) {
+      return createErrorResponse(ErrorCode.MISSING_FIELDS, 400, { missing })
+    }
+
+    // 5. 길이 및 값 검증
+    if (sanitizedTitle.length < 2 || sanitizedTitle.length > 100) {
+      return NextResponse.json(
+        { error: '제목은 2자 이상 100자 이하여야 합니다' },
+        { status: 400 }
+      )
+    }
+
+    if (sanitizedReporterName.length < 2 || sanitizedReporterName.length > 20) {
+      return NextResponse.json(
+        { error: '제보자 닉네임은 2자 이상 20자 이하여야 합니다' },
+        { status: 400 }
+      )
+    }
+
+    if (sanitizedDescription.length < 2 || sanitizedDescription.length > 30) {
+      return NextResponse.json(
+        { error: '추가정보는 2자 이상 30자 이하여야 합니다' },
+        { status: 400 }
+      )
+    }
+
+    if (!threshold || threshold < 10) {
+      return NextResponse.json(
+        { error: '정원은 최소 10명 이상이어야 합니다' },
+        { status: 400 }
+      )
+    }
+
+    // 6. Supabase insert
+    const { data, error } = await supabase
+      .from('reports')
+      .insert({
+        title: sanitizedTitle,
+        reporter_name: sanitizedReporterName,
+        description: sanitizedDescription,
+        threshold: threshold,
+        status: 'paused',
+        curious_count: 0
+      })
+      .select()
+      .single()
+
+    // 7. 에러 처리
+    if (error) {
+      console.error('Supabase error:', error)
+      return createErrorResponse(ErrorCode.INTERNAL_ERROR, 500, error.message)
+    }
+
+    // 8. 성공 응답
+    return createSuccessResponse(data, 201)
   } catch (error) {
     console.error('API error:', error)
     return createErrorResponse(ErrorCode.INTERNAL_ERROR, 500)
