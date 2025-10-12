@@ -19,8 +19,14 @@ export async function apiClient<T>(
 }
 
 // 이슈 조회
-export async function fetchIssues() {
-  return apiClient<{ success: boolean; data: any[]; count: number }>('/api/issues')
+export async function fetchIssues(params?: { includeAll?: boolean; limit?: number; offset?: number }) {
+  const searchParams = new URLSearchParams()
+  if (params?.includeAll) searchParams.set('includeAll', 'true')
+  if (params?.limit) searchParams.set('limit', params.limit.toString())
+  if (params?.offset) searchParams.set('offset', params.offset.toString())
+
+  const url = `/api/issues${searchParams.toString() ? `?${searchParams.toString()}` : ''}`
+  return apiClient<{ success: boolean; data: any[]; count: number }>(url)
 }
 
 // 투표

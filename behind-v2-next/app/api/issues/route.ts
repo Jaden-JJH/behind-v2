@@ -13,9 +13,10 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url)
     const limit = parseInt(searchParams.get('limit') || '10')
     const offset = parseInt(searchParams.get('offset') || '0')
+    const includeAll = searchParams.get('includeAll') === 'true'
 
-    // Supabase에서 메인 노출 이슈만 조회
-    const { data: issues, error } = await supabase
+    // Supabase 쿼리 빌더
+    let query = supabase
       .from('issues')
       .select(`
         *,
@@ -32,10 +33,20 @@ export async function GET(request: Request) {
           )
         )
       `)
-      .or('show_in_main_hot.eq.true,show_in_main_poll.eq.true')
-      .order('show_in_main_hot', { ascending: false, nullsFirst: false })
-      .order('created_at', { ascending: false })
-      .range(offset, offset + limit - 1)
+
+    // includeAll 여부에 따라 필터 및 정렬 적용
+    if (includeAll) {
+      query = query
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+    } else {
+      query = query
+        .or('show_in_main_hot.eq.true,show_in_main_poll.eq.true')
+        .order('show_in_main_hot', { ascending: false, nullsFirst: false })
+        .order('created_at', { ascending: false })
+    }
+
+    const { data: issues, error } = await query.range(offset, offset + limit - 1)
 
     if (error) {
       console.error('Supabase error:', error)

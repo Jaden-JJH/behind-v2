@@ -8,13 +8,14 @@ import { MessageCircle, Eye, TrendingUp, ArrowDown, ChevronDown, Flame } from "l
 import { IssueCard } from "@/components/issue-card";
 import { QuickVote } from "@/components/quick-vote";
 import { fetchIssues } from "@/lib/api-client";
-import { formatTime } from "@/lib/utils";
+import { formatTime, formatDate } from "@/lib/utils";
 
 export default function LandingPage() {
   const [showAllReported, setShowAllReported] = useState(false);
 
   const [issues, setIssues] = useState<any[]>([]);
   const [polls, setPolls] = useState<any[]>([]);
+  const [pastIssues, setPastIssues] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -40,6 +41,17 @@ export default function LandingPage() {
 
         console.log('Filtered poll issues:', pollIssues);
         setPolls(pollIssues);
+
+        // 지나간 이슈 데이터 (전체 active 이슈 중 최신순 5개)
+        const pastResponse = await fetchIssues({ includeAll: true, limit: 5 });
+        const pastData = pastResponse.data.map(issue => ({
+          id: String(issue.display_id),
+          title: issue.title,
+          date: formatDate(issue.created_at),
+          views: issue.view_count || 0,
+          comments: issue.comment_count || 0
+        }));
+        setPastIssues(pastData);
       } catch (err) {
         console.error("Failed to load issues:", err);
       } finally {
@@ -58,13 +70,6 @@ export default function LandingPage() {
     { id: "influencer-fake", title: "인플루언서 H 허위 광고", time: Date.now() - 3600000 * 18, curious: 98, threshold: 150 },
   ];
 
-  const pastIssues = [
-    { id: "past-1", title: "2024 연말 K-POP 시상식 뒷얘기", date: "2024.12.30", participants: 1250, views: 3420, comments: 156 },
-    { id: "past-2", title: "대기업 신입 공채 내부 정보", date: "2024.12.15", participants: 890, views: 2100, comments: 78 },
-    { id: "past-3", title: "유명 유튜버 협찬 논란", date: "2024.12.01", participants: 2100, views: 5600, comments: 289 },
-    { id: "past-4", title: "배달앱 수수료 인상 사태", date: "2024.11.20", participants: 1560, views: 4200, comments: 203 },
-    { id: "past-5", title: "부동산 시장 급변 예측", date: "2024.11.10", participants: 980, views: 2800, comments: 92 },
-  ];
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -164,6 +169,7 @@ export default function LandingPage() {
                   <div
                     key={issue.id}
                     className="p-4 rounded-lg border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/50 transition-all cursor-pointer group"
+                    onClick={() => window.location.href = `/issues/${issue.id}`}
                   >
                     <div className="flex items-start justify-between gap-4 mb-2">
                       <div className="flex items-start gap-3 flex-1 min-w-0">
@@ -189,7 +195,7 @@ export default function LandingPage() {
                   </div>
                 ))}
               </div>
-              <Button variant="outline" className="w-full mt-4 border-slate-300 text-slate-700 hover:bg-slate-100">
+              <Button variant="outline" className="w-full mt-4 border-slate-300 text-slate-700 hover:bg-slate-100" onClick={() => window.location.href = '/issues'}>
                 더 많은 이슈 보기
               </Button>
             </CardContent>
