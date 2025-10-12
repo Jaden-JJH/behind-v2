@@ -100,3 +100,47 @@ export async function PUT(
     return createErrorResponse(ErrorCode.INTERNAL_ERROR, 500)
   }
 }
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    // 1. 어드민 인증 확인
+    const adminAuth = cookies().get('admin-auth')
+    if (!adminAuth || adminAuth.value !== 'true') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // 2. ID 추출
+    const reportId = params.id
+
+    // 3. Supabase delete
+    const { error } = await supabase
+      .from('reports')
+      .delete()
+      .eq('id', reportId)
+
+    // 4. 에러 처리
+    if (error) {
+      console.error('Supabase error:', error)
+
+      // 404: 해당 ID 없음
+      if (error.code === 'PGRST116') {
+        return NextResponse.json(
+          { error: '해당 리포트를 찾을 수 없습니다' },
+          { status: 404 }
+        )
+      }
+
+      // 500: DB 에러
+      return createErrorResponse(ErrorCode.INTERNAL_ERROR, 500, error.message)
+    }
+
+    // 5. 성공 응답
+    return NextResponse.json({ success: true }, { status: 200 })
+  } catch (error) {
+    console.error('API error:', error)
+    return createErrorResponse(ErrorCode.INTERNAL_ERROR, 500)
+  }
+}
