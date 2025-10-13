@@ -7,8 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MessageCircle, Eye, TrendingUp, ArrowDown, ChevronDown, Flame } from "lucide-react";
 import { IssueCard } from "@/components/issue-card";
 import { QuickVote } from "@/components/quick-vote";
-import { fetchIssues } from "@/lib/api-client";
+import { fetchIssues, fetchReports, curiousReport } from "@/lib/api-client";
 import { formatTime, formatDate } from "@/lib/utils";
+import { getDeviceHash } from "@/lib/device-hash";
 
 export default function LandingPage() {
   const [showAllReported, setShowAllReported] = useState(false);
@@ -16,6 +17,8 @@ export default function LandingPage() {
   const [polls, setPolls] = useState<any[]>([]);
   const [pastIssues, setPastIssues] = useState<any[]>([]);
   const [trendingIssues, setTrendingIssues] = useState<any[]>([]);
+  const [reportedIssues, setReportedIssues] = useState<any[]>([]);
+  const [curiousLoading, setCuriousLoading] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -65,6 +68,11 @@ export default function LandingPage() {
             changeAmount: 0
           }));
         setTrendingIssues(trendingData);
+
+        // 제보된 이슈 로드
+        const reportsResponse = await fetchReports({ status: 'active' });
+        const shuffled = reportsResponse.data.sort(() => 0.5 - Math.random());
+        setReportedIssues(shuffled.slice(0, 3));
       } catch (err) {
         console.error("Failed to load issues:", err);
       } finally {
@@ -74,15 +82,32 @@ export default function LandingPage() {
     loadIssues();
   }, []);
 
-  const reported = [
-    { id: "corp-reorg", title: "대기업 C 구조조정", time: Date.now() - 3600000 * 2, curious: 127, threshold: 200 },
-    { id: "politician-private", title: "정치인 D의 사적 모임", time: Date.now() - 3600000 * 5, curious: 89, threshold: 150 },
-    { id: "celeb-scandal", title: "연예인 E 스캔들 증거", time: Date.now() - 3600000 * 8, curious: 215, threshold: 300 },
-    { id: "tech-leak", title: "IT기업 F 신제품 유출", time: Date.now() - 3600000 * 12, curious: 56, threshold: 100 },
-    { id: "startup-culture", title: "스타트업 G 직장 문화", time: Date.now() - 3600000 * 15, curious: 42, threshold: 80 },
-    { id: "influencer-fake", title: "인플루언서 H 허위 광고", time: Date.now() - 3600000 * 18, curious: 98, threshold: 150 },
-  ];
+  const handleCurious = async (reportId: string) => {
+    setCuriousLoading(prev => ({ ...prev, [reportId]: true }));
 
+    try {
+      const deviceHash = getDeviceHash();
+      await curiousReport(reportId, deviceHash);
+
+      alert('궁금한 이슈, 공개되면 알려드릴게요.');
+
+      // 다시 로드
+      const reportsResponse = await fetchReports({ status: 'active' });
+      const shuffled = reportsResponse.data.sort(() => 0.5 - Math.random());
+      setReportedIssues(shuffled.slice(0, 3));
+    } catch (err: any) {
+      if (err.status === 409 || err.code === 'ALREADY_CURIOUS') {
+        alert('이미 궁금해요를 누르셨습니다.');
+      } else if (err.status === 429 || err.code === 'RATE_LIMIT_EXCEEDED') {
+        alert('너무 많은 요청입니다. 잠시 후 다시 시도해주세요.');
+      } else {
+        console.error('Curious error:', err);
+        alert('오류가 발생했습니다.');
+      }
+    } finally {
+      setCuriousLoading(prev => ({ ...prev, [reportId]: false }));
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -268,8 +293,8 @@ export default function LandingPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                {reported.slice(0, showAllReported ? reported.length : 3).map((r) => {
-                  const progress = Math.min((r.curious / r.threshold) * 100, 100);
+                {reportedIssues.slice(0, showAllReported ? reportedIssues.length : 3).map((r) => {
+                  const progress = Math.min((r.curious_count / r.threshold) * 100, 100);
 
                   return (
                     <div
@@ -281,16 +306,18 @@ export default function LandingPage() {
                         <Button
                           variant="outline"
                           size="sm"
+                          onClick={() => handleCurious(r.id)}
+                          disabled={curiousLoading[r.id]}
                           className="h-7 text-xs font-medium border-indigo-400 text-indigo-700 hover:bg-indigo-100 hover:border-indigo-500 flex-shrink-0"
                         >
-                          궁금해요
+                          {curiousLoading[r.id] ? '...' : '궁금해요'}
                         </Button>
                       </div>
 
                       <div className="space-y-1.5">
                         <div className="flex items-center justify-between text-xs">
-                          <span className="text-slate-500">{formatTime(r.time)}</span>
-                          <span className="text-indigo-700 font-semibold">{r.curious}/{r.threshold}</span>
+                          <span className="text-slate-500">{formatTime(new Date(r.created_at).getTime())}</span>
+                          <span className="text-indigo-700 font-semibold">{r.curious_count}/{r.threshold}</span>
                         </div>
                         <div className="h-2 bg-indigo-100 rounded-full overflow-hidden">
                           <div
@@ -305,21 +332,22 @@ export default function LandingPage() {
               </div>
 
               <div className="flex gap-2 mt-3">
-                {reported.length > 3 && (
+                {reportedIssues.length > 3 && (
                   <Button
                     variant="ghost"
                     size="sm"
                     className="flex-1 text-indigo-700 hover:text-indigo-800 hover:bg-indigo-100"
                     onClick={() => setShowAllReported(!showAllReported)}
                   >
-                    {showAllReported ? "접기" : `${reported.length - 3}개 더보기`}
+                    {showAllReported ? "접기" : `${reportedIssues.length - 3}개 더보기`}
                     <ChevronDown className={`w-4 h-4 ml-1 transition-transform ${showAllReported ? "rotate-180" : ""}`} />
                   </Button>
                 )}
                 <Button
                   variant="outline"
                   size="sm"
-                  className={`${reported.length > 3 ? 'flex-1' : 'w-full'} border-indigo-400 text-indigo-700 hover:bg-indigo-100 hover:border-indigo-500`}
+                  onClick={() => window.location.href = '/reported-issues'}
+                  className={`${reportedIssues.length > 3 ? 'flex-1' : 'w-full'} border-indigo-400 text-indigo-700 hover:bg-indigo-100 hover:border-indigo-500`}
                 >
                   전체보기
                 </Button>

@@ -12,7 +12,11 @@ export async function apiClient<T>(
   })
 
   if (!response.ok) {
-    throw new Error(`API error: ${response.status}`)
+    const errorData = await response.json().catch(() => ({}));
+    const error: any = new Error(errorData.error || `API error: ${response.status}`);
+    error.status = response.status;
+    error.code = errorData.code;
+    throw error;
   }
 
   return response.json()
@@ -49,6 +53,25 @@ export async function createComment(issueId: string, body: string, userNick: str
   return apiClient<{ success: boolean; data: any }>('/api/comments', {
     method: 'POST',
     body: JSON.stringify({ issueId, body, userNick }),
+  })
+}
+
+// 제보 목록 조회
+export async function fetchReports(params?: { status?: string; sortBy?: string; deviceHash?: string }) {
+  const searchParams = new URLSearchParams()
+  if (params?.status) searchParams.set('status', params.status)
+  if (params?.sortBy) searchParams.set('sortBy', params.sortBy)
+  if (params?.deviceHash) searchParams.set('device_hash', params.deviceHash)
+
+  const url = `/api/reports${searchParams.toString() ? `?${searchParams.toString()}` : ''}`
+  return apiClient<{ success: boolean; data: any[]; count: number }>(url)
+}
+
+// 궁금해요 누르기
+export async function curiousReport(reportId: string, deviceHash: string) {
+  return apiClient<{ success: boolean; data: any }>(`/api/reports/${reportId}/curious`, {
+    method: 'POST',
+    body: JSON.stringify({ deviceHash }),
   })
 }
 
