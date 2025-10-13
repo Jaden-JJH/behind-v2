@@ -123,7 +123,13 @@ export default function LandingPage() {
                 <Button variant="ghost" className="text-slate-600 hover:text-slate-900 hover:bg-slate-100">전체 이슈</Button>
               </Link>
               <Button variant="ghost" className="text-slate-600 hover:text-slate-900 hover:bg-slate-100">내 대화방</Button>
-              <Button variant="ghost" className="text-slate-600 hover:text-slate-900 hover:bg-slate-100">제보하기</Button>
+              <Button 
+                variant="ghost" 
+                className="text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                onClick={() => window.open('https://forms.gle/xot7tw9vZ48uhChG7', '_blank', 'noopener,noreferrer')}
+              >
+                제보하기
+              </Button>
             </nav>
             <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">로그인</Button>
           </div>
