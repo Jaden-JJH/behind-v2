@@ -15,6 +15,7 @@ export async function GET(request: Request) {
     // 1. 쿼리 파라미터 추출
     const { searchParams } = new URL(request.url)
     const visibility = searchParams.get('visibility')
+    const approvalStatus = searchParams.get('approval_status')
     const sortBy = searchParams.get('sortBy') || 'latest'
     const deviceHash = searchParams.get('device_hash')
     const myCurious = searchParams.get('my_curious') === 'true'
@@ -46,6 +47,11 @@ export async function GET(request: Request) {
     // visibility 필터 적용
     if (visibility) {
       query = query.eq('visibility', visibility)
+    }
+
+    // approval_status 필터 적용
+    if (approvalStatus) {
+      query = query.eq('approval_status', approvalStatus)
     }
 
     // my_curious 필터 적용
