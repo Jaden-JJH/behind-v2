@@ -59,10 +59,30 @@ export default function ReportedIssuesPage() {
 
     try {
       const deviceHash = getDeviceHash()
+
+      // 1. 낙관적 업데이트 (즉시 UI 반영)
+      setReports(prev => prev.map(r =>
+        r.id === reportId
+          ? { ...r, curious_count: r.curious_count + 1, is_curious: true }
+          : r
+      ))
+
+      // 2. API 호출 (백그라운드)
       await curiousReport(reportId, deviceHash)
-      alert('궁금한 이슈, 공개되면 알려드릴게요.')
-      await loadReports()
+
+      // 3. alert 메시지 간결하게
+      alert('궁금해요를 눌렀습니다!')
+
+      // loadReports() 제거됨 - 이미 UI 업데이트 완료
+
     } catch (err: any) {
+      // 에러 시 롤백
+      setReports(prev => prev.map(r =>
+        r.id === reportId
+          ? { ...r, curious_count: r.curious_count - 1, is_curious: false }
+          : r
+      ))
+
       if (err.status === 409 || err.code === 'ALREADY_CURIOUS') {
         alert('이미 궁금해요를 누르셨습니다.')
       } else if (err.status === 429 || err.code === 'RATE_LIMIT_EXCEEDED') {

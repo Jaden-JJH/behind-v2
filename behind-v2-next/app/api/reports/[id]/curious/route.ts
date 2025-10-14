@@ -10,10 +10,13 @@ const supabase = createClient(
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // 1. Rate Limiting
+    // 1. params await (Next.js 15)
+    const { id: reportId } = await params
+
+    // 2. Rate Limiting
     const ip = getClientIp(request)
     const { success, limit, remaining, reset } = await curiousLimiter.limit(ip)
 
@@ -35,10 +38,9 @@ export async function POST(
       )
     }
 
-    // 2. 요청 바디 파싱
+    // 3. 요청 바디 파싱
     const body = await request.json()
     const { deviceHash } = body
-    const reportId = params.id
 
     // 3. 입력 검증
     const missing = validateRequired({ reportId, deviceHash })
@@ -65,29 +67,14 @@ export async function POST(
       return createErrorResponse(ErrorCode.INTERNAL_ERROR, 500, error.message)
     }
 
-    // 5. 100% 달성 체크 및 status 변경
+    // 5. 성공 응답
     const result = data[0]
-    let statusUpdated = false
+    console.log('RPC 반환값:', result)  // 디버깅용
 
-    if (result.curious_count >= result.threshold && result.status === 'active') {
-      const { error: statusError } = await supabase
-        .from('reports')
-        .update({ status: 'pending' })
-        .eq('id', reportId)
-
-      if (!statusError) {
-        statusUpdated = true
-      } else {
-        console.error('Status update error:', statusError)
-      }
-    }
-
-    // 6. 성공 응답
     return createSuccessResponse({
-      curious_count: result.curious_count,
-      threshold: result.threshold,
-      is_complete: result.curious_count >= result.threshold,
-      status_updated: statusUpdated
+      curious_count: result.result_curious_count,
+      threshold: result.result_threshold,
+      is_complete: result.result_curious_count >= result.result_threshold
     }, 200)
   } catch (error) {
     console.error('API error:', error)
