@@ -16,7 +16,8 @@ export async function PUT(
 ) {
   try {
     // 1. 어드민 인증 확인
-    const adminAuth = cookies().get('admin-auth')
+    const cookieStore = await cookies()
+    const adminAuth = cookieStore.get('admin-auth')
     if (!adminAuth || adminAuth.value !== 'true') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -107,7 +108,8 @@ export async function DELETE(
 ) {
   try {
     // 1. 어드민 인증 확인
-    const adminAuth = cookies().get('admin-auth')
+    const cookieStore = await cookies()
+    const adminAuth = cookieStore.get('admin-auth')
     if (!adminAuth || adminAuth.value !== 'true') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -151,7 +153,8 @@ export async function PATCH(
 ) {
   try {
     // 1. 어드민 인증 확인
-    const adminAuth = cookies().get('admin-auth')
+    const cookieStore = await cookies()
+    const adminAuth = cookieStore.get('admin-auth')
     if (!adminAuth || adminAuth.value !== 'true') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
