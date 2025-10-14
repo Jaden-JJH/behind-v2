@@ -144,3 +144,61 @@ export async function DELETE(
     return createErrorResponse(ErrorCode.INTERNAL_ERROR, 500)
   }
 }
+
+export async function PATCH(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    // 1. 어드민 인증 확인
+    const adminAuth = cookies().get('admin-auth')
+    if (!adminAuth || adminAuth.value !== 'true') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // 2. ID 추출
+    const reportId = params.id
+
+    // 3. 요청 바디 파싱
+    const body = await request.json()
+    const { status } = body
+
+    // 4. status 검증
+    if (!status || !['active', 'paused', 'pending', 'approved', 'rejected'].includes(status)) {
+      return NextResponse.json(
+        { error: '유효하지 않은 상태값입니다' },
+        { status: 400 }
+      )
+    }
+
+    // 5. Supabase update
+    const { data, error } = await supabase
+      .from('reports')
+      .update({ status })
+      .eq('id', reportId)
+      .select()
+      .single()
+
+    // 6. 에러 처리
+    if (error) {
+      console.error('Supabase error:', error)
+
+      // 404: 해당 ID 없음
+      if (error.code === 'PGRST116') {
+        return NextResponse.json(
+          { error: '해당 리포트를 찾을 수 없습니다' },
+          { status: 404 }
+        )
+      }
+
+      // 500: DB 에러
+      return createErrorResponse(ErrorCode.INTERNAL_ERROR, 500, error.message)
+    }
+
+    // 7. 성공 응답
+    return createSuccessResponse(data, 200)
+  } catch (error) {
+    console.error('API error:', error)
+    return createErrorResponse(ErrorCode.INTERNAL_ERROR, 500)
+  }
+}
