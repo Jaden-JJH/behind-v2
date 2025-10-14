@@ -7,7 +7,7 @@ import { sanitizeHtml } from '@/lib/sanitize'
 // 서버에서만 사용하는 Supabase 클라이언트
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
 export async function GET(request: Request) {
