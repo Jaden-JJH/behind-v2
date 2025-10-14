@@ -31,7 +31,8 @@ interface ReportedIssue {
   description: string
   curious_count: number
   threshold: number
-  status: 'active' | 'paused' | 'pending' | 'approved' | 'rejected'
+  approval_status: 'pending' | 'approved' | 'rejected'
+  visibility: 'active' | 'paused'
   created_at: string
 }
 
@@ -263,8 +264,8 @@ export default function AdminReportsPage() {
 
   // 게시/중지 토글
   async function toggleStatus(report: ReportedIssue) {
-    const newStatus = report.status === 'active' ? 'paused' : 'active'
-    const action = newStatus === 'active' ? '게시 시작하시겠습니까?' : '노출 중지하시겠습니까?'
+    const newVisibility = report.visibility === 'active' ? 'paused' : 'active'
+    const action = newVisibility === 'active' ? '게시 시작하시겠습니까?' : '노출 중지하시겠습니까?'
 
     if (!window.confirm(action)) {
       return
@@ -274,7 +275,7 @@ export default function AdminReportsPage() {
       const response = await fetch(`/api/reports/${report.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus })
+        body: JSON.stringify({ visibility: newVisibility })
       })
 
       const data = await response.json()
@@ -284,7 +285,7 @@ export default function AdminReportsPage() {
         return
       }
 
-      const message = newStatus === 'active' ? '게시 시작되었습니다' : '노출 중지되었습니다'
+      const message = newVisibility === 'active' ? '게시 시작되었습니다' : '노출 중지되었습니다'
       showSuccess(message)
       loadReports()
     } catch (error) {
@@ -292,27 +293,77 @@ export default function AdminReportsPage() {
     }
   }
 
-  // Status 뱃지 렌더링
-  function renderStatusBadge(status: string) {
+  // 승인상태 변경
+  async function handleApprovalChange(reportId: number, newStatus: string) {
+    const labels = {
+      pending: '대기',
+      approved: '승인',
+      rejected: '거부'
+    }
+
+    const statusLabel = labels[newStatus as keyof typeof labels] || newStatus
+
+    if (!window.confirm(`'${statusLabel}'(으)로 변경하시겠습니까?`)) {
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/reports/${reportId}/approval-status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ approval_status: newStatus })
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        showError(data)
+        return
+      }
+
+      showSuccess(`'${statusLabel}'(으)로 변경되었습니다`)
+      loadReports()
+    } catch (error) {
+      showError(error)
+    }
+  }
+
+  // 승인상태 뱃지 렌더링
+  function renderApprovalBadge(approvalStatus: string) {
     const colors = {
-      active: 'bg-green-100 text-green-800',
-      paused: 'bg-gray-100 text-gray-800',
       pending: 'bg-yellow-100 text-yellow-800',
       approved: 'bg-blue-100 text-blue-800',
-      rejected: 'bg-red-100 text-red-800'
+      rejected: 'bg-gray-100 text-gray-800'
+    }
+
+    const labels = {
+      pending: '대기',
+      approved: '승인',
+      rejected: '거부'
+    }
+
+    return (
+      <span className={`inline-block px-2 py-1 text-xs font-medium rounded ${colors[approvalStatus as keyof typeof colors] || 'bg-gray-100 text-gray-800'}`}>
+        {labels[approvalStatus as keyof typeof labels] || approvalStatus}
+      </span>
+    )
+  }
+
+  // 노출상태 뱃지 렌더링
+  function renderVisibilityBadge(visibility: string) {
+    const colors = {
+      active: 'bg-green-100 text-green-800',
+      paused: 'bg-gray-100 text-gray-800'
     }
 
     const labels = {
       active: '게시중',
-      paused: '중지',
-      pending: '대기',
-      approved: '승인됨',
-      rejected: '거부됨'
+      paused: '중지'
     }
 
     return (
-      <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-800'}`}>
-        {labels[status as keyof typeof labels] || status}
+      <span className={`inline-block px-2 py-1 text-xs font-medium rounded ${colors[visibility as keyof typeof colors] || 'bg-gray-100 text-gray-800'}`}>
+        {labels[visibility as keyof typeof labels] || visibility}
       </span>
     )
   }
@@ -344,7 +395,8 @@ export default function AdminReportsPage() {
                   <TableHead>제보자</TableHead>
                   <TableHead>추가정보</TableHead>
                   <TableHead>궁금해요</TableHead>
-                  <TableHead>상태</TableHead>
+                  <TableHead>승인상태</TableHead>
+                  <TableHead>노출상태</TableHead>
                   <TableHead className="text-right">관리</TableHead>
                 </TableRow>
               </TableHeader>
@@ -354,7 +406,7 @@ export default function AdminReportsPage() {
                   return (
                     <TableRow
                       key={report.id}
-                      className={isFullyReached ? 'bg-green-50' : ''}
+                      className={isFullyReached && report.approval_status === 'pending' ? 'bg-green-50' : ''}
                     >
                       <TableCell className="font-medium">{report.title}</TableCell>
                       <TableCell>{report.reporter_name}</TableCell>
@@ -365,15 +417,30 @@ export default function AdminReportsPage() {
                           <span className="ml-2 text-green-600 font-semibold">100%</span>
                         )}
                       </TableCell>
-                      <TableCell>{renderStatusBadge(report.status)}</TableCell>
+                      <TableCell>
+                        <select
+                          value={report.approval_status}
+                          onChange={(e) => handleApprovalChange(report.id, e.target.value)}
+                          disabled={!isFullyReached}
+                          className={`px-2 py-1 text-xs rounded border ${
+                            isFullyReached
+                              ? 'cursor-pointer border-gray-300'
+                              : 'opacity-50 cursor-not-allowed border-gray-200 bg-gray-50'
+                          }`}
+                        >
+                          <option value="pending">대기</option>
+                          <option value="approved">승인</option>
+                          <option value="rejected">거부</option>
+                        </select>
+                      </TableCell>
+                      <TableCell>{renderVisibilityBadge(report.visibility)}</TableCell>
                       <TableCell className="text-right space-x-2">
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => toggleStatus(report)}
-                          disabled={report.status === 'pending'}
                         >
-                          {report.status === 'active' ? '중지' : '게시'}
+                          {report.visibility === 'active' ? '중지' : '게시'}
                         </Button>
                         <Button
                           variant="outline"
@@ -386,7 +453,7 @@ export default function AdminReportsPage() {
                           variant="outline"
                           size="sm"
                           onClick={() => openDeleteModal(report)}
-                          disabled={report.status === 'active'}
+                          disabled={report.visibility === 'active'}
                         >
                           삭제
                         </Button>
@@ -406,7 +473,7 @@ export default function AdminReportsPage() {
           <DialogHeader>
             <DialogTitle>제보 등록</DialogTitle>
             <DialogDescription>
-              새로운 제보를 등록합니다. 등록 후 상태는 '중지'로 설정됩니다.
+              새로운 제보를 등록합니다. 등록 후 노출상태는 '중지'로 설정됩니다.
             </DialogDescription>
           </DialogHeader>
 
