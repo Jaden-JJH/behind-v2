@@ -122,7 +122,7 @@ export default function AdminLayout({
             </div>
             {pendingCount > 0 && (
               <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
-                🔴{pendingCount}
+                {pendingCount}
               </span>
             )}
           </Link>
