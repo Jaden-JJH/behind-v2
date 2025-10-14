@@ -113,7 +113,9 @@ export default function AdminLayout({
             className={`flex items-center justify-between px-4 py-3 rounded-lg transition-colors ${
               isActive('/admin/reports')
                 ? 'bg-indigo-600 text-white'
-                : 'text-gray-300 hover:bg-gray-700'
+                : pendingCount > 0
+                  ? 'bg-red-600 text-white'
+                  : 'text-gray-300 hover:bg-gray-700'
             }`}
           >
             <div className="flex items-center">
@@ -121,7 +123,7 @@ export default function AdminLayout({
               <span>제보 관리</span>
             </div>
             {pendingCount > 0 && (
-              <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
+              <span className="bg-white text-red-600 text-xs font-bold px-2 py-1 rounded-full">
                 {pendingCount}
               </span>
             )}
@@ -205,7 +207,9 @@ export default function AdminLayout({
               className={`flex items-center justify-between px-4 py-3 rounded-lg transition-colors ${
                 isActive('/admin/reports')
                   ? 'bg-indigo-600 text-white'
-                  : 'text-gray-300 hover:bg-gray-700'
+                  : pendingCount > 0
+                    ? 'bg-red-600 text-white'
+                    : 'text-gray-300 hover:bg-gray-700'
               }`}
             >
               <div className="flex items-center">
@@ -213,8 +217,8 @@ export default function AdminLayout({
                 <span>제보 관리</span>
               </div>
               {pendingCount > 0 && (
-                <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
-                  🔴{pendingCount}
+                <span className="bg-white text-red-600 text-xs font-bold px-2 py-1 rounded-full">
+                  {pendingCount}
                 </span>
               )}
             </Link>

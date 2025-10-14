@@ -392,31 +392,42 @@ export default function AdminReportsPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>제목</TableHead>
+                  <TableHead>궁금해요</TableHead>
+                  <TableHead>노출상태</TableHead>
+                  <TableHead>승인상태</TableHead>
+                  <TableHead className="text-right">관리</TableHead>
                   <TableHead>제보자</TableHead>
                   <TableHead>추가정보</TableHead>
-                  <TableHead>궁금해요</TableHead>
-                  <TableHead>승인상태</TableHead>
-                  <TableHead>노출상태</TableHead>
-                  <TableHead className="text-right">관리</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {reports.map(report => {
                   const isFullyReached = report.curious_count >= report.threshold
+
+                  let bgColor = ''
+                  if (isFullyReached) {
+                    if (report.approval_status === 'pending') {
+                      bgColor = 'bg-green-50'
+                    } else if (report.approval_status === 'approved') {
+                      bgColor = 'bg-blue-50'
+                    } else if (report.approval_status === 'rejected') {
+                      bgColor = 'bg-red-50'
+                    }
+                  }
+
                   return (
                     <TableRow
                       key={report.id}
-                      className={isFullyReached && report.approval_status === 'pending' ? 'bg-green-50' : ''}
+                      className={`hover:bg-opacity-80 ${bgColor}`}
                     >
                       <TableCell className="font-medium">{report.title}</TableCell>
-                      <TableCell>{report.reporter_name}</TableCell>
-                      <TableCell>{report.description}</TableCell>
                       <TableCell>
                         {report.curious_count} / {report.threshold}
                         {isFullyReached && (
                           <span className="ml-2 text-green-600 font-semibold">100%</span>
                         )}
                       </TableCell>
+                      <TableCell>{renderVisibilityBadge(report.visibility)}</TableCell>
                       <TableCell>
                         <select
                           value={report.approval_status}
@@ -433,7 +444,6 @@ export default function AdminReportsPage() {
                           <option value="rejected">거부</option>
                         </select>
                       </TableCell>
-                      <TableCell>{renderVisibilityBadge(report.visibility)}</TableCell>
                       <TableCell className="text-right space-x-2">
                         <Button
                           variant="outline"
@@ -458,6 +468,8 @@ export default function AdminReportsPage() {
                           삭제
                         </Button>
                       </TableCell>
+                      <TableCell>{report.reporter_name}</TableCell>
+                      <TableCell>{report.description}</TableCell>
                     </TableRow>
                   )
                 })}
