@@ -57,11 +57,19 @@ export async function createComment(issueId: string, body: string, userNick: str
 }
 
 // 제보 목록 조회
-export async function fetchReports(params?: { status?: string; sortBy?: string; deviceHash?: string }) {
+export async function fetchReports(params?: {
+  visibility?: string;
+  approval_status?: string;
+  sortBy?: string;
+  device_hash?: string;
+  my_curious?: boolean;
+}) {
   const searchParams = new URLSearchParams()
-  if (params?.status) searchParams.set('status', params.status)
+  if (params?.visibility) searchParams.set('visibility', params.visibility)
+  if (params?.approval_status) searchParams.set('approval_status', params.approval_status)
   if (params?.sortBy) searchParams.set('sortBy', params.sortBy)
-  if (params?.deviceHash) searchParams.set('device_hash', params.deviceHash)
+  if (params?.device_hash) searchParams.set('device_hash', params.device_hash)
+  if (params?.my_curious) searchParams.set('my_curious', 'true')
 
   const url = `/api/reports${searchParams.toString() ? `?${searchParams.toString()}` : ''}`
   return apiClient<{ success: boolean; data: any[]; count: number }>(url)
