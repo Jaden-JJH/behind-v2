@@ -14,7 +14,7 @@ export async function GET(request: Request) {
   try {
     // 1. 쿼리 파라미터 추출
     const { searchParams } = new URL(request.url)
-    const status = searchParams.get('status')
+    const visibility = searchParams.get('visibility')
     const sortBy = searchParams.get('sortBy') || 'latest'
     const deviceHash = searchParams.get('device_hash')
     const myCurious = searchParams.get('my_curious') === 'true'
@@ -43,9 +43,9 @@ export async function GET(request: Request) {
     // 3. reports 테이블 쿼리
     let query = supabase.from('reports').select('*')
 
-    // status 필터 적용
-    if (status) {
-      query = query.eq('status', status)
+    // visibility 필터 적용
+    if (visibility) {
+      query = query.eq('visibility', visibility)
     }
 
     // my_curious 필터 적용
@@ -178,7 +178,8 @@ export async function POST(request: Request) {
         reporter_name: sanitizedReporterName,
         description: sanitizedDescription,
         threshold: threshold,
-        status: 'paused',
+        approval_status: 'pending',
+        visibility: 'paused',
         curious_count: 0
       })
       .select()
