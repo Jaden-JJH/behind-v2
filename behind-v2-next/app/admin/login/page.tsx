@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { csrfFetch } from '@/lib/csrf-client'
 
 export default function AdminLoginPage() {
   const [password, setPassword] = useState('')
@@ -10,8 +11,8 @@ export default function AdminLoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    
-    const response = await fetch('/api/admin/auth', {
+
+    const response = await csrfFetch('/api/admin/auth', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ password })

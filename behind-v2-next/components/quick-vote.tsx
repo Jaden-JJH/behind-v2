@@ -1,5 +1,6 @@
 'use client'
 import { handleApiResponse, showError } from '@/lib/toast-utils';
+import { csrfFetch } from '@/lib/csrf-client';
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -95,7 +96,7 @@ export function QuickVote({ pollId, question, options, ctaLabel = "댓글 토론
 
     try {
       // API 호출
-      const response = await fetch('/api/vote', {
+      const response = await csrfFetch('/api/vote', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

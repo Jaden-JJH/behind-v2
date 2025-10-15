@@ -2,29 +2,31 @@ import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { supabase } from '@/lib/supabase'
 import { sanitizeFields, sanitizeHtml } from '@/lib/sanitize'
+import { withCsrfProtection } from '@/lib/api-helpers'
 
 export async function POST(request: Request) {
-  // 인증 확인
-  const authCookie = cookies().get('admin-auth')
-  if (authCookie?.value !== 'true') {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-  const {
-    title,
-    preview,
-    thumbnail,
-    capacity,
-    summary,
-    mediaYoutube,
-    mediaNewsTitle,
-    mediaNewsSource,
-    mediaNewsUrl,
-    behindStory,
-    pollQuestion,
-    options,
-    showInMainHot,
-    showInMainPoll
-  } = await request.json()
+  return withCsrfProtection(request, async (req) => {
+    // 인증 확인
+    const authCookie = cookies().get('admin-auth')
+    if (authCookie?.value !== 'true') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    const {
+      title,
+      preview,
+      thumbnail,
+      capacity,
+      summary,
+      mediaYoutube,
+      mediaNewsTitle,
+      mediaNewsSource,
+      mediaNewsUrl,
+      behindStory,
+      pollQuestion,
+      options,
+      showInMainHot,
+      showInMainPoll
+    } = await req.json()
 
   // XSS 방어: 텍스트 필드 정제
   const sanitized = sanitizeFields(
@@ -122,8 +124,8 @@ export async function POST(request: Request) {
 
     if (roomError) throw roomError
 
-    return NextResponse.json({ 
-      success: true, 
+    return NextResponse.json({
+      success: true,
       issue,
       message: '이슈가 성공적으로 등록되었습니다'
     })
@@ -135,4 +137,5 @@ export async function POST(request: Request) {
       { status: 500 }
     )
   }
+  })
 }

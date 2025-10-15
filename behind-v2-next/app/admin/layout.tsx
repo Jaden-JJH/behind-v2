@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
+import { csrfFetch } from '@/lib/csrf-client'
 
 export default function AdminLayout({
   children,
@@ -44,7 +45,7 @@ export default function AdminLayout({
 
   const handleLogout = async () => {
     try {
-      await fetch('/api/admin/logout', { method: 'POST' })
+      await csrfFetch('/api/admin/logout', { method: 'POST' })
       router.push('/admin/login')
     } catch (error) {
       console.error('Logout failed:', error)

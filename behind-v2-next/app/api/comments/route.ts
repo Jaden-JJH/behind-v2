@@ -1,8 +1,9 @@
-import { NextResponse } from 'next/server' 
+import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { createErrorResponse, createSuccessResponse, ErrorCode, validateRequired } from '@/lib/api-error'
 import { sanitizeHtml } from '@/lib/sanitize'
 import { commentLimiter, getClientIp } from '@/lib/rate-limiter'
+import { withCsrfProtection } from '@/lib/api-helpers'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -46,99 +47,101 @@ export async function GET(request: Request) {
 
 // 댓글 작성 (POST)
 export async function POST(request: Request) {
-  try {
-    const ip = getClientIp(request)
-    const { success, limit, remaining, reset } = await commentLimiter.limit(ip)
-    
-    if (!success) {
-      return NextResponse.json(
-        { 
-          error: 'Too many requests',
-          code: 'RATE_LIMIT_EXCEEDED',
-          retryAfter: Math.ceil((reset - Date.now()) / 1000)
-        },
-        { 
-          status: 429,
-          headers: {
-            'X-RateLimit-Limit': limit.toString(),
-            'X-RateLimit-Remaining': remaining.toString(),
-            'X-RateLimit-Reset': reset.toString(),
-          }
-        }
-      )
-    }
-    
-    const body = await request.json()
-    const { issueId, body: commentBody, userNick } = body
-
-    // XSS 방어: 입력 정제
-    const sanitizedBody = sanitizeHtml(commentBody)
-    const sanitizedNick = sanitizeHtml(userNick)
-
-    // 입력 검증
-    const missing = validateRequired({ issueId, body: sanitizedBody, userNick: sanitizedNick })
-    if (missing.length > 0) {
-      return createErrorResponse(ErrorCode.MISSING_FIELDS, 400, { missing })
-    }
-
-    // 댓글 길이 검증
-    if (sanitizedBody.length < 2) {
-      return createErrorResponse(ErrorCode.COMMENT_TOO_SHORT, 400)
-    }
-    if (sanitizedBody.length > 500) {
-      return createErrorResponse(ErrorCode.COMMENT_TOO_LONG, 400)
-    }
-
-    // 닉네임 검증
-    if (sanitizedNick.length < 2) {
-      return createErrorResponse(ErrorCode.NICKNAME_TOO_SHORT, 400)
-    }
-    if (sanitizedNick.length > 20) {
-      return createErrorResponse(ErrorCode.NICKNAME_TOO_LONG, 400)
-    }
-
-    // 댓글 작성
-    const { data, error } = await supabase
-      .from('comments')
-      .insert({
-        issue_id: issueId,
-        body: sanitizedBody,
-        user_nick: sanitizedNick
-      })
-      .select()
-      .single()
-
-    if (error) {
-      console.error('Supabase error:', error)
-      return createErrorResponse(ErrorCode.COMMENT_CREATE_FAILED, 500, error.message)
-    }
-
-    // 이슈의 댓글 수 증가 (에러 무시)
-    console.log('[DEBUG] 댓글 수 증가 시작:', { issueId })
+  return withCsrfProtection(request, async (req) => {
     try {
-      const { data: issueData, error: selectError } = await supabaseAdmin
-        .from('issues')
-        .select('comment_count')
-        .eq('id', issueId)
+      const ip = getClientIp(req)
+      const { success, limit, remaining, reset } = await commentLimiter.limit(ip)
+
+      if (!success) {
+        return NextResponse.json(
+          {
+            error: 'Too many requests',
+            code: 'RATE_LIMIT_EXCEEDED',
+            retryAfter: Math.ceil((reset - Date.now()) / 1000)
+          },
+          {
+            status: 429,
+            headers: {
+              'X-RateLimit-Limit': limit.toString(),
+              'X-RateLimit-Remaining': remaining.toString(),
+              'X-RateLimit-Reset': reset.toString(),
+            }
+          }
+        )
+      }
+
+      const body = await req.json()
+      const { issueId, body: commentBody, userNick } = body
+
+      // XSS 방어: 입력 정제
+      const sanitizedBody = sanitizeHtml(commentBody)
+      const sanitizedNick = sanitizeHtml(userNick)
+
+      // 입력 검증
+      const missing = validateRequired({ issueId, body: sanitizedBody, userNick: sanitizedNick })
+      if (missing.length > 0) {
+        return createErrorResponse(ErrorCode.MISSING_FIELDS, 400, { missing })
+      }
+
+      // 댓글 길이 검증
+      if (sanitizedBody.length < 2) {
+        return createErrorResponse(ErrorCode.COMMENT_TOO_SHORT, 400)
+      }
+      if (sanitizedBody.length > 500) {
+        return createErrorResponse(ErrorCode.COMMENT_TOO_LONG, 400)
+      }
+
+      // 닉네임 검증
+      if (sanitizedNick.length < 2) {
+        return createErrorResponse(ErrorCode.NICKNAME_TOO_SHORT, 400)
+      }
+      if (sanitizedNick.length > 20) {
+        return createErrorResponse(ErrorCode.NICKNAME_TOO_LONG, 400)
+      }
+
+      // 댓글 작성
+      const { data, error } = await supabase
+        .from('comments')
+        .insert({
+          issue_id: issueId,
+          body: sanitizedBody,
+          user_nick: sanitizedNick
+        })
+        .select()
         .single()
 
-      console.log('[DEBUG] 현재 댓글 수 조회:', { issueData, selectError })
-
-      if (issueData) {
-        const { error: updateError } = await supabaseAdmin
-          .from('issues')
-          .update({ comment_count: (issueData.comment_count || 0) + 1 })
-          .eq('id', issueId)
-
-        console.log('[DEBUG] 댓글 수 업데이트 결과:', { updateError })
+      if (error) {
+        console.error('Supabase error:', error)
+        return createErrorResponse(ErrorCode.COMMENT_CREATE_FAILED, 500, error.message)
       }
-    } catch (error) {
-      console.error('Failed to update comment_count:', error)
-    }
 
-    return createSuccessResponse(data, 201)
-  } catch (error) {
-    console.error('API error:', error)
-    return createErrorResponse(ErrorCode.INTERNAL_ERROR, 500)
-  }
+      // 이슈의 댓글 수 증가 (에러 무시)
+      console.log('[DEBUG] 댓글 수 증가 시작:', { issueId })
+      try {
+        const { data: issueData, error: selectError } = await supabaseAdmin
+          .from('issues')
+          .select('comment_count')
+          .eq('id', issueId)
+          .single()
+
+        console.log('[DEBUG] 현재 댓글 수 조회:', { issueData, selectError })
+
+        if (issueData) {
+          const { error: updateError } = await supabaseAdmin
+            .from('issues')
+            .update({ comment_count: (issueData.comment_count || 0) + 1 })
+            .eq('id', issueId)
+
+          console.log('[DEBUG] 댓글 수 업데이트 결과:', { updateError })
+        }
+      } catch (error) {
+        console.error('Failed to update comment_count:', error)
+      }
+
+      return createSuccessResponse(data, 201)
+    } catch (error) {
+      console.error('API error:', error)
+      return createErrorResponse(ErrorCode.INTERNAL_ERROR, 500)
+    }
+  })
 }

@@ -22,6 +22,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { showSuccess, showError } from '@/lib/toast-utils'
+import { csrfFetch } from '@/lib/csrf-client'
 
 // 인터페이스 정의
 interface ReportedIssue {
@@ -125,7 +126,7 @@ export default function AdminReportsPage() {
 
     try {
       setSubmitting(true)
-      const response = await fetch('/api/reports', {
+      const response = await csrfFetch('/api/reports', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -199,7 +200,7 @@ export default function AdminReportsPage() {
 
     try {
       setSubmitting(true)
-      const response = await fetch(`/api/reports/${selectedReport.id}`, {
+      const response = await csrfFetch(`/api/reports/${selectedReport.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -242,7 +243,7 @@ export default function AdminReportsPage() {
 
     try {
       setSubmitting(true)
-      const response = await fetch(`/api/reports/${selectedReport.id}`, {
+      const response = await csrfFetch(`/api/reports/${selectedReport.id}`, {
         method: 'DELETE'
       })
 
@@ -272,7 +273,7 @@ export default function AdminReportsPage() {
     }
 
     try {
-      const response = await fetch(`/api/reports/${report.id}`, {
+      const response = await csrfFetch(`/api/reports/${report.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ visibility: newVisibility })
@@ -308,7 +309,7 @@ export default function AdminReportsPage() {
     }
 
     try {
-      const response = await fetch(`/api/reports/${reportId}/approval-status`, {
+      const response = await csrfFetch(`/api/reports/${reportId}/approval-status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ approval_status: newStatus })

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { csrfFetch } from '@/lib/csrf-client'
 
 export default function AdminPage() {
   const router = useRouter()
@@ -39,7 +40,7 @@ export default function AdminPage() {
     setMessage('')
 
     try {
-      const response = await fetch('/api/admin/issues', {
+      const response = await csrfFetch('/api/admin/issues', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

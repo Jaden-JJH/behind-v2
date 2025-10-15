@@ -14,6 +14,7 @@ import { ImageWithFallback } from "@/components/figma/ImageWithFallback";
 import { QuickVote } from "@/components/quick-vote";
 import { formatTime } from "@/lib/utils";
 import { showSuccess, showError, handleApiResponse } from '@/lib/toast-utils';
+import { csrfFetch } from '@/lib/csrf-client';
 
 // deviceHash 생성/가져오기 함수
 function getDeviceHash(): string {
@@ -226,7 +227,7 @@ export default function IssueDetailPage() {
 
     try {
       setSubmitting(true);
-      const response = await fetch('/api/comments', {
+      const response = await csrfFetch('/api/comments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -267,7 +268,7 @@ export default function IssueDetailPage() {
       const deviceHash = getDeviceHash()
       const currentVote = voteStates[commentId] // 'up' | 'down' | null
 
-      const response = await fetch(`/api/comments/${commentId}/vote`, {
+      const response = await csrfFetch(`/api/comments/${commentId}/vote`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ voteType, deviceHash }),
