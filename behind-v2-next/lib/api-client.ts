@@ -1,9 +1,11 @@
+import { csrfFetch } from './csrf-client'
+
 // API 호출 공통 함수
 export async function apiClient<T>(
   url: string,
   options?: RequestInit
 ): Promise<T> {
-  const response = await fetch(url, {
+  const response = await csrfFetch(url, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
