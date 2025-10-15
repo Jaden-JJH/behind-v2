@@ -70,7 +70,11 @@ export default function LandingPage() {
         setTrendingIssues(trendingData);
 
         // 제보된 이슈 로드
-        const reportsResponse = await fetchReports({ status: 'active' });
+        const deviceHash = getDeviceHash();
+        const reportsResponse = await fetchReports({
+          visibility: 'active',
+          device_hash: deviceHash
+        });
         const shuffled = reportsResponse.data.sort(() => 0.5 - Math.random());
         setReportedIssues(shuffled.slice(0, 3));
       } catch (err) {
@@ -87,15 +91,27 @@ export default function LandingPage() {
 
     try {
       const deviceHash = getDeviceHash();
+
+      // 낙관적 업데이트
+      setReportedIssues(prev => prev.map(r =>
+        r.id === reportId
+          ? { ...r, curious_count: r.curious_count + 1, is_curious: true }
+          : r
+      ));
+
+      // API 호출
       await curiousReport(reportId, deviceHash);
 
-      alert('궁금한 이슈, 공개되면 알려드릴게요.');
+      alert('궁금해요를 눌렀습니다!');
 
-      // 다시 로드
-      const reportsResponse = await fetchReports({ status: 'active' });
-      const shuffled = reportsResponse.data.sort(() => 0.5 - Math.random());
-      setReportedIssues(shuffled.slice(0, 3));
     } catch (err: any) {
+      // 에러 시 롤백
+      setReportedIssues(prev => prev.map(r =>
+        r.id === reportId
+          ? { ...r, curious_count: r.curious_count - 1, is_curious: false }
+          : r
+      ));
+
       if (err.status === 409 || err.code === 'ALREADY_CURIOUS') {
         alert('이미 궁금해요를 누르셨습니다.');
       } else if (err.status === 429 || err.code === 'RATE_LIMIT_EXCEEDED') {
@@ -308,15 +324,39 @@ export default function LandingPage() {
                       className="p-3 rounded-lg bg-white border border-indigo-200 hover:border-indigo-300 hover:bg-indigo-50 transition-all group"
                     >
                       <div className="flex items-start justify-between gap-2 mb-2">
-                        <p className="text-sm font-medium text-slate-800 group-hover:text-indigo-700 transition-colors flex-1 leading-snug">{r.title}</p>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-slate-800 group-hover:text-indigo-700 transition-colors leading-snug">
+                            {r.title}
+                          </p>
+                          {/* 100% 달성 시 배지 */}
+                          {r.curious_count >= r.threshold && (
+                            <span className={`inline-block mt-1 px-2 py-0.5 rounded text-xs font-medium ${
+                              r.approval_status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                              r.approval_status === 'approved' ? 'bg-blue-100 text-blue-800' :
+                              'bg-gray-100 text-gray-800'
+                            }`}>
+                              {r.approval_status === 'pending' && '검토 중'}
+                              {r.approval_status === 'approved' && '이슈 등록 확정'}
+                              {r.approval_status === 'rejected' && '이슈 등록 불가'}
+                            </span>
+                          )}
+                        </div>
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => handleCurious(r.id)}
-                          disabled={curiousLoading[r.id]}
-                          className="h-7 text-xs font-medium border-indigo-400 text-indigo-700 hover:bg-indigo-100 hover:border-indigo-500 flex-shrink-0"
+                          disabled={curiousLoading[r.id] || r.curious_count >= r.threshold}
+                          className={`h-7 text-xs font-medium flex-shrink-0 ${
+                            r.curious_count >= r.threshold
+                              ? 'opacity-50 cursor-not-allowed bg-gray-100 border-gray-300 text-gray-500'
+                              : r.is_curious
+                              ? 'bg-blue-500 text-white border-blue-500 hover:bg-blue-600'
+                              : 'border-indigo-400 text-indigo-700 hover:bg-indigo-100 hover:border-indigo-500'
+                          }`}
                         >
-                          {curiousLoading[r.id] ? '...' : '궁금해요'}
+                          {curiousLoading[r.id] ? '...' :
+                           r.curious_count >= r.threshold ? '마감' :
+                           r.is_curious ? '궁금해요 ✓' : '궁금해요'}
                         </Button>
                       </div>
 

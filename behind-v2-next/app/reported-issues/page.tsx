@@ -284,18 +284,22 @@ export default function ReportedIssuesPage() {
 
                     {/* 궁금해요 버튼 */}
                     <Button
-                      variant={report.is_curious ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => handleCurious(report.id)}
-                      disabled={curiousLoading[report.id]}
-                      className={`w-full ${
-                        report.is_curious 
-                          ? 'bg-indigo-600 hover:bg-indigo-700 text-white' 
-                          : 'border-indigo-400 text-indigo-700 hover:bg-indigo-50'
-                      }`}
+                        variant={report.is_curious ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => handleCurious(report.id)}
+                        disabled={curiousLoading[report.id] || report.curious_count >= report.threshold}
+                        className={`w-full ${
+                        report.curious_count >= report.threshold
+                            ? 'opacity-50 cursor-not-allowed bg-gray-100 border-gray-300 text-gray-500'
+                            : report.is_curious 
+                            ? 'bg-indigo-600 hover:bg-indigo-700 text-white' 
+                            : 'border-indigo-400 text-indigo-700 hover:bg-indigo-50'
+                        }`}
                     >
-                      <Heart className={`w-4 h-4 mr-1 ${report.is_curious ? 'fill-current' : ''}`} />
-                      {curiousLoading[report.id] ? '...' : report.is_curious ? '궁금해요 ✓' : '궁금해요'}
+                        <Heart className={`w-4 h-4 mr-1 ${report.is_curious ? 'fill-current' : ''}`} />
+                        {curiousLoading[report.id] ? '...' : 
+                        report.curious_count >= report.threshold ? '마감' :
+                        report.is_curious ? '궁금해요 ✓' : '궁금해요'}
                     </Button>
                   </CardContent>
                 </Card>
