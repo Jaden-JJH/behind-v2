@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { adminAuthLimiter, getClientIp } from '@/lib/rate-limiter'
 import { withCsrfProtection } from '@/lib/api-helpers'
+import { verifyPassword } from '@/lib/password'
 
 export async function POST(request: Request) {
   return withCsrfProtection(request, async (req) => {
@@ -29,8 +30,13 @@ export async function POST(request: Request) {
 
     const { password } = await req.json()
 
-    if (password === process.env.ADMIN_PASSWORD) {
-      cookies().set('admin-auth', 'true', {
+    // Base64 디코딩
+    const hashedPassword = Buffer.from(process.env.ADMIN_PASSWORD!, 'base64').toString('utf-8')
+
+    const verifyResult = await verifyPassword(password, hashedPassword)
+
+    if (verifyResult) {
+      (await cookies()).set('admin-auth', 'true', {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         maxAge: 60 * 60 * 24 // 24시간
