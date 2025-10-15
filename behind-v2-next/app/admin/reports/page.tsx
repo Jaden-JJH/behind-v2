@@ -486,7 +486,7 @@ export default function AdminReportsPage() {
           <DialogHeader>
             <DialogTitle>제보 등록</DialogTitle>
             <DialogDescription>
-              새로운 제보를 등록합니다. 등록 후 노출상태는 '중지'로 설정됩니다.
+              새로운 제보를 등록합니다. 등록 후 노출상태는 &apos;중지&apos;로 설정됩니다.
             </DialogDescription>
           </DialogHeader>
 

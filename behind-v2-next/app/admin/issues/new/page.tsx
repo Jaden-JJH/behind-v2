@@ -238,7 +238,7 @@ export default function AdminPage() {
                 className="w-4 h-4"
               />
               <label htmlFor="showInMainHot" className="text-sm font-medium">
-                메인 화면 "가장 뜨거운 이슈"에 표시
+                메인 화면 &quot;가장 뜨거운 이슈&quot;에 표시
               </label>
             </div>
           </div>
@@ -313,7 +313,7 @@ export default function AdminPage() {
                   className="w-4 h-4"
                 />
                 <label htmlFor="showInMainPoll" className="text-sm font-medium">
-                  메인 화면 "실시간 투표"에 표시
+                  메인 화면 &quot;실시간 투표&quot;에 표시
                 </label>
               </div>
             </div>
