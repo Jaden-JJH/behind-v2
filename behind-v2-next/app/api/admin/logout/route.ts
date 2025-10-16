@@ -5,7 +5,8 @@ import { withCsrfProtection } from '@/lib/api-helpers'
 export async function POST(request: Request) {
   return withCsrfProtection(request, async (req) => {
     // 쿠키 삭제
-    cookies().delete('admin-auth')
+    const cookieStore = await cookies()
+    cookieStore.delete('admin-auth')
 
     return NextResponse.json({ success: true })
   })

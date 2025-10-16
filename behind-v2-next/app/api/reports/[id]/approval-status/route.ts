@@ -12,7 +12,7 @@ const supabase = createClient(
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   return withCsrfProtection(request, async (req) => {
     try {
@@ -24,7 +24,7 @@ export async function PATCH(
       }
 
       // 2. ID 추출
-      const reportId = params.id
+      const { id: reportId } = await params
 
       // 3. 요청 바디 파싱
       const body = await req.json()

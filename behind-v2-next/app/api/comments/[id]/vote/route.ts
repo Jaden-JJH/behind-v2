@@ -10,11 +10,11 @@ const supabase = createClient(
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   return withCsrfProtection(request, async (req) => {
     try {
-      const commentId = params.id
+      const { id: commentId } = await params
       const { voteType, deviceHash } = await req.json()
 
       // 입력 검증

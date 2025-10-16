@@ -10,8 +10,8 @@ const PROTECTED_METHODS = ['POST', 'PUT', 'PATCH', 'DELETE'];
  * API Route에서 CSRF 검증을 수행하는 래퍼 함수
  */
 export async function withCsrfProtection(
-  request: NextRequest,
-  handler: (request: NextRequest) => Promise<NextResponse>
+  request: Request,
+  handler: (request: Request) => Promise<NextResponse>
 ): Promise<NextResponse> {
   // GET, HEAD, OPTIONS는 CSRF 검증 불필요
   if (!PROTECTED_METHODS.includes(request.method)) {

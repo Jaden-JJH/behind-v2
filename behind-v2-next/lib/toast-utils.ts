@@ -75,7 +75,6 @@ export async function handleApiResponse<T>(
   return data.data
 }
 
-// Promise 자동 처리 (로딩 -> 성공/실패)
 export function toastPromise<T>(
   promise: Promise<T>,
   messages: {
@@ -84,9 +83,11 @@ export function toastPromise<T>(
     error?: string | ((error: any) => string)
   }
 ): Promise<T> {
-  return toast.promise(promise, {
+  toast.promise(promise, {
     loading: messages.loading,
     success: messages.success,
     error: messages.error || '오류가 발생했습니다',
   })
+  
+  return promise
 }

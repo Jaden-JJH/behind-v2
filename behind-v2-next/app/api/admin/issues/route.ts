@@ -7,7 +7,8 @@ import { withCsrfProtection } from '@/lib/api-helpers'
 export async function POST(request: Request) {
   return withCsrfProtection(request, async (req) => {
     // 인증 확인
-    const authCookie = cookies().get('admin-auth')
+    const cookieStore = await cookies()
+    const authCookie = cookieStore.get('admin-auth')
     if (authCookie?.value !== 'true') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }

@@ -13,7 +13,7 @@ const supabase = createClient(
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   return withCsrfProtection(request, async (req) => {
     try {
@@ -25,7 +25,7 @@ export async function PUT(
       }
 
       // 2. ID 추출
-      const reportId = params.id
+      const { id: reportId } = await params
 
       // 3. 요청 바디 파싱
       const body = await req.json()
@@ -107,7 +107,7 @@ export async function PUT(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   return withCsrfProtection(request, async (req) => {
     try {
@@ -119,7 +119,7 @@ export async function DELETE(
       }
 
       // 2. ID 추출
-      const reportId = params.id
+      const { id: reportId } = await params
 
       // 3. 리포트 조회 (visibility 확인)
       const { data: report, error: fetchError } = await supabase
@@ -170,7 +170,7 @@ export async function DELETE(
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   return withCsrfProtection(request, async (req) => {
     try {
@@ -182,7 +182,7 @@ export async function PATCH(
       }
 
       // 2. ID 추출
-      const reportId = params.id
+      const { id: reportId } = await params
 
       // 3. 요청 바디 파싱
       const body = await req.json()
