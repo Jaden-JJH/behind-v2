@@ -4,515 +4,367 @@ import { supabase } from '@/lib/supabase'
 import { sanitizeFields, sanitizeHtml } from '@/lib/sanitize'
 import { withCsrfProtection } from '@/lib/api-helpers'
 
-// Helper: 이슈 조회 공통 로직
-async function fetchIssueWithPoll(id: string) {
-  const { data: issue, error: issueError } = await supabase
-    .from('issues')
-    .select(`
-      id,
-      display_id,
-      slug,
-      title,
-      preview,
-      summary,
-      thumbnail,
-      category,
-      approval_status,
-      visibility,
-      show_in_main_hot,
-      show_in_main_poll,
-      behind_story,
-      media_embed,
-      capacity,
-      view_count,
-      comment_count,
-      created_at,
-      polls (
-        id,
-        question,
-        poll_options (
-          id,
-          label,
-          vote_count
-        )
-      )
-    `)
-    .eq('id', id)
-    .single()
-
-  if (issueError) {
-    if (issueError.code === 'PGRST116') {
-      return { error: 'Issue not found', status: 404, issue: null }
-    }
-    throw issueError
-  }
-
-  if (!issue) {
-    return { error: 'Issue not found', status: 404, issue: null }
-  }
-
-  // 투표 정보 처리
-  const poll = issue.polls?.[0] ? {
-    id: issue.polls[0].id,
-    question: issue.polls[0].question,
-    options: issue.polls[0].poll_options?.map((opt: any) => ({
-      id: opt.id,
-      label: opt.label,
-      vote_count: opt.vote_count || 0
-    })) || []
-  } : null
-
-  // poll_votes 카운트 조회
-  let pollVotesCount = 0
-  if (poll?.id) {
-    const { count, error: countError } = await supabase
-      .from('poll_votes')
-      .select('*', { count: 'exact', head: true })
-      .eq('poll_id', poll.id)
-
-    if (!countError) {
-      pollVotesCount = count || 0
-    }
-  }
-
-  const { polls, ...issueData } = issue
-
-  return {
-    error: null,
-    status: 200,
-    issue: {
-      ...issueData,
-      poll,
-      poll_votes_count: pollVotesCount
-    }
-  }
-}
-
-export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: Request, { params }: { params: { id: string } }) {
   try {
-    // 1. 어드민 인증 확인
+    // 1. 인증 확인
     const cookieStore = await cookies()
     const authCookie = cookieStore.get('admin-auth')
     if (authCookie?.value !== 'true') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // 2. 경로 파라미터 추출 (UUID)
-    const { id } = await params
+    const id = params.id
 
-    if (!id) {
+    // 2. issues 테이블에서 id 기준 조회
+    const { data: issue, error: issueError } = await supabase
+      .from('issues')
+      .select('*')
+      .eq('id', id)
+      .single()
+
+    if (issueError) {
+      console.error('Issue fetch error:', issueError)
       return NextResponse.json(
-        { error: 'Issue ID is required' },
-        { status: 400 }
+        { error: issueError.message || 'Failed to fetch issue' },
+        { status: 500 }
       )
     }
 
-    const result = await fetchIssueWithPoll(id)
-
-    if (result.error) {
-      return NextResponse.json(
-        { error: result.error },
-        { status: result.status }
-      )
+    if (!issue) {
+      return NextResponse.json({ error: 'Issue not found' }, { status: 404 })
     }
 
+    // 3. polls 테이블에서 해당 이슈의 투표 조회
+    const { data: poll, error: pollError } = await supabase
+      .from('polls')
+      .select('id, question')
+      .eq('issue_id', id)
+      .single()
+
+    // poll이 없으면 null, 에러는 logs만
+    if (pollError && pollError.code !== 'PGRST116') {
+      console.error('Poll fetch error:', pollError)
+    }
+
+    // 4. poll_votes_count 계산 (poll_options의 votes 합계)
+    let poll_votes_count = 0
+    if (poll) {
+      const { data: pollOptions, error: optionsError } = await supabase
+        .from('poll_options')
+        .select('votes')
+        .eq('poll_id', poll.id)
+
+      if (optionsError) {
+        console.error('Poll options fetch error:', optionsError)
+      } else if (pollOptions) {
+        poll_votes_count = pollOptions.reduce((sum, opt) => sum + (opt.votes || 0), 0)
+      }
+    }
+
+    // 5. 응답
     return NextResponse.json({
       success: true,
-      data: result.issue
+      data: {
+        ...issue,
+        poll: poll || null,
+        poll_votes_count
+      }
     })
   } catch (error: any) {
-    console.error('Admin issue detail error:', error)
+    console.error('Issue detail error:', error)
     return NextResponse.json(
-      { error: error.message || 'Internal server error' },
+      { error: error.message || 'Failed to fetch issue' },
       { status: 500 }
     )
   }
 }
 
-export async function PUT(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PUT(request: Request, { params }: { params: { id: string } }) {
   return withCsrfProtection(request, async (req) => {
     try {
-      // 1. 어드민 인증 확인
+      // 1. 인증 확인
       const cookieStore = await cookies()
       const authCookie = cookieStore.get('admin-auth')
       if (authCookie?.value !== 'true') {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
       }
 
-      // 2. 경로 파라미터 추출
-      const { id } = await params
-
-      if (!id) {
-        return NextResponse.json(
-          { error: 'Issue ID is required' },
-          { status: 400 }
-        )
-      }
-
-      // 3. 요청 본문 파싱
+      const id = params.id
       const {
         title,
         preview,
         summary,
         thumbnail,
-        category,
-        approval_status,
-        visibility,
-        show_in_main_hot,
-        show_in_main_poll,
-        behind_story,
-        capacity,
         media_embed,
-        poll
+        behind_story,
+        show_in_main_hot,
+        show_in_main_poll
       } = await req.json()
 
-      // 4. XSS 방어: 텍스트 필드 정제
+      // 2. XSS 방어: 텍스트 필드 정제
       const sanitized = sanitizeFields(
         {
           title,
           preview,
           summary,
-          behind_story,
-          pollQuestion: poll?.question
+          behind_story
         },
-        ['title', 'preview', 'summary', 'behind_story', 'pollQuestion']
+        ['title', 'preview', 'summary', 'behind_story']
       )
 
-      // 투표 옵션 정제
-      const sanitizedPollOptions = poll?.options?.map((opt: string) => sanitizeHtml(opt))
-
-      // 5. 필드 유효성 검증
-      const validCategories = ['정치', '경제', '연예', 'IT/테크', '스포츠', '사회']
-      const validApprovalStatus = ['pending', 'approved', 'rejected']
-      const validVisibility = ['active', 'paused']
-
-      // title 검증 (5-100자)
-      if (title !== undefined) {
-        if (typeof title !== 'string' || title.length < 5 || title.length > 100) {
-          return NextResponse.json(
-            { error: 'Title must be between 5 and 100 characters' },
-            { status: 400 }
-          )
-        }
-      }
-
-      // category 검증
-      if (category !== undefined) {
-        if (!validCategories.includes(category)) {
-          return NextResponse.json(
-            { error: `Category must be one of: ${validCategories.join(', ')}` },
-            { status: 400 }
-          )
-        }
-      }
-
-      // approval_status 검증
-      if (approval_status !== undefined) {
-        if (!validApprovalStatus.includes(approval_status)) {
-          return NextResponse.json(
-            { error: `Approval status must be one of: ${validApprovalStatus.join(', ')}` },
-            { status: 400 }
-          )
-        }
-      }
-
-      // visibility 검증
-      if (visibility !== undefined) {
-        if (!validVisibility.includes(visibility)) {
-          return NextResponse.json(
-            { error: `Visibility must be one of: ${validVisibility.join(', ')}` },
-            { status: 400 }
-          )
-        }
-      }
-
-      // preview 검증 (있으면 길이 제한)
-      if (preview !== undefined && typeof preview === 'string' && preview.length > 200) {
-        return NextResponse.json(
-          { error: 'Preview must be less than 200 characters' },
-          { status: 400 }
-        )
-      }
-
-      // summary 검증
-      if (summary !== undefined && typeof summary === 'string' && summary.length > 500) {
-        return NextResponse.json(
-          { error: 'Summary must be less than 500 characters' },
-          { status: 400 }
-        )
-      }
-
-      // behind_story 검증
-      if (sanitized.behind_story !== undefined && typeof sanitized.behind_story === 'string' && sanitized.behind_story.length > 1000) {
-        return NextResponse.json(
-          { error: 'Behind story must be less than 1000 characters' },
-          { status: 400 }
-        )
-      }
-
-      // 6. 기존 이슈 조회
-      const result = await fetchIssueWithPoll(id)
-
-      if (result.error) {
-        return NextResponse.json(
-          { error: result.error },
-          { status: result.status }
-        )
-      }
-
-      const existingIssue = result.issue
-
-      // 7. [B] 중지 불가 검증: visibility 변경 시 메인 화면 노출 확인
-      if (visibility === 'paused') {
-        // 변경 전 값 체크
-        const currentShowInMainHot = show_in_main_hot !== undefined ? show_in_main_hot : existingIssue.show_in_main_hot
-        const currentShowInMainPoll = show_in_main_poll !== undefined ? show_in_main_poll : existingIssue.show_in_main_poll
-
-        if (currentShowInMainHot || currentShowInMainPoll) {
-          return NextResponse.json(
-            { error: '메인 화면에 노출 중입니다. 먼저 노출 설정을 해제한 후 중지 가능합니다' },
-            { status: 400 }
-          )
-        }
-      }
-
-      // 8. [A] 투표 수정 불가 검증
-      const isEditingPoll = poll !== undefined
-      if (isEditingPoll && existingIssue.poll_votes_count > 0) {
-        return NextResponse.json(
-          { error: '투표가 1개 이상 있으면 투표 옵션을 수정할 수 없습니다' },
-          { status: 400 }
-        )
-      }
-
-      // 9. 이슈 업데이트 데이터 구성
-      const updateData: any = {}
-
-      if (title !== undefined) updateData.title = sanitized.title
-      if (preview !== undefined) updateData.preview = sanitized.preview
-      if (summary !== undefined) updateData.summary = sanitized.summary
-      if (thumbnail !== undefined) updateData.thumbnail = thumbnail
-      if (category !== undefined) updateData.category = category
-      if (approval_status !== undefined) updateData.approval_status = approval_status
-      if (visibility !== undefined) updateData.visibility = visibility
-      if (show_in_main_hot !== undefined) updateData.show_in_main_hot = show_in_main_hot
-      if (show_in_main_poll !== undefined) updateData.show_in_main_poll = show_in_main_poll
-      if (sanitized.behind_story !== undefined) updateData.behind_story = sanitized.behind_story
-      if (capacity !== undefined) updateData.capacity = capacity
-
-      // media_embed 처리
-      if (media_embed !== undefined) {
-        const newMediaEmbed: any = {}
-        if (media_embed.youtube) {
-          newMediaEmbed.youtube = media_embed.youtube
-        }
-        if (media_embed.news?.title && media_embed.news?.url) {
-          newMediaEmbed.news = {
+      // media_embed에서 news 필드의 텍스트도 정제
+      let sanitizedMediaEmbed = media_embed
+      if (media_embed?.news) {
+        sanitizedMediaEmbed = {
+          ...media_embed,
+          news: {
+            ...media_embed.news,
             title: sanitizeHtml(media_embed.news.title),
-            source: sanitizeHtml(media_embed.news.source || ''),
-            url: media_embed.news.url
+            source: sanitizeHtml(media_embed.news.source)
           }
         }
-        updateData.media_embed = Object.keys(newMediaEmbed).length > 0 ? newMediaEmbed : null
       }
 
-      // 10. 이슈 업데이트
-      const { error: updateError } = await supabase
+      // 3. 기존 이슈 조회
+      const { data: existingIssue, error: fetchError } = await supabase
         .from('issues')
-        .update(updateData)
+        .select('id, show_in_main_hot, show_in_main_poll')
         .eq('id', id)
+        .single()
 
-      if (updateError) throw updateError
+      if (fetchError) {
+        console.error('Issue fetch error:', fetchError)
+        return NextResponse.json(
+          { error: fetchError.message || 'Failed to fetch issue' },
+          { status: 500 }
+        )
+      }
 
-      // 11. 투표 처리 (poll_votes가 없을 때만)
-      if (isEditingPoll && existingIssue.poll_votes_count === 0) {
-        // 기존 poll 삭제
-        if (existingIssue.poll?.id) {
-          // poll_options 삭제 (cascade delete가 없으면 명시적으로)
-          const { error: optionsDeleteError } = await supabase
-            .from('poll_options')
-            .delete()
-            .eq('poll_id', existingIssue.poll.id)
+      if (!existingIssue) {
+        return NextResponse.json({ error: 'Issue not found' }, { status: 404 })
+      }
 
-          if (optionsDeleteError) throw optionsDeleteError
+      // 4. 투표 수 확인
+      const { data: poll, error: pollError } = await supabase
+        .from('polls')
+        .select('id')
+        .eq('issue_id', id)
+        .single()
 
-          // poll 삭제
-          const { error: pollDeleteError } = await supabase
-            .from('polls')
-            .delete()
-            .eq('id', existingIssue.poll.id)
+      let hasVotes = false
+      if (poll) {
+        const { data: votes, error: votesError } = await supabase
+          .from('poll_options')
+          .select('votes')
+          .eq('poll_id', poll.id)
 
-          if (pollDeleteError) throw pollDeleteError
-        }
-
-        // 새 poll 생성
-        if (sanitized.pollQuestion && sanitizedPollOptions && sanitizedPollOptions.length >= 2) {
-          const { data: newPoll, error: pollCreateError } = await supabase
-            .from('polls')
-            .insert({
-              issue_id: id,
-              question: sanitized.pollQuestion
-            })
-            .select()
-            .single()
-
-          if (pollCreateError) throw pollCreateError
-
-          // 새 poll_options 생성
-          const { error: optionsCreateError } = await supabase
-            .from('poll_options')
-            .insert(
-              sanitizedPollOptions.map((text: string) => ({
-                poll_id: newPoll.id,
-                label: text
-              }))
-            )
-
-          if (optionsCreateError) throw optionsCreateError
+        if (!votesError && votes) {
+          hasVotes = votes.some((opt) => (opt.votes || 0) >= 1)
         }
       }
 
-      // 12. 업데이트된 이슈 조회 및 응답
-      const updatedResult = await fetchIssueWithPoll(id)
+      // 5. 투표 수정 불가 검증
+      if (hasVotes) {
+        // 투표가 있으면 show_in_main_poll을 변경할 수 없음
+        if (show_in_main_poll !== existingIssue.show_in_main_poll) {
+          return NextResponse.json(
+            { error: 'Cannot modify poll settings when votes exist' },
+            { status: 400 }
+          )
+        }
+      }
 
-      if (updatedResult.error) {
+      // 6. 이슈 업데이트
+      const { data: updatedIssue, error: updateError } = await supabase
+        .from('issues')
+        .update({
+          title: sanitized.title,
+          preview: sanitized.preview,
+          summary: sanitized.summary || null,
+          thumbnail: thumbnail || null,
+          media_embed: sanitizedMediaEmbed || null,
+          behind_story: sanitized.behind_story || null,
+          show_in_main_hot: show_in_main_hot !== undefined ? show_in_main_hot : existingIssue.show_in_main_hot,
+          show_in_main_poll: show_in_main_poll !== undefined ? show_in_main_poll : existingIssue.show_in_main_poll
+        })
+        .eq('id', id)
+        .select()
+        .single()
+
+      if (updateError) {
+        console.error('Issue update error:', updateError)
         return NextResponse.json(
-          { error: updatedResult.error },
-          { status: updatedResult.status }
+          { error: updateError.message || 'Failed to update issue' },
+          { status: 500 }
         )
       }
 
       return NextResponse.json({
         success: true,
-        data: updatedResult.issue
+        issue: updatedIssue,
+        message: '이슈가 성공적으로 수정되었습니다'
       })
     } catch (error: any) {
-      console.error('Admin issue update error:', error)
+      console.error('Issue update error:', error)
       return NextResponse.json(
-        { error: error.message || 'Internal server error' },
+        { error: error.message || 'Failed to update issue' },
         { status: 500 }
       )
     }
   })
 }
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function DELETE(request: Request, { params }: { params: { id: string } }) {
   return withCsrfProtection(request, async (req) => {
     try {
-      // 1. 어드민 인증 확인
+      // 1. 인증 확인
       const cookieStore = await cookies()
       const authCookie = cookieStore.get('admin-auth')
       if (authCookie?.value !== 'true') {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
       }
 
-      // 2. 경로 파라미터 추출 (UUID)
-      const { id } = await params
+      const id = params.id
 
-      if (!id) {
+      // 2. 이슈 조회 및 visibility 확인
+      const { data: issue, error: fetchError } = await supabase
+        .from('issues')
+        .select('id, visibility')
+        .eq('id', id)
+        .single()
+
+      if (fetchError) {
+        console.error('Issue fetch error:', fetchError)
         return NextResponse.json(
-          { error: 'Issue ID is required' },
+          { error: fetchError.message || 'Failed to fetch issue' },
+          { status: 500 }
+        )
+      }
+
+      if (!issue) {
+        return NextResponse.json({ error: 'Issue not found' }, { status: 404 })
+      }
+
+      // visibility가 active인 경우 삭제 불가
+      if (issue.visibility === 'active') {
+        return NextResponse.json(
+          { error: 'Cannot delete active issues' },
           { status: 400 }
         )
       }
 
-      // 3. 기존 이슈 조회
-      const result = await fetchIssueWithPoll(id)
+      // 3. 연관 데이터 정리 (hard delete)
+      // poll 조회
+      const { data: polls, error: pollsFetchError } = await supabase
+        .from('polls')
+        .select('id')
+        .eq('issue_id', id)
 
-      if (result.error) {
+      if (pollsFetchError) {
+        console.error('Polls fetch error:', pollsFetchError)
         return NextResponse.json(
-          { error: result.error },
-          { status: result.status }
+          { error: pollsFetchError.message || 'Failed to fetch related polls' },
+          { status: 500 }
         )
       }
 
-      const existingIssue = result.issue
+      // poll이 있으면 poll_votes, poll_options 삭제
+      if (polls && polls.length > 0) {
+        const pollIds = polls.map((p) => p.id)
 
-      // 4. 삭제 가능 검증: visibility='paused'일 때만 삭제 가능
-      if (existingIssue.visibility !== 'paused') {
-        return NextResponse.json(
-          {
-            error: '게시 중인 이슈는 삭제할 수 없습니다. 먼저 중지한 후 삭제 가능합니다'
-          },
-          { status: 400 }
-        )
-      }
-
-      // 5. 연관 데이터 삭제 (외래키 제약 고려)
-      // 순서: poll_votes → poll_options → polls → comments → rooms → issues
-      // 각 쿼리는 순차 실행되며, 하나라도 실패하면 즉시 throw
-
-      // 5-1. poll_votes 삭제
-      if (existingIssue.poll?.id) {
-        const { error: pollVotesDeleteError } = await supabase
+        // poll_votes 삭제
+        const { error: votesDeleteError } = await supabase
           .from('poll_votes')
           .delete()
-          .eq('poll_id', existingIssue.poll.id)
+          .in('poll_id', pollIds)
 
-        if (pollVotesDeleteError) throw pollVotesDeleteError
-      }
+        if (votesDeleteError) {
+          console.error('Poll votes delete error:', votesDeleteError)
+          return NextResponse.json(
+            { error: votesDeleteError.message || 'Failed to delete poll votes' },
+            { status: 500 }
+          )
+        }
 
-      // 5-2. poll_options 삭제
-      if (existingIssue.poll?.id) {
+        // poll_options 삭제
         const { error: optionsDeleteError } = await supabase
           .from('poll_options')
           .delete()
-          .eq('poll_id', existingIssue.poll.id)
+          .in('poll_id', pollIds)
 
-        if (optionsDeleteError) throw optionsDeleteError
-      }
+        if (optionsDeleteError) {
+          console.error('Poll options delete error:', optionsDeleteError)
+          return NextResponse.json(
+            { error: optionsDeleteError.message || 'Failed to delete poll options' },
+            { status: 500 }
+          )
+        }
 
-      // 5-3. polls 삭제
-      if (existingIssue.poll?.id) {
-        const { error: pollDeleteError } = await supabase
+        // polls 삭제
+        const { error: pollsDeleteError } = await supabase
           .from('polls')
           .delete()
-          .eq('id', existingIssue.poll.id)
+          .in('id', pollIds)
 
-        if (pollDeleteError) throw pollDeleteError
+        if (pollsDeleteError) {
+          console.error('Polls delete error:', pollsDeleteError)
+          return NextResponse.json(
+            { error: pollsDeleteError.message || 'Failed to delete polls' },
+            { status: 500 }
+          )
+        }
       }
 
-      // 5-4. comments 삭제
-      const { error: commentsDeleteError } = await supabase
-        .from('comments')
-        .delete()
-        .eq('issue_id', id)
-
-      if (commentsDeleteError) throw commentsDeleteError
-
-      // 5-5. rooms 삭제
+      // rooms 삭제
       const { error: roomsDeleteError } = await supabase
         .from('rooms')
         .delete()
         .eq('issue_id', id)
 
-      if (roomsDeleteError) throw roomsDeleteError
+      if (roomsDeleteError) {
+        console.error('Rooms delete error:', roomsDeleteError)
+        return NextResponse.json(
+          { error: roomsDeleteError.message || 'Failed to delete rooms' },
+          { status: 500 }
+        )
+      }
 
-      // 5-6. issues 삭제
+      // comments 삭제
+      const { error: commentsDeleteError } = await supabase
+        .from('comments')
+        .delete()
+        .eq('issue_id', id)
+
+      if (commentsDeleteError) {
+        console.error('Comments delete error:', commentsDeleteError)
+        return NextResponse.json(
+          { error: commentsDeleteError.message || 'Failed to delete comments' },
+          { status: 500 }
+        )
+      }
+
+      // issues 삭제 (hard delete)
       const { error: issueDeleteError } = await supabase
         .from('issues')
         .delete()
         .eq('id', id)
 
-      if (issueDeleteError) throw issueDeleteError
+      if (issueDeleteError) {
+        console.error('Issue delete error:', issueDeleteError)
+        return NextResponse.json(
+          { error: issueDeleteError.message || 'Failed to delete issue' },
+          { status: 500 }
+        )
+      }
 
       return NextResponse.json({
         success: true,
-        message: '이슈가 삭제되었습니다'
+        message: '이슈가 성공적으로 삭제되었습니다'
       })
     } catch (error: any) {
-      console.error('Admin issue delete error:', error)
+      console.error('Issue delete error:', error)
       return NextResponse.json(
-        { error: error.message || 'Internal server error' },
+        { error: error.message || 'Failed to delete issue' },
         { status: 500 }
       )
     }
