@@ -133,16 +133,7 @@ export function QuickVote({ pollId, question, options, ctaLabel = "댓글 토론
       <CardContent>
         {!voted ? (
           <div className="flex gap-3">
-            {safeOptions.map((o, idx) => (
-              <Button
-                key={`${o.label}-${idx}`}
-                onClick={() => handleVote(idx)}
-                variant="outline"
-                className="flex-1 h-auto py-3 border-slate-300 text-slate-700 hover:bg-indigo-50 hover:border-indigo-400 hover:text-indigo-700 transition-all"
-              >
-                {o.label}
-              </Button>
-            ))}
+            .
           </div>
         ) : (
           <div className="space-y-3">
