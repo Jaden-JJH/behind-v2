@@ -401,3 +401,120 @@ export async function PUT(
     }
   })
 }
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  return withCsrfProtection(request, async (req) => {
+    try {
+      // 1. 어드민 인증 확인
+      const cookieStore = await cookies()
+      const authCookie = cookieStore.get('admin-auth')
+      if (authCookie?.value !== 'true') {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+
+      // 2. 경로 파라미터 추출 (UUID)
+      const { id } = await params
+
+      if (!id) {
+        return NextResponse.json(
+          { error: 'Issue ID is required' },
+          { status: 400 }
+        )
+      }
+
+      // 3. 기존 이슈 조회
+      const result = await fetchIssueWithPoll(id)
+
+      if (result.error) {
+        return NextResponse.json(
+          { error: result.error },
+          { status: result.status }
+        )
+      }
+
+      const existingIssue = result.issue
+
+      // 4. 삭제 가능 검증: visibility='paused'일 때만 삭제 가능
+      if (existingIssue.visibility !== 'paused') {
+        return NextResponse.json(
+          {
+            error: '게시 중인 이슈는 삭제할 수 없습니다. 먼저 중지한 후 삭제 가능합니다'
+          },
+          { status: 400 }
+        )
+      }
+
+      // 5. 연관 데이터 삭제 (외래키 제약 고려)
+      // 순서: poll_votes → poll_options → polls → comments → rooms → issues
+      // 각 쿼리는 순차 실행되며, 하나라도 실패하면 즉시 throw
+
+      // 5-1. poll_votes 삭제
+      if (existingIssue.poll?.id) {
+        const { error: pollVotesDeleteError } = await supabase
+          .from('poll_votes')
+          .delete()
+          .eq('poll_id', existingIssue.poll.id)
+
+        if (pollVotesDeleteError) throw pollVotesDeleteError
+      }
+
+      // 5-2. poll_options 삭제
+      if (existingIssue.poll?.id) {
+        const { error: optionsDeleteError } = await supabase
+          .from('poll_options')
+          .delete()
+          .eq('poll_id', existingIssue.poll.id)
+
+        if (optionsDeleteError) throw optionsDeleteError
+      }
+
+      // 5-3. polls 삭제
+      if (existingIssue.poll?.id) {
+        const { error: pollDeleteError } = await supabase
+          .from('polls')
+          .delete()
+          .eq('id', existingIssue.poll.id)
+
+        if (pollDeleteError) throw pollDeleteError
+      }
+
+      // 5-4. comments 삭제
+      const { error: commentsDeleteError } = await supabase
+        .from('comments')
+        .delete()
+        .eq('issue_id', id)
+
+      if (commentsDeleteError) throw commentsDeleteError
+
+      // 5-5. rooms 삭제
+      const { error: roomsDeleteError } = await supabase
+        .from('rooms')
+        .delete()
+        .eq('issue_id', id)
+
+      if (roomsDeleteError) throw roomsDeleteError
+
+      // 5-6. issues 삭제
+      const { error: issueDeleteError } = await supabase
+        .from('issues')
+        .delete()
+        .eq('id', id)
+
+      if (issueDeleteError) throw issueDeleteError
+
+      return NextResponse.json({
+        success: true,
+        message: '이슈가 삭제되었습니다'
+      })
+    } catch (error: any) {
+      console.error('Admin issue delete error:', error)
+      return NextResponse.json(
+        { error: error.message || 'Internal server error' },
+        { status: 500 }
+      )
+    }
+  })
+}
