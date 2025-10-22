@@ -34,10 +34,10 @@ export async function GET(request: Request, { params }: { params: { id: string }
       return NextResponse.json({ error: 'Issue not found' }, { status: 404 })
     }
 
-    // 3. polls 테이블에서 해당 이슈의 투표 조회
+    // 3. polls 테이블에서 해당 이슈의 투표 조회 (poll_options 포함)
     const { data: poll, error: pollError } = await supabase
       .from('polls')
-      .select('id, question')
+      .select('id, question, poll_options(id, label, votes)')
       .eq('issue_id', id)
       .single()
 

@@ -122,27 +122,52 @@ export default function AdminIssuesPage() {
     }
   }
 
-  // 수정 모달 열기
-  function openEditModal(issue: Issue) {
-    console.log('Selected issue:', issue)
-    console.log('Poll data:', issue.poll)
-    console.log('editPollQuestion will be:', issue.poll?.question || '')
+  // 폼 초기화 Helper 함수
+  function initializeForm(issueData: Issue) {
+    setSelectedIssue(issueData)
+    setEditTitle(issueData.title)
+    setEditPreview(issueData.preview || '')
+    setEditSummary(issueData.summary || '')
+    setEditCategory(issueData.category)
+    setEditApprovalStatus(issueData.approval_status)
+    setEditVisibility(issueData.visibility)
+    setEditShowInMainHot(issueData.show_in_main_hot)
+    setEditShowInMainPoll(issueData.show_in_main_poll)
+    setEditBehindStory(issueData.behind_story || '')
+    setEditCapacity(issueData.capacity || 0)
+    setEditThumbnail(issueData.thumbnail || '')
 
-    setSelectedIssue(issue)
-    setEditTitle(issue.title)
-    setEditPreview(issue.preview || '')
-    setEditSummary(issue.summary || '')
-    setEditCategory(issue.category)
-    setEditApprovalStatus(issue.approval_status)
-    setEditVisibility(issue.visibility)
-    setEditShowInMainHot(issue.show_in_main_hot)
-    setEditShowInMainPoll(issue.show_in_main_poll)
-    setEditBehindStory(issue.behind_story || '')
-    setEditCapacity(issue.capacity || 0)
-    setEditThumbnail(issue.thumbnail || '')
-    setEditPollQuestion(issue.poll?.question || '')
-    setEditPollOptions(issue.poll?.options?.map(opt => opt.label) || ['', ''])
-    setShowEditModal(true)
+    const pollData = issueData.poll
+    const pollOptions = pollData?.options || []
+    setEditPollQuestion(pollData?.question || '')
+    setEditPollOptions(pollOptions.length > 0 ? pollOptions.map(opt => opt.label) : ['', ''])
+  }
+
+  // 수정 모달 열기
+  async function openEditModal(issue: Issue) {
+    try {
+      // API에서 최신 투표 정보 조회
+      const response = await csrfFetch(`/api/admin/issues/${issue.id}`)
+      const data = await response.json()
+
+      if (!response.ok) {
+        // API 호출 실패 시 기본값으로 모달 열기
+        console.error('Failed to fetch issue details:', data)
+        initializeForm(issue)
+        setShowEditModal(true)
+        return
+      }
+
+      // 성공: API 응답 데이터로 폼 초기화
+      initializeForm(data.data)
+      setShowEditModal(true)
+    } catch (error) {
+      // 네트워크 오류 등 예외 발생 시 기본값으로 모달 열기
+      console.error('Error fetching issue details:', error)
+      showError(error)
+      initializeForm(issue)
+      setShowEditModal(true)
+    }
   }
 
   // 수정 핸들러
