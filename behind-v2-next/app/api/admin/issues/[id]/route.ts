@@ -37,7 +37,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
     // 3. polls 테이블에서 해당 이슈의 투표 조회 (poll_options 포함)
     const { data: poll, error: pollError } = await supabase
       .from('polls')
-      .select('id, question, poll_options(id, label, votes)')
+      .select('id, question, poll_options(id, label, vote_count)')
       .eq('issue_id', id)
       .single()
 
@@ -46,19 +46,10 @@ export async function GET(request: Request, { params }: { params: { id: string }
       console.error('Poll fetch error:', pollError)
     }
 
-    // 4. poll_votes_count 계산 (poll_options의 votes 합계)
+    // 4. poll_votes_count 계산 (poll_options 배열의 votes 합계)
     let poll_votes_count = 0
-    if (poll) {
-      const { data: pollOptions, error: optionsError } = await supabase
-        .from('poll_options')
-        .select('votes')
-        .eq('poll_id', poll.id)
-
-      if (optionsError) {
-        console.error('Poll options fetch error:', optionsError)
-      } else if (pollOptions) {
-        poll_votes_count = pollOptions.reduce((sum, opt) => sum + (opt.votes || 0), 0)
-      }
+    if (poll && poll.poll_options && Array.isArray(poll.poll_options)) {
+      poll_votes_count = poll.poll_options.reduce((sum, opt) => sum + (opt.vote_count || 0), 0)
     }
 
     // 5. 응답

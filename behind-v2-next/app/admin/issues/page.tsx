@@ -138,7 +138,7 @@ export default function AdminIssuesPage() {
     setEditThumbnail(issueData.thumbnail || '')
 
     const pollData = issueData.poll
-    const pollOptions = pollData?.options || []
+    const pollOptions = pollData?.poll_options || []
     setEditPollQuestion(pollData?.question || '')
     setEditPollOptions(pollOptions.length > 0 ? pollOptions.map(opt => opt.label) : ['', ''])
   }
