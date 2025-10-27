@@ -1,55 +1,319 @@
 'use client'
 
-import { useEffect, useRef, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Send, Shuffle, MessageCircle } from "lucide-react";
-import { allIssues } from "@/lib/data/issues";
-import { getLS, setLS, chatKey, nickKey, randomNickname, formatTime } from "@/lib/utils";
+import { useEffect, useRef, useState } from "react"
+import { useParams, useRouter } from "next/navigation"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Separator } from "@/components/ui/separator"
+import { ArrowLeft, Send, Shuffle, MessageCircle, Users } from "lucide-react"
+import {
+  fetchChatMessages,
+  fetchChatRoomState,
+  joinChatRoom,
+  leaveChatRoom,
+  sendChatMessage,
+  touchChatPresence
+} from "@/lib/chat-client"
+import type { ChatMembership, ChatMessage, ChatRoomState } from "@/lib/chat-types"
+import { getLS, setLS, delLS, nickKey, randomNickname, sessionKey, formatTime } from "@/lib/utils"
+import { getDeviceHash } from "@/lib/device-hash"
 
-interface Message {
-  id: number;
-  author: string;
-  text: string;
-  ts: number;
-  isSystem?: boolean;
+function getOrCreateSession(roomId: string): string {
+  const existing = getLS<string>(sessionKey(roomId), null)
+  if (existing) return existing
+  const next = crypto.randomUUID()
+  setLS(sessionKey(roomId), next)
+  return next
+}
+
+function sortMessages(messages: ChatMessage[]): ChatMessage[] {
+  return [...messages].sort(
+    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+  )
+}
+
+function mergeMessages(current: ChatMessage[], incoming: ChatMessage[]): ChatMessage[] {
+  const map = new Map<number, ChatMessage>()
+  current.forEach((msg) => map.set(msg.id, msg))
+  incoming.forEach((msg) => map.set(msg.id, msg))
+  return sortMessages(Array.from(map.values()))
 }
 
 export default function ChatRoom() {
-  const params = useParams();
-  const router = useRouter();
-  const roomId = params.id as string;
+  const params = useParams()
+  const router = useRouter()
+  const issueId = params.id as string
 
-  const issue = allIssues.find((i) => i.id === roomId) || allIssues[0];
+  const scrollerRef = useRef<HTMLDivElement>(null)
+  const membershipRef = useRef<ChatMembership | null>(null)
 
-  const [nick, setNick] = useState(() => getLS<string>(nickKey(roomId), randomNickname()) || randomNickname());
-  const [messages, setMessages] = useState<Message[]>(() => getLS<Message[]>(chatKey(roomId), null) || [
-    { id: 1, author: "운영봇", text: "오늘 이슈 요약: 내부자 개입 가능성 제기", ts: Date.now() - 1000 * 60 * 30, isSystem: true },
-    { id: 2, author: "활동자1014", text: "보안팀이 뚫린거면 진짜 심각한거 아님?", ts: Date.now() - 1000 * 60 * 20 },
-    { id: 3, author: "활동자5823", text: "ㄹㅇ... 나도 걱정된다", ts: Date.now() - 1000 * 60 * 10 },
-  ]);
-  const [input, setInput] = useState("");
-  const scrollerRef = useRef<HTMLDivElement>(null);
+  const [roomState, setRoomState] = useState<ChatRoomState | null>(null)
+  const [membership, setMembership] = useState<ChatMembership | null>(null)
+  const [messages, setMessages] = useState<ChatMessage[]>([])
+  const [input, setInput] = useState("")
+  const [loading, setLoading] = useState(true)
+  const [joinError, setJoinError] = useState<string | null>(null)
+  const [messageError, setMessageError] = useState<string | null>(null)
+  const [initialized, setInitialized] = useState(false)
 
-  useEffect(() => { setLS(chatKey(roomId), messages); }, [roomId, messages]);
-  useEffect(() => { setLS(nickKey(roomId), nick); }, [roomId, nick]);
+  const [sessionId, setSessionId] = useState<string>('')
+  const [nick, setNick] = useState<string>('')
+  const [nickReady, setNickReady] = useState(false)
+
+  useEffect(() => {
+    if (!issueId) return
+    const id = getOrCreateSession(issueId)
+    setSessionId(id)
+  }, [issueId])
+
+  useEffect(() => {
+    if (!issueId) return
+    let saved = getLS<string>(nickKey(issueId), null)
+    if (!saved) {
+      saved = randomNickname()
+      setLS(nickKey(issueId), saved)
+    }
+    setNick(saved)
+    setNickReady(true)
+  }, [issueId])
+
+  useEffect(() => {
+    membershipRef.current = membership ?? null
+  }, [membership])
+
+  useEffect(() => {
+    const source = roomState ?? membership ?? null
+    if (!source) return
+
+    setHeaderInfo((prev) => ({
+      title: source.issueTitle || prev.title || '채팅방',
+      subtitle:
+        source.issuePreview ||
+        source.issueTitle ||
+        prev.subtitle ||
+        '',
+      activeMembers:
+        typeof source.activeMembers === 'number' ? source.activeMembers : prev.activeMembers,
+      capacity:
+        typeof source.capacity === 'number' ? source.capacity : prev.capacity
+    }))
+  }, [roomState, membership])
+
+  useEffect(() => {
+    if (initialized || !nickReady || !sessionId) return
+    setInitialized(true)
+
+    let cancelled = false
+
+    async function initialize() {
+      try {
+        setLoading(true)
+        setJoinError(null)
+
+        await fetchChatRoomState(issueId).then((state) => {
+          if (!cancelled) setRoomState(state)
+        }).catch(() => undefined)
+
+        const deviceHash = getDeviceHash()
+        const joined = await joinChatRoom(issueId, {
+          deviceHash,
+          nickname: nick,
+          sessionId
+        })
+
+        if (cancelled) return
+
+       setMembership(joined)
+       membershipRef.current = joined
+        setRoomState((prev) => {
+          if (!prev) return { ...joined }
+          return {
+            ...prev,
+            roomId: joined.roomId ?? prev.roomId,
+            capacity: joined.capacity ?? prev.capacity,
+            activeMembers: joined.activeMembers ?? prev.activeMembers,
+            lastMessageAt: joined.lastMessageAt ?? prev.lastMessageAt,
+            issueTitle: prev.issueTitle ?? joined.issueTitle ?? null,
+            issueThumbnail: prev.issueThumbnail ?? joined.issueThumbnail ?? null,
+            issuePreview: prev.issuePreview ?? joined.issuePreview ?? null
+          }
+        })
+
+        const history = await fetchChatMessages(issueId, joined.roomId, { limit: 100 })
+        if (!cancelled) {
+          setMessages(sortMessages(history))
+        }
+      } catch (error: any) {
+        console.error('Failed to enter chat room:', error)
+        if (!cancelled) {
+          setJoinError(error?.message || '채팅방에 입장할 수 없습니다.')
+          setMembership(null)
+          membershipRef.current = null
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false)
+        }
+      }
+    }
+
+    initialize()
+
+    return () => {
+      cancelled = true
+    }
+  }, [initialized, issueId, nick, nickReady, sessionId])
+
+  useEffect(() => {
+    if (!membership) return
+
+    let cancelled = false
+    let isFetching = false
+
+    async function syncMessages() {
+      if (isFetching) return
+      isFetching = true
+      try {
+        const latest = await fetchChatMessages(issueId, membership.roomId, { limit: 50 })
+        if (!cancelled) {
+          setMessages((prev) => mergeMessages(prev, latest))
+        }
+      } catch (error) {
+        console.error('Failed to sync messages:', error)
+      } finally {
+        isFetching = false
+      }
+    }
+
+    const pollTimer = window.setInterval(syncMessages, 4000)
+
+    const presenceTimer = window.setInterval(async () => {
+      try {
+        const presence = await touchChatPresence(issueId, membership.memberId)
+        if (!cancelled) {
+          setRoomState((prev) =>
+            prev ? { ...prev, activeMembers: presence.activeMembers } : prev
+          )
+        }
+      } catch (error) {
+        console.error('Failed to update presence:', error)
+      }
+    }, 25000)
+
+    syncMessages()
+
+    return () => {
+      cancelled = true
+      window.clearInterval(pollTimer)
+      window.clearInterval(presenceTimer)
+    }
+  }, [issueId, membership])
+
   useEffect(() => {
     if (scrollerRef.current) {
-      scrollerRef.current.scrollTop = scrollerRef.current.scrollHeight;
+      scrollerRef.current.scrollTop = scrollerRef.current.scrollHeight
     }
-  }, [messages]);
+  }, [messages])
 
-  const send = () => {
-    const text = input.trim();
-    if (!text) return;
-    const next = messages.concat([{ id: Date.now(), author: nick, text, ts: Date.now() }]);
-    setMessages(next);
-    setInput("");
-  };
+  useEffect(() => {
+    return () => {
+      const member = membershipRef.current
+      if (member) {
+        leaveChatRoom(issueId, member.memberId).catch((error) => {
+          console.error('Failed to leave chat room:', error)
+        })
+      }
+    }
+  }, [issueId])
+
+  useEffect(() => {
+    if (!joinError) return
+    const key = sessionKey(issueId)
+    delLS(key)
+    const next = getOrCreateSession(issueId)
+    setSessionId(next)
+    setInitialized(false)
+    setJoinError(null)
+  }, [joinError, issueId])
+
+  const send = async () => {
+    if (!membership) return
+    const text = input.trim()
+    if (!text) return
+
+    setInput("")
+    setMessageError(null)
+
+    try {
+      const saved = await sendChatMessage(issueId, membership.memberId, text)
+      setMessages((prev) => mergeMessages(prev, [saved]))
+    } catch (error: any) {
+      console.error('Failed to send message:', error)
+      setMessageError(error?.message || '메시지를 전송하지 못했습니다.')
+      setInput(text)
+    }
+  }
+
+  const handleShuffleNick = async () => {
+    const next = randomNickname()
+    setNick(next)
+    setLS(nickKey(issueId), next)
+
+    const member = membershipRef.current
+    if (!member) return
+
+    try {
+      const deviceHash = getDeviceHash()
+      const updated = await joinChatRoom(issueId, {
+        deviceHash,
+        nickname: next,
+        sessionId: member.sessionId || sessionId
+      })
+      setMembership(updated)
+      membershipRef.current = updated
+      setRoomState((prev) => {
+        if (!prev) return { ...updated }
+        return {
+          ...prev,
+          roomId: updated.roomId ?? prev.roomId,
+          capacity: updated.capacity ?? prev.capacity,
+          activeMembers: updated.activeMembers ?? prev.activeMembers,
+          lastMessageAt: updated.lastMessageAt ?? prev.lastMessageAt,
+          issueTitle: prev.issueTitle ?? updated.issueTitle ?? null,
+          issueThumbnail: prev.issueThumbnail ?? updated.issueThumbnail ?? null,
+          issuePreview: prev.issuePreview ?? updated.issuePreview ?? null
+        }
+      })
+    } catch (error) {
+      console.error('Failed to update nickname:', error)
+    }
+  }
+
+  const resolvedState = roomState ?? membership ?? null
+  const activeMembers =
+    typeof resolvedState?.activeMembers === 'number' ? resolvedState.activeMembers : null
+  const capacity =
+    typeof resolvedState?.capacity === 'number' ? resolvedState.capacity : null
+  const isFull =
+    activeMembers !== null && capacity !== null ? activeMembers >= capacity : false
+  const headerTitle = (() => {
+    const raw = resolvedState?.issueTitle
+    if (typeof raw === 'string' && raw.trim().length > 0) return raw.trim()
+    return resolvedState ? `이슈 ${resolvedState.issueId} 채팅방` : '채팅방'
+  })()
+  const headerSubtitle = (() => {
+    const raw = resolvedState?.issuePreview
+    if (typeof raw === 'string' && raw.trim().length > 0) return raw.trim()
+    return ''
+  })()
+  const occupancyLabel =
+    activeMembers !== null || capacity !== null
+      ? `${(activeMembers ?? 0).toLocaleString()} / ${capacity?.toLocaleString() ?? '?'}`
+      : loading
+        ? '로딩 중...'
+        : '참여자 수 확인 중'
 
   return (
     <div className="min-h-screen bg-background">
@@ -61,19 +325,27 @@ export default function ChatRoom() {
           </Button>
           <div className="flex items-center justify-between gap-4">
             <div className="flex-1 min-w-0">
-              <h1 className="truncate">{issue.title}</h1>
-              <div className="flex items-center gap-3 mt-1 text-muted-foreground flex-wrap">
-                <span>{issue.participants}/{issue.capacity}</span>
+              <h1 className="truncate text-lg font-semibold text-foreground">{headerTitle}</h1>
+              {headerSubtitle && (
+                <p className="text-sm text-muted-foreground truncate mt-1">{headerSubtitle}</p>
+              )}
+              <div className="flex items-center gap-3 mt-2 text-muted-foreground flex-wrap">
+                <span className="flex items-center gap-2 text-sm">
+                  <Users className="w-3.5 h-3.5" />
+                  <span className="font-medium text-foreground">{occupancyLabel}</span>
+                </span>
                 <Separator orientation="vertical" className="h-4" />
-                <span className="truncate">
-                  <strong className="text-foreground">{nick}</strong>
+                <span className="truncate text-sm">
+                  내 닉네임:
+                  <strong className="text-foreground ml-1">{nickReady ? nick : '로딩 중'}</strong>
                 </span>
               </div>
             </div>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setNick(randomNickname())}
+              onClick={handleShuffleNick}
+              disabled={!membership}
             >
               <Shuffle className="w-4 h-4 mr-1.5" />
               닉네임 변경
@@ -82,11 +354,19 @@ export default function ChatRoom() {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 py-6">
+      <main className="max-w-4xl mx-auto px-4 py-6 space-y-4">
         <Card>
           <CardContent className="p-0">
             <div ref={scrollerRef} className="h-[500px] overflow-y-auto p-4 space-y-3">
-              {messages.length === 0 ? (
+              {joinError ? (
+                <div className="flex flex-col items-center justify-center h-full text-muted-foreground text-center space-y-2">
+                  <MessageCircle className="w-12 h-12 mb-3 opacity-50" />
+                  <p>{joinError}</p>
+                  {isFull && (
+                    <p className="text-sm text-rose-500">채팅방 정원이 가득 찼습니다.</p>
+                  )}
+                </div>
+              ) : messages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
                   <MessageCircle className="w-12 h-12 mb-3 opacity-50" />
                   <p>아직 메시지가 없습니다.</p>
@@ -94,54 +374,49 @@ export default function ChatRoom() {
                 </div>
               ) : (
                 messages.map((m) => {
-                  const isOwn = m.author === nick && !m.isSystem;
-                  const isSystem = m.isSystem;
-
-                  if (isSystem) {
-                    return (
-                      <div key={m.id} className="flex justify-center">
-                        <div className="bg-muted px-3 py-1.5 rounded-full max-w-md text-center">
-                          <p className="text-muted-foreground">{m.text}</p>
-                        </div>
-                      </div>
-                    );
-                  }
+                  const isOwn = membership?.memberId === m.memberId
 
                   return (
                     <div key={m.id} className={`flex gap-2 ${isOwn ? "flex-row-reverse" : ""}`}>
                       <Avatar className="w-8 h-8 flex-shrink-0">
                         <AvatarFallback className={isOwn ? "bg-indigo-600 text-white" : "bg-muted"}>
-                          {m.author.slice(-2)}
+                          {m.authorNick?.slice(-2)}
                         </AvatarFallback>
                       </Avatar>
                       <div className={`flex flex-col gap-1 max-w-[70%] ${isOwn ? "items-end" : ""}`}>
                         {!isOwn && (
-                          <span className="text-sm text-muted-foreground px-1">{m.author}</span>
+                          <span className="text-sm text-muted-foreground px-1">{m.authorNick}</span>
                         )}
                         <div className={`rounded-2xl px-4 py-2 ${isOwn ? "bg-indigo-600 text-white" : "bg-muted"}`}>
-                          <p className="break-words">{m.text}</p>
+                          <p className="break-words">{m.body}</p>
                         </div>
-                        <span className="text-xs text-muted-foreground px-1">{formatTime(m.ts)}</span>
+                        <span className="text-xs text-muted-foreground px-1">{formatTime(m.createdAt)}</span>
                       </div>
                     </div>
-                  );
+                  )
                 })
               )}
             </div>
           </CardContent>
         </Card>
 
-        <div className="flex gap-2 mt-4">
-          <Input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && send()}
-            placeholder="메시지를 입력하세요..."
-            className="flex-1"
-          />
-          <Button onClick={send} disabled={!input.trim()}>
-            <Send className="w-4 h-4" />
-          </Button>
+        <div className="flex flex-col gap-2">
+          {messageError && (
+            <div className="text-sm text-rose-500">{messageError}</div>
+          )}
+          <div className="flex gap-2">
+            <Input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && !e.nativeEvent.isComposing && send()}
+              placeholder={joinError ? "채팅에 참여할 수 없습니다." : "메시지를 입력하세요..."}
+              className="flex-1"
+              disabled={!membership || !!joinError}
+            />
+            <Button onClick={send} disabled={!membership || !!joinError || !input.trim()}>
+              <Send className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
       </main>
 
@@ -149,5 +424,5 @@ export default function ChatRoom() {
         © 2025 비하인드. 모두의 뒷얘기 살롱.
       </footer>
     </div>
-  );
+  )
 }

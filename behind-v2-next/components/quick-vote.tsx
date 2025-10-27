@@ -1,5 +1,5 @@
 'use client'
-import { handleApiResponse, showError } from '@/lib/toast-utils';
+import { handleApiResponse } from '@/lib/toast-utils';
 import { csrfFetch } from '@/lib/csrf-client';
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -132,8 +132,32 @@ export function QuickVote({ pollId, question, options, ctaLabel = "댓글 토론
       </CardHeader>
       <CardContent>
         {!voted ? (
-          <div className="flex gap-3">
-            .
+          <div className="space-y-3">
+            {safeOptions.map((option, idx) => {
+              const count = toSafeNumber(counts?.[idx])
+              return (
+                <Button
+                  key={option.id || idx}
+                  variant="outline"
+                  className="w-full justify-between border-slate-300 hover:bg-indigo-50 hover:border-indigo-400"
+                  onClick={() => handleVote(idx)}
+                >
+                  <span className="text-slate-800">{option.label}</span>
+                  <span className="text-sm text-slate-500 tabular-nums">
+                    {count.toLocaleString()}표
+                  </span>
+                </Button>
+              )
+            })}
+            {onCta && (
+              <Button
+                onClick={onCta}
+                variant="secondary"
+                className="w-full border-indigo-500 text-indigo-700 hover:bg-indigo-50"
+              >
+                {ctaLabel}
+              </Button>
+            )}
           </div>
         ) : (
           <div className="space-y-3">

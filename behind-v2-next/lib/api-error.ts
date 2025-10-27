@@ -40,6 +40,15 @@ export enum ErrorCode {
   // 이슈 관련
   ISSUE_FETCH_FAILED = 'ISSUE_FETCH_FAILED',
 
+  // 채팅 관련
+  CHAT_ROOM_NOT_FOUND = 'CHAT_ROOM_NOT_FOUND',
+  CHAT_ROOM_FULL = 'CHAT_ROOM_FULL',
+  CHAT_MEMBER_CONFLICT = 'CHAT_MEMBER_CONFLICT',
+  CHAT_MEMBER_NOT_FOUND = 'CHAT_MEMBER_NOT_FOUND',
+  CHAT_MESSAGE_TOO_LONG = 'CHAT_MESSAGE_TOO_LONG',
+  CHAT_MESSAGE_FAILED = 'CHAT_MESSAGE_FAILED',
+  CHAT_RATE_LIMITED = 'CHAT_RATE_LIMITED',
+
   // 댓글 투표
   COMMENT_VOTE_ALREADY = 'ALREADY_VOTED',
   COMMENT_VOTE_FAILED = 'COMMENT_VOTE_FAILED'
@@ -65,7 +74,15 @@ const ERROR_MESSAGES: Record<ErrorCode, string> = {
   [ErrorCode.ISSUE_FETCH_FAILED]: '이슈를 불러오지 못했습니다',
 
   [ErrorCode.COMMENT_VOTE_ALREADY]: '이미 투표하셨습니다',
-  [ErrorCode.COMMENT_VOTE_FAILED]: '댓글 투표 처리에 실패했습니다'
+  [ErrorCode.COMMENT_VOTE_FAILED]: '댓글 투표 처리에 실패했습니다',
+
+  [ErrorCode.CHAT_ROOM_NOT_FOUND]: '채팅방을 찾을 수 없습니다',
+  [ErrorCode.CHAT_ROOM_FULL]: '채팅방 정원이 가득 찼습니다',
+  [ErrorCode.CHAT_MEMBER_CONFLICT]: '이미 참여 중인 사용자입니다',
+  [ErrorCode.CHAT_MEMBER_NOT_FOUND]: '채팅 참여 정보를 찾을 수 없습니다',
+  [ErrorCode.CHAT_MESSAGE_TOO_LONG]: '메시지가 너무 깁니다',
+  [ErrorCode.CHAT_MESSAGE_FAILED]: '메시지를 전송하지 못했습니다',
+  [ErrorCode.CHAT_RATE_LIMITED]: '요청이 너무 많습니다. 잠시 후 다시 시도해주세요'
 }
 
 // 에러 응답 생성 함수

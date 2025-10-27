@@ -15,9 +15,17 @@ export async function apiClient<T>(
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    const error: any = new Error(errorData.error || `API error: ${response.status}`);
+    const rawError = (errorData as any)?.error;
+    const message =
+      typeof rawError === 'string'
+        ? rawError
+        : rawError?.message || `API error: ${response.status}`;
+    const error: any = new Error(message);
     error.status = response.status;
-    error.code = errorData.code;
+    error.code =
+      typeof rawError === 'object' && rawError?.code ? rawError.code : (errorData as any)?.code;
+    error.details =
+      typeof rawError === 'object' && rawError?.details ? rawError.details : (errorData as any)?.details;
     throw error;
   }
 
@@ -25,11 +33,12 @@ export async function apiClient<T>(
 }
 
 // 이슈 조회
-export async function fetchIssues(params?: { includeAll?: boolean; limit?: number; offset?: number }) {
+export async function fetchIssues(params?: { includeAll?: boolean; limit?: number; offset?: number; status?: string }) {
   const searchParams = new URLSearchParams()
   if (params?.includeAll) searchParams.set('includeAll', 'true')
   if (params?.limit) searchParams.set('limit', params.limit.toString())
   if (params?.offset) searchParams.set('offset', params.offset.toString())
+  if (params?.status) searchParams.set('status', params.status)
 
   const url = `/api/issues${searchParams.toString() ? `?${searchParams.toString()}` : ''}`
   return apiClient<{ success: boolean; data: any[]; count: number }>(url)
@@ -84,4 +93,3 @@ export async function curiousReport(reportId: string, deviceHash: string) {
     body: JSON.stringify({ deviceHash }),
   })
 }
-
