@@ -24,6 +24,13 @@ export enum ErrorCode {
   INVALID_REQUEST = 'INVALID_REQUEST',
   MISSING_FIELDS = 'MISSING_FIELDS',
 
+  // 계정 관련 (추가)
+  UNAUTHORIZED = 'UNAUTHORIZED',
+  NICKNAME_TAKEN = 'NICKNAME_TAKEN',
+  NICKNAME_INVALID = 'NICKNAME_INVALID',
+  NICKNAME_CHANGE_TOO_SOON = 'NICKNAME_CHANGE_TOO_SOON',
+  LOGIN_REQUIRED = 'LOGIN_REQUIRED',
+
   // 댓글 관련
   COMMENT_TOO_SHORT = 'COMMENT_TOO_SHORT',
   COMMENT_TOO_LONG = 'COMMENT_TOO_LONG',
@@ -59,6 +66,11 @@ const ERROR_MESSAGES: Record<ErrorCode, string> = {
   [ErrorCode.INTERNAL_ERROR]: '서버 오류가 발생했습니다',
   [ErrorCode.INVALID_REQUEST]: '잘못된 요청입니다',
   [ErrorCode.MISSING_FIELDS]: '필수 항목이 누락되었습니다',
+  [ErrorCode.UNAUTHORIZED]: '로그인이 필요합니다',
+  [ErrorCode.NICKNAME_TAKEN]: '이미 사용 중인 닉네임입니다',
+  [ErrorCode.NICKNAME_INVALID]: '닉네임 형식이 올바르지 않습니다',
+  [ErrorCode.NICKNAME_CHANGE_TOO_SOON]: '닉네임은 30일에 1회만 변경할 수 있습니다',
+  [ErrorCode.LOGIN_REQUIRED]: '로그인이 필요합니다',
 
   [ErrorCode.COMMENT_TOO_SHORT]: '댓글은 2자 이상 작성해주세요',
   [ErrorCode.COMMENT_TOO_LONG]: '댓글은 500자 이하로 작성해주세요',
