@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
       return createErrorResponse(ErrorCode.NICKNAME_TAKEN, 409)
     }
 
-    // 4. 닉네임 저장
+    // 4. 닉네임 저장 (DB 테이블)
     const { error: updateError } = await supabase
       .from('users')
       .update({ 
@@ -63,7 +63,17 @@ export async function POST(request: NextRequest) {
       return createErrorResponse(ErrorCode.INTERNAL_ERROR, 500)
     }
 
-    // 5. 성공 응답
+    // 5. Auth user_metadata에도 동기화
+    const { error: authUpdateError } = await supabase.auth.updateUser({
+      data: { nickname }
+    })
+
+    if (authUpdateError) {
+      console.error('Update auth metadata error:', authUpdateError)
+      // DB는 이미 업데이트됨, 에러만 로그
+    }
+
+    // 6. 성공 응답
     return createSuccessResponse({ 
       nickname,
       message: '닉네임이 설정되었습니다'

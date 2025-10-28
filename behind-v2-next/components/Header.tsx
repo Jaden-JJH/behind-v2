@@ -9,7 +9,7 @@ import { NicknameModal } from "@/components/NicknameModal";
 import { Button } from "@/components/ui/button";
 
 export function Header() {
-  const { user, loading, signInWithGoogle, signOut } = useAuth();
+  const { user, loading, signInWithGoogle, signOut, refreshUser } = useAuth();
   const [showNicknameModal, setShowNicknameModal] = useState(false);
   const router = useRouter();
 
@@ -56,10 +56,11 @@ export function Header() {
     }
   }, [signOut]);
 
-  const handleNicknameSuccess = useCallback(() => {
+  const handleNicknameSuccess = useCallback(async () => {
     setShowNicknameModal(false);
+    await refreshUser();
     router.refresh();
-  }, [router]);
+  }, [router, refreshUser]);
 
   return (
     <>
