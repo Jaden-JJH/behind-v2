@@ -4,6 +4,8 @@ import { csrfFetch } from '@/lib/csrf-client';
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAuth } from '@/hooks/useAuth';
+import { LoginPrompt } from '@/components/LoginPrompt';
 
 /** =========================
  *  Utils
@@ -61,6 +63,38 @@ const getDeviceHash = (): string => {
   return hash;
 };
 
+// 투표 횟수 관리
+const VOTE_COUNT_KEY = 'bh_vote_count';
+
+const getVoteCount = (): number => {
+  if (typeof window === "undefined") return 0;
+  try {
+    const count = localStorage.getItem(VOTE_COUNT_KEY);
+    return count ? Number.parseInt(count, 10) : 0;
+  } catch {
+    return 0;
+  }
+};
+
+const incrementVoteCount = (): number => {
+  if (typeof window === "undefined") return 0;
+  try {
+    const current = getVoteCount();
+    const newCount = current + 1;
+    localStorage.setItem(VOTE_COUNT_KEY, String(newCount));
+    return newCount;
+  } catch {
+    return 0;
+  }
+};
+
+const resetVoteCount = (): void => {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.removeItem(VOTE_COUNT_KEY);
+  } catch {}
+};
+
 /** =========================
  *  QuickVote - 투표 컴포넌트
  *  ========================= */
@@ -73,10 +107,12 @@ interface QuickVoteProps {
 }
 
 export function QuickVote({ pollId, question, options, ctaLabel = "댓글 토론 참여하기", onCta }: QuickVoteProps) {
+  const { user, signInWithGoogle } = useAuth();
   const safeOptions = useMemo(() => normalizeOptions(options), [options]);
   const [counts, setCounts] = useState(() => initCountsFromOptions(safeOptions));
   const [selected, setSelected] = useState<number | null>(null);
   const [voted, setVoted] = useState(false);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
   useEffect(() => {
     const saved = getStoredVote(pollId || question || "");
@@ -86,10 +122,28 @@ export function QuickVote({ pollId, question, options, ctaLabel = "댓글 토론
     }
   }, [pollId, question]);
 
+  // 로그인 시 투표 카운트 초기화
+  useEffect(() => {
+    if (user) {
+      resetVoteCount();
+    }
+  }, [user]);
+
   const total = (Array.isArray(counts) ? counts : []).reduce((a, b) => toSafeNumber(a) + toSafeNumber(b), 0);
 
   const handleVote = async (idx: number) => {
     if (voted) return;
+
+    // 비로그인 사용자: 투표 횟수 체크
+    if (!user) {
+      const currentCount = getVoteCount();
+      
+      // 3번째 투표부터 로그인 팝업 표시
+      if (currentCount >= 2) {
+        setShowLoginPrompt(true);
+        // 팝업 표시 후에도 투표는 진행 (옵션 A 정책)
+      }
+    }
 
     const selectedOption = safeOptions[idx];
     const cleanPollId = pollId.replace(/^poll_/, '');
@@ -115,6 +169,14 @@ export function QuickVote({ pollId, question, options, ctaLabel = "댓글 토론
       setVoted(true);
       setStoredVote(pollId || question || "", idx);
 
+      // 비로그인 사용자: 투표 카운트 증가 (최대 3까지)
+      if (!user) {
+        const currentCount = getVoteCount();
+        if (currentCount < 3) {
+          incrementVoteCount();
+        }
+      }
+
     } catch (error: any) {
       // handleApiResponse에서 이미 토스트 표시됨
       // 중복 투표는 409 에러로 처리됨
@@ -123,76 +185,85 @@ export function QuickVote({ pollId, question, options, ctaLabel = "댓글 토론
   };
 
   return (
-    <Card className="bg-white border-slate-200 shadow-sm">
-      <CardHeader>
-        <CardTitle className="text-base font-semibold text-slate-800">{question}</CardTitle>
-        <p className="text-slate-500 text-sm flex items-center gap-1.5 mt-1">
-          {toSafeNumber(total).toLocaleString()}명 참여
-        </p>
-      </CardHeader>
-      <CardContent>
-        {!voted ? (
-          <div className="space-y-3">
-            {safeOptions.map((option, idx) => {
-              const count = toSafeNumber(counts?.[idx])
-              return (
+    <>
+      <LoginPrompt
+        open={showLoginPrompt}
+        onClose={() => setShowLoginPrompt(false)}
+        onLogin={signInWithGoogle}
+        voteCount={getVoteCount()}
+      />
+
+      <Card className="bg-white border-slate-200 shadow-sm">
+        <CardHeader>
+          <CardTitle className="text-base font-semibold text-slate-800">{question}</CardTitle>
+          <p className="text-slate-500 text-sm flex items-center gap-1.5 mt-1">
+            {toSafeNumber(total).toLocaleString()}명 참여
+          </p>
+        </CardHeader>
+        <CardContent>
+          {!voted ? (
+            <div className="space-y-3">
+              {safeOptions.map((option, idx) => {
+                const count = toSafeNumber(counts?.[idx])
+                return (
+                  <Button
+                    key={option.id || idx}
+                    variant="outline"
+                    className="w-full justify-between border-slate-300 hover:bg-indigo-50 hover:border-indigo-400"
+                    onClick={() => handleVote(idx)}
+                  >
+                    <span className="text-slate-800">{option.label}</span>
+                    <span className="text-sm text-slate-500 tabular-nums">
+                      {count.toLocaleString()}표
+                    </span>
+                  </Button>
+                )
+              })}
+              {onCta && (
                 <Button
-                  key={option.id || idx}
-                  variant="outline"
-                  className="w-full justify-between border-slate-300 hover:bg-indigo-50 hover:border-indigo-400"
-                  onClick={() => handleVote(idx)}
+                  onClick={onCta}
+                  variant="secondary"
+                  className="w-full border-indigo-500 text-indigo-700 hover:bg-indigo-50"
                 >
-                  <span className="text-slate-800">{option.label}</span>
-                  <span className="text-sm text-slate-500 tabular-nums">
-                    {count.toLocaleString()}표
-                  </span>
+                  {ctaLabel}
                 </Button>
-              )
-            })}
-            {onCta && (
-              <Button
-                onClick={onCta}
-                variant="secondary"
-                className="w-full border-indigo-500 text-indigo-700 hover:bg-indigo-50"
-              >
-                {ctaLabel}
-              </Button>
-            )}
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {safeOptions.map((o, idx) => {
-              const c = toSafeNumber(counts?.[idx]);
-              const t = Math.max(1, toSafeNumber(total));
-              const pct = Math.round((c / t) * 100);
-              const chosen = selected === idx;
-              return (
-                <div key={`res-${idx}`} className={`relative p-3 rounded-lg border-2 transition-all ${chosen ? "border-indigo-500 bg-indigo-50" : "border-slate-200 bg-slate-50"}`}>
-                  <div className="flex justify-between items-center mb-2 relative z-10">
-                    <span className={chosen ? "text-indigo-900 font-medium" : "text-slate-700"}>{o.label}</span>
-                    <span className={`${chosen ? "text-indigo-700 font-semibold" : "text-slate-500"} tabular-nums text-sm`}>{pct}%</span>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {safeOptions.map((o, idx) => {
+                const c = toSafeNumber(counts?.[idx]);
+                const t = Math.max(1, toSafeNumber(total));
+                const pct = Math.round((c / t) * 100);
+                const chosen = selected === idx;
+                return (
+                  <div key={`res-${idx}`} className={`relative p-3 rounded-lg border-2 transition-all ${chosen ? "border-indigo-500 bg-indigo-50" : "border-slate-200 bg-slate-50"}`}>
+                    <div className="flex justify-between items-center mb-2 relative z-10">
+                      <span className={chosen ? "text-indigo-900 font-medium" : "text-slate-700"}>{o.label}</span>
+                      <span className={`${chosen ? "text-indigo-700 font-semibold" : "text-slate-500"} tabular-nums text-sm`}>{pct}%</span>
+                    </div>
+                    <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+                      <div
+                        className={`h-2 rounded-full transition-all duration-500 ease-out ${chosen ? "bg-indigo-600" : "bg-slate-400"}`}
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
                   </div>
-                  <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
-                    <div
-                      className={`h-2 rounded-full transition-all duration-500 ease-out ${chosen ? "bg-indigo-600" : "bg-slate-400"}`}
-                      style={{ width: `${pct}%` }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-            {onCta && (
-              <Button
-                onClick={onCta}
-                variant="outline"
-                className="w-full mt-2 border-indigo-500 text-indigo-700 hover:bg-indigo-50"
-              >
-                {ctaLabel}
-              </Button>
-            )}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+                );
+              })}
+              {onCta && (
+                <Button
+                  onClick={onCta}
+                  variant="outline"
+                  className="w-full mt-2 border-indigo-500 text-indigo-700 hover:bg-indigo-50"
+                >
+                  {ctaLabel}
+                </Button>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </>
   );
 }
