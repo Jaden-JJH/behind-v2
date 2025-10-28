@@ -68,10 +68,16 @@ export async function csrfFetch(url: string, options: RequestInit = {}): Promise
   
   // GET 요청은 CSRF 토큰 불필요
   if (!protectedMethods.includes(method)) {
-    return fetch(url, options);
+    return fetch(url, {
+      ...options,
+      credentials: 'include', // 쿠키 포함
+    });
   }
   
   // CSRF 토큰 추가
   const csrfOptions = await withCsrfToken(options);
-  return fetch(url, csrfOptions);
+  return fetch(url, {
+    ...csrfOptions,
+    credentials: 'include', // 쿠키 포함
+  });
 }
