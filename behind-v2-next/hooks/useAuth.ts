@@ -8,6 +8,7 @@ type UseAuthReturn = {
   loading: boolean
   signInWithGoogle: () => Promise<void>
   signOut: () => Promise<void>
+  refreshUser: () => Promise<void>
 }
 
 export const useAuth = (): UseAuthReturn => {
@@ -65,10 +66,22 @@ export const useAuth = (): UseAuthReturn => {
     if (error) throw error
   }
 
+  const refreshUser = async (): Promise<void> => {
+    const { data, error } = await supabase.auth.getUser()
+
+    if (error) {
+      console.error('Failed to refresh user', error)
+      return
+    }
+
+    setUser(data.user)
+  }
+
   return {
     user,
     loading,
     signInWithGoogle,
     signOut,
+    refreshUser,
   }
 }
