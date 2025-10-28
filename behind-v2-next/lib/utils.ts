@@ -25,11 +25,19 @@ export const setLS = (k: string, v: unknown): void => {
   } catch {}
 };
 
+export const delLS = (k: string): void => {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.removeItem(k);
+  } catch {}
+};
+
 /** =========================
  *  Chat Helpers
  *  ========================= */
 export const chatKey = (roomId: string): string => `bh_chat_${roomId}`;
 export const nickKey = (roomId: string): string => `bh_nick_${roomId}`;
+export const sessionKey = (roomId: string): string => `bh_session_${roomId}`;
 
 export function randomNickname(): string {
   const num = Math.floor(1000 + Math.random() * 9000);

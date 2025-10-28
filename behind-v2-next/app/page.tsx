@@ -8,8 +8,10 @@ import { MessageCircle, Eye, TrendingUp, ArrowDown, ChevronDown, Flame } from "l
 import { IssueCard } from "@/components/issue-card";
 import { QuickVote } from "@/components/quick-vote";
 import { fetchIssues, fetchReports, curiousReport } from "@/lib/api-client";
+import { fetchChatRoomState, fetchChatRoomStates } from "@/lib/chat-client";
 import { formatTime, formatDate } from "@/lib/utils";
 import { getDeviceHash } from "@/lib/device-hash";
+import type { ChatRoomState } from "@/lib/chat-types";
 
 export default function LandingPage() {
   const [showAllReported, setShowAllReported] = useState(false);
@@ -20,6 +22,7 @@ export default function LandingPage() {
   const [reportedIssues, setReportedIssues] = useState<any[]>([]);
   const [curiousLoading, setCuriousLoading] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(true);
+  const [chatStates, setChatStates] = useState<Record<string, ChatRoomState>>({});
 
   useEffect(() => {
     async function loadIssues() {
@@ -30,19 +33,10 @@ export default function LandingPage() {
 
         // 투표 데이터 로드
         const pollIssues = response.data.filter(issue => {
-          console.log('Issue check:', {
-            display_id: issue.display_id,
-            status: issue.status,
-            show_in_main_poll: issue.show_in_main_poll,
-            has_poll: !!issue.poll
-          });
-
           return issue.status === "active" &&
                  issue.show_in_main_poll === true &&
                  issue.poll;
         }).slice(0, 2);
-
-        console.log('Filtered poll issues:', pollIssues);
         setPolls(pollIssues);
 
         // 지나간 이슈 데이터 (전체 active 이슈 중 최신순 5개)
@@ -85,6 +79,61 @@ export default function LandingPage() {
     }
     loadIssues();
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadChatStates(targetIssues: any[]) {
+      const ids = targetIssues.map((issue) => issue.id).filter(Boolean);
+      if (ids.length === 0) {
+        if (!cancelled) {
+          setChatStates({});
+        }
+        return;
+      }
+
+      try {
+        const states = await fetchChatRoomStates(ids);
+        if (cancelled) return;
+
+        const map: Record<string, ChatRoomState> = {};
+        states.forEach((state) => {
+          map[state.issueId] = state;
+        });
+        setChatStates(map);
+      } catch (error) {
+        console.error("Failed to batch fetch chat states:", error);
+
+        const entries = await Promise.all(
+          ids.map(async (id) => {
+            try {
+              const state = await fetchChatRoomState(id);
+              return [id, state] as const;
+            } catch (err) {
+              console.error("Failed to fetch chat state:", id, err);
+              return null;
+            }
+          })
+        );
+
+        if (cancelled) return;
+
+        const map: Record<string, ChatRoomState> = {};
+        entries.forEach((entry) => {
+          if (!entry) return;
+          const [id, state] = entry;
+          map[id] = state;
+        });
+        setChatStates(map);
+      }
+    }
+
+    loadChatStates(issues);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [issues]);
 
   const handleCurious = async (reportId: string) => {
     setCuriousLoading(prev => ({ ...prev, [reportId]: true }));
@@ -173,7 +222,14 @@ export default function LandingPage() {
                   issue={{
                     ...issue,
                     commentCount: issue.comment_count,
-                    viewCount: issue.view_count
+                    viewCount: issue.view_count,
+                    chat: chatStates[issue.id]
+                      ? {
+                          activeMembers: chatStates[issue.id].activeMembers,
+                          capacity: chatStates[issue.id].capacity,
+                          isFull: chatStates[issue.id].activeMembers >= chatStates[issue.id].capacity
+                        }
+                      : undefined
                   }}
                   onOpenIssue={(display_id) => window.location.href = `/issues/${display_id}`}
                   onOpenChat={(id) => window.location.href = `/chat/${id}`}

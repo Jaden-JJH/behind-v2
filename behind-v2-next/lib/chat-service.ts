@@ -59,18 +59,29 @@ function mapChatError(error: PostgrestError): ChatServiceError {
   return new ChatServiceError(ChatServiceErrorCode.UNKNOWN, error.message)
 }
 
-function parseRoomState(row: any): ChatRoomState {
+function parseRoomState(row: any, fallbackIssueId?: string): ChatRoomState {
   if (!row) {
     throw new ChatServiceError(ChatServiceErrorCode.ROOM_NOT_FOUND)
   }
 
+  const issueId = row.issue_id ?? row.issueId ?? fallbackIssueId ?? ''
+  const capacityValue =
+    row.capacity ?? row.room_capacity ?? row.max_capacity ?? row.capacity_value ?? null
+  const activeMembersValue =
+    row.active_members ?? row.activeMembers ?? row.members_active ?? null
+
+  const capacity =
+    typeof capacityValue === 'number' ? capacityValue : Number(capacityValue ?? 0)
+  const activeMembers =
+    typeof activeMembersValue === 'number'
+      ? activeMembersValue
+      : Number(activeMembersValue ?? 0)
+
   return {
     roomId: row.room_id ?? row.id ?? '',
-    issueId: row.issue_id ?? '',
-    capacity: typeof row.capacity === 'number' ? row.capacity : Number(row.capacity ?? 0),
-    activeMembers: typeof row.active_members === 'number'
-      ? row.active_members
-      : Number(row.active_members ?? 0),
+    issueId,
+    capacity,
+    activeMembers,
     lastMessageAt: row.last_message_at ?? null,
     issueTitle: row.issue_title ?? row.title ?? null,
     issueThumbnail: row.issue_thumbnail ?? row.thumbnail ?? null,
@@ -78,8 +89,8 @@ function parseRoomState(row: any): ChatRoomState {
   }
 }
 
-function parseMembership(row: any): ChatMembership {
-  const base = parseRoomState(row)
+function parseMembership(row: any, fallbackIssueId?: string): ChatMembership {
+  const base = parseRoomState(row, fallbackIssueId)
   return {
     ...base,
     memberId: row.member_id ?? row.id ?? '',
@@ -122,14 +133,24 @@ export async function getChatRoomState(issueId: string): Promise<ChatRoomState> 
   }
 
   const row = Array.isArray(data) ? data[0] : data
-  const state = parseRoomState(row)
+  const state = parseRoomState(row, issueId)
+  if (!state.issueId && issueId) {
+    state.issueId = issueId
+  }
 
   const needsMetadata =
-    !state.issueTitle || !state.issueThumbnail || !state.issuePreview || !state.capacity
+    !state.issueId ||
+    !state.issueTitle ||
+    !state.issueThumbnail ||
+    !state.issuePreview ||
+    !state.capacity
 
-  if (needsMetadata) {
+  const metadataIssueId = state.issueId || issueId
+
+  if (needsMetadata && metadataIssueId) {
     try {
-      const issue = await fetchIssueForRoom(state.issueId)
+      const issue = await fetchIssueForRoom(metadataIssueId)
+      state.issueId = state.issueId || issue.id
       state.issueTitle = state.issueTitle ?? issue.title ?? null
       state.issueThumbnail = state.issueThumbnail ?? issue.thumbnail ?? null
       state.issuePreview = state.issuePreview ?? issue.preview ?? null
@@ -156,7 +177,7 @@ export async function getChatRoomStates(issueIds: string[]): Promise<ChatRoomSta
   }
 
   const rows = Array.isArray(data) ? data : []
-  return rows.map(parseRoomState)
+  return rows.map((row) => parseRoomState(row))
 }
 
 export async function joinChatRoom(params: ChatJoinParams): Promise<ChatMembership> {
@@ -189,7 +210,11 @@ export async function joinChatRoom(params: ChatJoinParams): Promise<ChatMembersh
   }
 
   const row = Array.isArray(data) ? data[0] : data
-  return parseMembership(row)
+  const membership = parseMembership(row, issueId)
+  if (!membership.issueId && issueId) {
+    membership.issueId = issueId
+  }
+  return membership
 }
 
 export async function leaveChatRoom(memberId: string): Promise<ChatPresenceState> {

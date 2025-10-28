@@ -45,13 +45,21 @@ export default function AdminDashboardPage() {
         {/* 빠른 액션 */}
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h2 className="text-xl font-bold mb-4">빠른 액션</h2>
-          <div className="flex gap-4">
+          <div className="flex gap-4 flex-wrap">
             <Link
               href="/admin/issues/new"
               className="inline-flex items-center px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
             >
               <span className="mr-2">➕</span>
               <span>이슈 등록하러 가기</span>
+            </Link>
+
+            <Link
+              href="/admin/issues"
+              className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <span className="mr-2">📋</span>
+              <span>이슈 목록 관리</span>
             </Link>
 
             <Link

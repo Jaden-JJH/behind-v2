@@ -94,6 +94,17 @@ export default function AdminLayout({
             {isIssuesOpen && (
               <div className="ml-4 mt-1 space-y-1">
                 <Link
+                  href="/admin/issues"
+                  className={`flex items-center px-4 py-2 rounded-lg transition-colors ${
+                    isActive('/admin/issues')
+                      ? 'bg-indigo-600 text-white'
+                      : 'text-gray-300 hover:bg-gray-700'
+                  }`}
+                >
+                  <span className="mr-3">📋</span>
+                  <span>목록</span>
+                </Link>
+                <Link
                   href="/admin/issues/new"
                   className={`flex items-center px-4 py-2 rounded-lg transition-colors ${
                     isActive('/admin/issues/new')
@@ -185,6 +196,18 @@ export default function AdminLayout({
 
               {isIssuesOpen && (
                 <div className="ml-4 mt-1 space-y-1">
+                  <Link
+                    href="/admin/issues"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`flex items-center px-4 py-2 rounded-lg transition-colors ${
+                      isActive('/admin/issues')
+                        ? 'bg-indigo-600 text-white'
+                        : 'text-gray-300 hover:bg-gray-700'
+                    }`}
+                  >
+                    <span className="mr-3">📋</span>
+                    <span>목록</span>
+                  </Link>
                   <Link
                     href="/admin/issues/new"
                     onClick={() => setIsMobileMenuOpen(false)}

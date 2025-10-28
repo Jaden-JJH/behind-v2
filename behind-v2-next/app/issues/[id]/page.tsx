@@ -2,19 +2,20 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Eye, ThumbsUp, ThumbsDown, Flag, ExternalLink } from "lucide-react";
+import { ArrowLeft, Eye, Users, ThumbsUp, ThumbsDown, Flag, ExternalLink } from "lucide-react";
 import { ImageWithFallback } from "@/components/figma/ImageWithFallback";
 import { QuickVote } from "@/components/quick-vote";
+import { fetchChatRoomState } from "@/lib/chat-client";
 import { formatTime } from "@/lib/utils";
 import { showSuccess, showError, handleApiResponse } from '@/lib/toast-utils';
 import { csrfFetch } from '@/lib/csrf-client';
+import type { ChatRoomState } from "@/lib/chat-types";
 
 // deviceHash 생성/가져오기 함수
 function getDeviceHash(): string {
@@ -62,7 +63,7 @@ interface Poll {
 }
 
 interface IssueDetail {
-  id: number;
+  id: string;
   slug: string;
   title: string;
   preview: string;
@@ -99,6 +100,9 @@ export default function IssueDetailPage() {
   const [issue, setIssue] = useState<IssueDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [chatState, setChatState] = useState<ChatRoomState | null>(null);
+  const [chatLoading, setChatLoading] = useState(false);
+  const [chatError, setChatError] = useState<string | null>(null);
 
   // 댓글 관련 state
   const [comments, setComments] = useState<any[]>([]);
@@ -180,6 +184,43 @@ export default function IssueDetailPage() {
       loadComments();
     }
   }, [issue?.id, sortBy]);
+
+  useEffect(() => {
+    if (!issue?.id) {
+      setChatState(null);
+      return;
+    }
+
+    const targetIssueId = String(issue.id);
+    let cancelled = false;
+
+    async function loadChatState() {
+      try {
+        setChatLoading(true);
+        setChatError(null);
+        const state = await fetchChatRoomState(targetIssueId);
+        if (!cancelled) {
+          setChatState(state);
+        }
+      } catch (err) {
+        console.error('Failed to load chat room state:', err);
+        if (!cancelled) {
+          setChatError('채팅방 정보를 불러오지 못했습니다.');
+          setChatState(null);
+        }
+      } finally {
+        if (!cancelled) {
+          setChatLoading(false);
+        }
+      }
+    }
+
+    loadChatState();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [issue?.id]);
 
   async function loadComments() {
     if (!issue?.id) return;
@@ -327,6 +368,17 @@ export default function IssueDetailPage() {
     );
   }
 
+  const chatActiveMembers = chatState?.activeMembers ?? issue?.active_members ?? 0;
+  const chatCapacity = chatState?.capacity ?? issue?.capacity ?? 0;
+  const isChatFull = chatCapacity > 0 && chatActiveMembers >= chatCapacity;
+  const chatStatusLabel = chatLoading
+    ? '채팅 인원 확인 중...'
+    : chatError
+      ? chatError
+      : `${chatActiveMembers}/${chatCapacity || 0} 참여중`;
+  const joinDisabled = isChatFull || !!chatError;
+  const joinLabel = isChatFull ? '정원 마감' : chatError ? '입장 불가' : '채팅방 입장';
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card sticky top-0 z-10">
@@ -339,7 +391,15 @@ export default function IssueDetailPage() {
             <div className="flex-1">
               <h1 className="mb-2">{issue.title}</h1>
               <div className="flex items-center gap-3 text-muted-foreground flex-wrap">
-                <span>{issue.capacity}명 정원</span>
+                <span className="flex items-center gap-1 text-sm">
+                  <Users className="w-3.5 h-3.5" />
+                  {chatStatusLabel}
+                </span>
+                {isChatFull && !chatError && (
+                  <span className="text-xs font-medium px-2 py-0.5 bg-rose-100 text-rose-600 rounded-full">
+                    정원 마감
+                  </span>
+                )}
                 {issue.view_count > 0 && (
                   <>
                     <Separator orientation="vertical" className="h-4" />
@@ -351,26 +411,35 @@ export default function IssueDetailPage() {
                 )}
               </div>
             </div>
-            <Link href={`/chat/${issue.id}`}>
-              <Button>
-                채팅방 입장
+            <div className="flex flex-col items-end gap-1">
+              <Button
+                disabled={joinDisabled}
+                className="min-w-[120px]"
+                onClick={() => {
+                  if (!joinDisabled) {
+                    router.push(`/chat/${issue.id}`);
+                  }
+                }}
+              >
+                {joinLabel}
               </Button>
-            </Link>
+              {isChatFull && (
+                <span className="text-xs text-rose-500">정원이 가득 찼습니다.</span>
+              )}
+            </div>
           </div>
         </div>
       </header>
 
       <main className="max-w-4xl mx-auto px-3 md:px-4 py-4 md:py-8 space-y-4 md:space-y-6">
         {/* 썸네일 이미지 */}
-        {issue.thumbnail && (
-          <div className="relative w-full aspect-video bg-muted rounded-xl overflow-hidden">
-            <ImageWithFallback
-              src={issue.thumbnail}
-              alt={issue.title}
-              className="w-full h-full object-cover"
-            />
-          </div>
-        )}
+        <div className="relative w-full aspect-video bg-muted rounded-xl overflow-hidden">
+          <ImageWithFallback
+            src={issue.thumbnail}
+            alt={issue.title}
+            className="w-full h-full object-cover"
+          />
+        </div>
 
         {/* 사건 요약 */}
         <Card>

@@ -1,11 +1,31 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { supabase } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabase-admin'
 import { sanitizeFields, sanitizeHtml } from '@/lib/sanitize'
+import { CATEGORY_EN_TO_KO, normalizeCategory, getEnglishCategory } from '@/lib/categories'
 import { withCsrfProtection } from '@/lib/api-helpers'
+
+let categoriesNormalized = false
+
+async function ensureIssueCategoriesNormalized() {
+  if (categoriesNormalized) return
+
+  await Promise.all(
+    Object.entries(CATEGORY_EN_TO_KO).map(([english, korean]) =>
+      supabaseAdmin
+        .from('issues')
+        .update({ category: korean })
+        .eq('category', english)
+    )
+  )
+
+  categoriesNormalized = true
+}
 
 export async function GET(request: Request) {
   try {
+    await ensureIssueCategoriesNormalized()
+
     // 1. 인증 확인
     const cookieStore = await cookies()
     const authCookie = cookieStore.get('admin-auth')
@@ -36,7 +56,7 @@ export async function GET(request: Request) {
     const isAscending = order === 'asc'
 
     // 6. issues 테이블 기본 쿼리
-    let query = supabase
+    let query = supabaseAdmin
       .from('issues')
       .select(
         'id, display_id, title, category, approval_status, visibility, view_count, comment_count, show_in_main_hot, show_in_main_poll, created_at',
@@ -45,7 +65,16 @@ export async function GET(request: Request) {
 
     // 7. 필터 적용
     if (category) {
-      query = query.eq('category', category)
+      const normalizedCategory = normalizeCategory(category)
+      const legacyEnglish = getEnglishCategory(normalizedCategory || undefined)
+
+      if (normalizedCategory) {
+        if (legacyEnglish) {
+          query = query.in('category', [normalizedCategory, legacyEnglish])
+        } else {
+          query = query.eq('category', normalizedCategory)
+        }
+      }
     }
     if (approval) {
       query = query.eq('approval_status', approval)
@@ -72,13 +101,16 @@ export async function GET(request: Request) {
     }
 
     // 11. 각 이슈의 투표 수 조회
-    let issuesWithVotes = issues || []
+    let issuesWithVotes = (issues || []).map((issue) => ({
+      ...issue,
+      category: normalizeCategory(issue.category)
+    }))
 
     if (issuesWithVotes.length > 0) {
       const issueIds = issuesWithVotes.map((issue) => issue.id)
 
       // polls 테이블에서 issue의 poll 데이터 조회
-      const { data: polls, error: pollsError } = await supabase
+      const { data: polls, error: pollsError } = await supabaseAdmin
         .from('polls')
         .select('id, issue_id')
         .in('issue_id', issueIds)
@@ -95,7 +127,7 @@ export async function GET(request: Request) {
 
         if (pollIds.length > 0) {
           // poll_votes에서 투표 수 조회
-          const { data: voteData, error: voteError } = await supabase
+          const { data: voteData, error: voteError } = await supabaseAdmin
             .from('poll_votes')
             .select('poll_id')
             .in('poll_id', pollIds)
@@ -168,6 +200,7 @@ export async function POST(request: Request) {
       preview,
       thumbnail,
       capacity,
+      category,
       summary,
       mediaYoutube,
       mediaNewsTitle,
@@ -219,7 +252,7 @@ export async function POST(request: Request) {
     }
 
     // 3. 이슈 생성
-    const { data: issue, error: issueError } = await supabase
+    const { data: issue, error: issueError } = await supabaseAdmin
       .from('issues')
       .insert({
         slug,
@@ -228,8 +261,9 @@ export async function POST(request: Request) {
         summary: sanitized.summary || null,
         thumbnail: thumbnail || null,
         capacity,
-        category: 'general',
-        status: 'active',
+        category: normalizeCategory(category) || '일반',
+        approval_status: 'pending',
+        visibility: 'paused',
         media_embed: Object.keys(mediaEmbed).length > 0 ? mediaEmbed : null,
         behind_story: sanitized.behindStory || null,
         show_in_main_hot: showInMainHot || false,
@@ -242,7 +276,7 @@ export async function POST(request: Request) {
 
     // 4. 투표 생성 (선택 사항)
     if (sanitized.pollQuestion && sanitizedOptions && sanitizedOptions.length >= 2) {
-      const { data: poll, error: pollError } = await supabase
+      const { data: poll, error: pollError } = await supabaseAdmin
         .from('polls')
         .insert({
           issue_id: issue.id,
@@ -254,7 +288,7 @@ export async function POST(request: Request) {
       if (pollError) throw pollError
 
       // 5. 투표 옵션 생성
-      const { error: optionsError } = await supabase
+      const { error: optionsError } = await supabaseAdmin
         .from('poll_options')
         .insert(
           sanitizedOptions.map((text: string) => ({
@@ -267,7 +301,7 @@ export async function POST(request: Request) {
     }
 
     // 6. 채팅방 생성
-    const { error: roomError } = await supabase
+    const { error: roomError } = await supabaseAdmin
       .from('rooms')
       .insert({
         issue_id: issue.id,

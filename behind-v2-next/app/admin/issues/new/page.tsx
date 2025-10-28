@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { csrfFetch } from '@/lib/csrf-client'
+import { CATEGORY_KO_VALUES } from '@/lib/categories'
 
 export default function AdminPage() {
   const router = useRouter()
@@ -10,6 +11,9 @@ export default function AdminPage() {
   const [preview, setPreview] = useState('')
   const [thumbnail, setThumbnail] = useState('')
   const [capacity, setCapacity] = useState('30')
+  const [category, setCategory] = useState(
+    CATEGORY_KO_VALUES[0] ?? '사회'
+  )
   const [pollQuestion, setPollQuestion] = useState('')
   const [option1, setOption1] = useState('')
   const [option2, setOption2] = useState('')
@@ -49,6 +53,7 @@ export default function AdminPage() {
           summary,
           thumbnail,
           capacity: parseInt(capacity),
+          category,
           mediaYoutube: mediaYoutube || null,
           mediaNewsTitle: mediaNewsTitle || null,
           mediaNewsSource: mediaNewsSource || null,
@@ -69,6 +74,7 @@ export default function AdminPage() {
         setSummary('')
         setThumbnail('')
         setCapacity('30')
+        setCategory(CATEGORY_KO_VALUES[0] ?? '사회')
         setMediaYoutube('')
         setMediaNewsTitle('')
         setMediaNewsSource('')
@@ -115,6 +121,21 @@ export default function AdminPage() {
               placeholder="이슈 제목 (5-50자, 예: 아이돌 A씨 계약 분쟁)"
             />
             <p className="text-xs text-gray-500 mt-1">{title.length}/50자</p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2">카테고리</label>
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="w-full px-4 py-2 border rounded-lg bg-white"
+            >
+              {CATEGORY_KO_VALUES.map((value) => (
+                <option key={value} value={value}>
+                  {value}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div>

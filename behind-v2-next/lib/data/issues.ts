@@ -32,7 +32,7 @@ export const allIssues: Issue[] = [
     upvotes: 234,
     commentCount: 47,
     liveViewers: 12,
-    category: "tech",
+    category: "IT/테크",
     isActive: true,
     createdAt: Date.now() - 1000 * 60 * 60 * 2,
     mediaEmbed: {
@@ -53,7 +53,7 @@ export const allIssues: Issue[] = [
     upvotes: 187,
     commentCount: 92,
     liveViewers: 8,
-    category: "entertainment",
+    category: "연예",
     isActive: true,
     createdAt: Date.now() - 1000 * 60 * 60 * 5
   },
@@ -67,7 +67,7 @@ export const allIssues: Issue[] = [
     upvotes: 312,
     commentCount: 156,
     liveViewers: 0,
-    category: "politics",
+    category: "정치",
     isActive: false,
     createdAt: Date.now() - 1000 * 60 * 60 * 24 * 3
   },
@@ -81,7 +81,7 @@ export const allIssues: Issue[] = [
     upvotes: 198,
     commentCount: 67,
     liveViewers: 15,
-    category: "economy",
+    category: "경제",
     isActive: true,
     createdAt: Date.now() - 1000 * 60 * 60 * 12
   },
@@ -95,7 +95,7 @@ export const allIssues: Issue[] = [
     upvotes: 276,
     commentCount: 203,
     liveViewers: 22,
-    category: "sports",
+    category: "스포츠",
     isActive: true,
     createdAt: Date.now() - 1000 * 60 * 60 * 8
   },
@@ -109,7 +109,7 @@ export const allIssues: Issue[] = [
     upvotes: 89,
     commentCount: 34,
     liveViewers: 0,
-    category: "society",
+    category: "사회",
     isActive: false,
     createdAt: Date.now() - 1000 * 60 * 60 * 24 * 7
   },
@@ -123,7 +123,7 @@ export const allIssues: Issue[] = [
     upvotes: 145,
     commentCount: 78,
     liveViewers: 12,
-    category: "tech",
+    category: "IT/테크",
     isActive: true,
     createdAt: Date.now() - 1000 * 60 * 60 * 18
   },

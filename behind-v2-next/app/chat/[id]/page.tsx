@@ -84,24 +84,6 @@ export default function ChatRoom() {
   }, [membership])
 
   useEffect(() => {
-    const source = roomState ?? membership ?? null
-    if (!source) return
-
-    setHeaderInfo((prev) => ({
-      title: source.issueTitle || prev.title || '채팅방',
-      subtitle:
-        source.issuePreview ||
-        source.issueTitle ||
-        prev.subtitle ||
-        '',
-      activeMembers:
-        typeof source.activeMembers === 'number' ? source.activeMembers : prev.activeMembers,
-      capacity:
-        typeof source.capacity === 'number' ? source.capacity : prev.capacity
-    }))
-  }, [roomState, membership])
-
-  useEffect(() => {
     if (initialized || !nickReady || !sessionId) return
     setInitialized(true)
 

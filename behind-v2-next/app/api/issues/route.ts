@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { createErrorResponse, createSuccessResponse, ErrorCode } from '@/lib/api-error'
+import { normalizeCategory } from '@/lib/categories'
 
 // 서버에서만 사용하는 Supabase 클라이언트
 const supabase = createClient(
@@ -14,6 +15,7 @@ export async function GET(request: Request) {
     const limit = parseInt(searchParams.get('limit') || '10')
     const offset = parseInt(searchParams.get('offset') || '0')
     const includeAll = searchParams.get('includeAll') === 'true'
+    const statusParam = searchParams.get('status')
 
     // Supabase 쿼리 빌더
     let query = supabase
@@ -36,9 +38,15 @@ export async function GET(request: Request) {
 
     // includeAll 여부에 따라 필터 및 정렬 적용
     if (includeAll) {
-      query = query
-        .eq('status', 'active')
-        .order('created_at', { ascending: false })
+      query = query.order('created_at', { ascending: false })
+
+      if (!statusParam || statusParam === 'active') {
+        query = query.eq('status', 'active')
+      } else if (statusParam === 'all') {
+        // no status filter, include every status value
+      } else {
+        query = query.eq('status', statusParam)
+      }
     } else {
       query = query
         .or('show_in_main_hot.eq.true,show_in_main_poll.eq.true')
@@ -53,7 +61,12 @@ export async function GET(request: Request) {
       return createErrorResponse(ErrorCode.ISSUE_FETCH_FAILED, 500, error.message)
     }
 
-    return createSuccessResponse(issues, 200, issues.length)
+    const normalizedIssues = (issues || []).map((issue) => ({
+      ...issue,
+      category: normalizeCategory(issue.category)
+    }))
+
+    return createSuccessResponse(normalizedIssues, 200, normalizedIssues.length)
   } catch (error) {
     console.error('API error:', error)
     return createErrorResponse(ErrorCode.INTERNAL_ERROR, 500)

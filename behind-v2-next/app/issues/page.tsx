@@ -9,6 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, MessageCircle, Users, Eye, Clock } from "lucide-react";
 import { ImageWithFallback } from "@/components/figma/ImageWithFallback";
 import { fetchIssues } from "@/lib/api-client";
+import { fetchChatRoomState, fetchChatRoomStates } from "@/lib/chat-client";
+import type { ChatRoomState } from "@/lib/chat-types";
 import { formatTime } from "@/lib/utils";
 
 export default function AllIssuesPage() {
@@ -19,13 +21,18 @@ export default function AllIssuesPage() {
   const [issues, setIssues] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [chatStates, setChatStates] = useState<Record<string, ChatRoomState>>({});
 
   // API에서 이슈 데이터 가져오기
   useEffect(() => {
     async function loadIssues() {
       try {
         setLoading(true);
-        const response = await fetchIssues();
+        const response = await fetchIssues({
+          includeAll: true,
+          limit: 200,
+          status: 'all'
+        });
         setIssues(response.data);
         setError(null);
       } catch (err) {
@@ -37,6 +44,61 @@ export default function AllIssuesPage() {
     }
     loadIssues();
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadChatStates(targetIssues: any[]) {
+      const ids = targetIssues.map((issue) => issue.id).filter(Boolean);
+      if (ids.length === 0) {
+        if (!cancelled) {
+          setChatStates({});
+        }
+        return;
+      }
+
+      try {
+        const states = await fetchChatRoomStates(ids);
+        if (cancelled) return;
+
+        const map: Record<string, ChatRoomState> = {};
+        states.forEach((state) => {
+          map[state.issueId] = state;
+        });
+        setChatStates(map);
+      } catch (error) {
+        console.error('Failed to batch fetch chat states:', error);
+
+        const entries = await Promise.all(
+          ids.map(async (id) => {
+            try {
+              const state = await fetchChatRoomState(id);
+              return [id, state] as const;
+            } catch (err) {
+              console.error('Failed to fetch chat state:', id, err);
+              return null;
+            }
+          })
+        );
+
+        if (cancelled) return;
+
+        const map: Record<string, ChatRoomState> = {};
+        entries.forEach((entry) => {
+          if (!entry) return;
+          const [id, state] = entry;
+          map[id] = state;
+        });
+        setChatStates(map);
+      }
+    }
+
+    loadChatStates(issues);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [issues]);
 
   const categories = [
     { value: "all", label: "전체" },
@@ -181,57 +243,69 @@ export default function AllIssuesPage() {
               해당하는 이슈가 없습니다.
             </div>
           ) : (
-            filteredIssues.map((issue) => (
-              <Card
-                key={issue.id}
-                className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
-                onClick={() => router.push(`/issues/${issue.display_id}`)}
-              >
-                <CardContent className="p-0">
-                  <div className="flex gap-3 p-3 md:p-4">
-                    {/* Thumbnail */}
-                    <div className="w-24 h-16 md:w-32 md:h-24 flex-shrink-0 rounded-lg overflow-hidden bg-muted">
-                      <ImageWithFallback
-                        src={issue.thumbnail || ''}
-                        alt={issue.title}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
+            filteredIssues.map((issue) => {
+              const chatState = chatStates[issue.id];
+              const currentMembers = chatState?.activeMembers ?? issue.active_members ?? issue.participants ?? 0;
+              const capacity = chatState?.capacity ?? issue.capacity ?? issue.room_capacity ?? 0;
+              const isFull = capacity > 0 && currentMembers >= capacity;
 
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <h3 className="font-semibold text-sm md:text-base line-clamp-1">
-                          {issue.title}
-                        </h3>
-                        <Badge variant={issue.status === 'active' ? 'default' : 'secondary'}>
-                          {issue.category}
-                        </Badge>
+              return (
+                <Card
+                  key={issue.id}
+                  className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                  onClick={() => router.push(`/issues/${issue.display_id}`)}
+                >
+                  <CardContent className="p-0">
+                    <div className="flex gap-3 p-3 md:p-4">
+                      {/* Thumbnail */}
+                      <div className="w-24 h-16 md:w-32 md:h-24 flex-shrink-0 rounded-lg overflow-hidden bg-muted">
+                        <ImageWithFallback
+                          src={issue.thumbnail}
+                          alt={issue.title}
+                          className="w-full h-full object-cover"
+                        />
                       </div>
-                      <p className="text-xs md:text-sm text-muted-foreground line-clamp-2 mb-2 md:mb-3">
-                        {issue.preview}
-                      </p>
-                      <div className="flex items-center gap-2 md:gap-4 text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <Users className="w-3.5 h-3.5" />
-                          {issue.capacity}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <MessageCircle className="w-3.5 h-3.5" />
-                          {issue.comment_count || 0}
-                        </span>
-                        {issue.view_count > 0 && (
+
+                      {/* Content */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <h3 className="font-semibold text-sm md:text-base line-clamp-1">
+                            {issue.title}
+                          </h3>
+                          <Badge variant={issue.status === 'active' ? 'default' : 'secondary'}>
+                            {issue.category}
+                          </Badge>
+                        </div>
+                        <p className="text-xs md:text-sm text-muted-foreground line-clamp-2 mb-2 md:mb-3">
+                          {issue.preview}
+                        </p>
+                        <div className="flex items-center gap-2 md:gap-4 text-xs text-muted-foreground">
                           <span className="flex items-center gap-1">
-                            <Eye className="w-3.5 h-3.5" />
-                            {issue.view_count.toLocaleString()}
+                            <Users className="w-3.5 h-3.5" />
+                            {capacity > 0 ? `${currentMembers}/${capacity}` : `${currentMembers}`}
+                            {isFull && (
+                              <span className="ml-1 px-1.5 py-0.5 text-[10px] rounded bg-rose-100 text-rose-600">
+                                정원 마감
+                              </span>
+                            )}
                           </span>
-                        )}
+                          <span className="flex items-center gap-1">
+                            <MessageCircle className="w-3.5 h-3.5" />
+                            {issue.comment_count || 0}
+                          </span>
+                          {issue.view_count > 0 && (
+                            <span className="flex items-center gap-1">
+                              <Eye className="w-3.5 h-3.5" />
+                              {issue.view_count.toLocaleString()}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
+                  </CardContent>
+                </Card>
+              );
+            })
           )}
         </div>
       </main>

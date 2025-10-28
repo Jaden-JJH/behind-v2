@@ -11,7 +11,7 @@
 //     }
 
 //     // 2. pending 상태 리포트 개수 조회
-//     const { count, error } = await supabase
+//     const { count, error } = await supabaseAdmin
 //       .from('reports')
 //       .select('*', { count: 'exact', head: true })
 //       .eq('status', 'pending')
@@ -32,7 +32,7 @@
 
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { supabase } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabase-admin'
 
 export async function GET() {
   try {
@@ -44,7 +44,7 @@ export async function GET() {
     }
 
     // 2. 모든 리포트 조회 후 필터링
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('reports')
       .select('curious_count, threshold, approval_status, visibility')
       .eq('approval_status', 'pending')

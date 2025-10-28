@@ -17,8 +17,13 @@ interface Issue {
   upvotes?: number;
   commentCount?: number;
   viewCount?: number;
-  participants: number;
-  capacity: number;
+  participants?: number;
+  capacity?: number;
+  chat?: {
+    activeMembers: number;
+    capacity: number;
+    isFull?: boolean;
+  };
 }
 
 interface IssueCardProps {
@@ -32,19 +37,30 @@ export function IssueCard({ issue, onOpenIssue, onOpenChat }: IssueCardProps) {
   // const [upvotes, setUpvotes] = useState(issue.upvotes || 0);
   // const [voted, setVoted] = useState<'up' | 'down' | null>(null);
 
+  const currentMembers =
+    issue.chat?.activeMembers ??
+    issue.participants ??
+    0;
+  const maxCapacity =
+    issue.chat?.capacity ??
+    issue.capacity ??
+    0;
+  const isFull = issue.chat?.isFull ?? (maxCapacity > 0 && currentMembers >= maxCapacity);
+
   return (
     <Card className="bg-white border-slate-200 hover:border-slate-300 hover:shadow-md transition-all overflow-hidden">
       <div className="flex gap-2 md:gap-4 p-3 md:p-4">
         {/* 썸네일 */}
-        {issue.thumbnail && (
-          <div className="w-24 h-16 md:w-48 md:h-32 flex-shrink-0 rounded-lg overflow-hidden bg-slate-100 cursor-pointer" onClick={() => onOpenIssue(String(issue.display_id))}>
-            <ImageWithFallback
-              src={issue.thumbnail}
-              alt={issue.title}
-              className="w-full h-full object-cover hover:scale-105 transition-transform"
-            />
-          </div>
-        )}
+        <div
+          className="w-24 h-16 md:w-48 md:h-32 flex-shrink-0 rounded-lg overflow-hidden bg-slate-100 cursor-pointer"
+          onClick={() => onOpenIssue(String(issue.display_id))}
+        >
+          <ImageWithFallback
+            src={issue.thumbnail}
+            alt={issue.title}
+            className="w-full h-full object-cover hover:scale-105 transition-transform"
+          />
+        </div>
 
         {/* 콘텐츠 영역 */}
         <div className="flex-1 flex flex-col justify-between">
@@ -66,7 +82,9 @@ export function IssueCard({ issue, onOpenIssue, onOpenChat }: IssueCardProps) {
               </span>
               <span className="flex items-center gap-1.5">
                 <Users className="w-4 h-4" />
-                <span className="font-medium">{issue.participants}/{issue.capacity}</span>
+                <span className="font-medium">
+                  {currentMembers}/{maxCapacity || '—'}
+                </span>
               </span>
               {issue.viewCount && (
                 <span className="flex items-center gap-1.5">
@@ -80,8 +98,13 @@ export function IssueCard({ issue, onOpenIssue, onOpenChat }: IssueCardProps) {
               <Button variant="outline" size="sm" className="border-slate-300 text-slate-700 hover:bg-slate-100" onClick={() => onOpenIssue(String(issue.display_id))}>
                 자세히
               </Button>
-              <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white" onClick={() => onOpenChat(issue.id)}>
-                채팅 입장
+              <Button
+                size="sm"
+                className="bg-indigo-600 hover:bg-indigo-700 text-white disabled:bg-slate-300 disabled:text-slate-500"
+                disabled={isFull}
+                onClick={() => onOpenChat(issue.id)}
+              >
+                {isFull ? '정원 마감' : '채팅 입장'}
               </Button>
             </div>
           </div>

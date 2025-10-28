@@ -36,6 +36,27 @@ export const curiousLimiter = new Ratelimit({
   prefix: 'ratelimit:curious',
 })
 
+export const chatSendLimiter = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(5, '5 s'), // 5초당 5회
+  analytics: true,
+  prefix: 'ratelimit:chat:send',
+})
+
+export const chatJoinLimiter = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(3, '1 m'), // 1분당 3회
+  analytics: true,
+  prefix: 'ratelimit:chat:join',
+})
+
+export const chatPresenceLimiter = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(6, '10 s'), // 10초당 6회
+  analytics: true,
+  prefix: 'ratelimit:chat:presence',
+})
+
 // IP 주소 추출 헬퍼 함수
 export function getClientIp(request: Request): string {
   // Vercel 환경에서 IP 추출

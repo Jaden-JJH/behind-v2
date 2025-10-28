@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/dialog'
 import { showSuccess, showError } from '@/lib/toast-utils'
 import { csrfFetch } from '@/lib/csrf-client'
+import { CATEGORY_KO_VALUES } from '@/lib/categories'
 import {
   Select,
   SelectContent,
@@ -31,6 +32,12 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+
+// 카테고리 매핑 (프론트엔드 표시값 → DB 저장값)
+const CATEGORY_OPTIONS = CATEGORY_KO_VALUES.map((value) => ({
+  value,
+  label: value
+}))
 
 // 인터페이스 정의
 interface Issue {
@@ -89,6 +96,15 @@ export default function AdminIssuesPage() {
   const [editThumbnail, setEditThumbnail] = useState('')
   const [editPollQuestion, setEditPollQuestion] = useState('')
   const [editPollOptions, setEditPollOptions] = useState<string[]>(['', ''])
+  const [editMediaYoutube, setEditMediaYoutube] = useState('')
+  const [editMediaNewsTitle, setEditMediaNewsTitle] = useState('')
+  const [editMediaNewsSource, setEditMediaNewsSource] = useState('')
+  const [editMediaNewsUrl, setEditMediaNewsUrl] = useState('')
+
+  // 필터 상태
+  const [filterCategory, setFilterCategory] = useState('')
+  const [filterApprovalStatus, setFilterApprovalStatus] = useState('')
+  const [filterVisibility, setFilterVisibility] = useState('')
 
   // 인증 확인
   useEffect(() => {
@@ -106,7 +122,21 @@ export default function AdminIssuesPage() {
   async function loadIssues() {
     try {
       setLoading(true)
-      const response = await fetch('/api/admin/issues?page=1&limit=50')
+
+      // 필터 파라미터 구성
+    const params = new URLSearchParams({
+      page: '1',
+      limit: '50'
+    })
+
+    if (filterCategory) {
+      params.append('category', filterCategory)
+    }
+
+      if (filterApprovalStatus) params.append('approval', filterApprovalStatus)
+      if (filterVisibility) params.append('visibility', filterVisibility)
+
+      const response = await fetch(`/api/admin/issues?${params.toString()}`)
       const data = await response.json()
 
       if (!response.ok) {
@@ -122,13 +152,42 @@ export default function AdminIssuesPage() {
     }
   }
 
+  // 필터 핸들러
+  function handleCategoryChange(value: string) {
+    setFilterCategory(value === 'all' ? '' : value)
+    // loadIssues()는 useEffect에서 호출됨
+  }
+
+  function handleApprovalStatusChange(value: string) {
+    setFilterApprovalStatus(value === 'all' ? '' : value)
+    // loadIssues()는 useEffect에서 호출됨
+  }
+
+  function handleVisibilityChange(value: string) {
+    setFilterVisibility(value === 'all' ? '' : value)
+    // loadIssues()는 useEffect에서 호출됨
+  }
+
+  function handleResetFilters() {
+    setFilterCategory('')
+    setFilterApprovalStatus('')
+    setFilterVisibility('')
+    // loadIssues()는 useEffect에서 호출됨
+  }
+
+  // 필터 변경 시 목록 재조회
+  useEffect(() => {
+    loadIssues()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterCategory, filterApprovalStatus, filterVisibility])
+
   // 폼 초기화 Helper 함수
   function initializeForm(issueData: Issue) {
     setSelectedIssue(issueData)
     setEditTitle(issueData.title)
     setEditPreview(issueData.preview || '')
     setEditSummary(issueData.summary || '')
-    setEditCategory(issueData.category)
+    setEditCategory(issueData.category || '')
     setEditApprovalStatus(issueData.approval_status)
     setEditVisibility(issueData.visibility)
     setEditShowInMainHot(issueData.show_in_main_hot)
@@ -136,6 +195,13 @@ export default function AdminIssuesPage() {
     setEditBehindStory(issueData.behind_story || '')
     setEditCapacity(issueData.capacity || 0)
     setEditThumbnail(issueData.thumbnail || '')
+
+    // media_embed 파싱
+    const mediaEmbed = (issueData as any).media_embed || {}
+    setEditMediaYoutube(mediaEmbed.youtube || '')
+    setEditMediaNewsTitle(mediaEmbed.news?.title || '')
+    setEditMediaNewsSource(mediaEmbed.news?.source || '')
+    setEditMediaNewsUrl(mediaEmbed.news?.url || '')
 
     const pollData = issueData.poll
     const pollOptions = pollData?.poll_options || []
@@ -153,18 +219,22 @@ export default function AdminIssuesPage() {
       if (!response.ok) {
         // API 호출 실패 시 기본값으로 모달 열기
         console.error('Failed to fetch issue details:', data)
+        setSelectedIssue(issue)
         initializeForm(issue)
         setShowEditModal(true)
         return
       }
 
-      // 성공: API 응답 데이터로 폼 초기화
-      initializeForm(data.data)
+      // 성공: API 응답 데이터로 폼 초기화하고 selectedIssue도 업데이트
+      const latestIssue = data.data
+      setSelectedIssue(latestIssue)
+      initializeForm(latestIssue)
       setShowEditModal(true)
     } catch (error) {
       // 네트워크 오류 등 예외 발생 시 기본값으로 모달 열기
       console.error('Error fetching issue details:', error)
       showError(error)
+      setSelectedIssue(issue)
       initializeForm(issue)
       setShowEditModal(true)
     }
@@ -215,6 +285,20 @@ export default function AdminIssuesPage() {
 
     try {
       setSubmitting(true)
+
+      // media_embed 구성
+      const mediaEmbed: any = {}
+      if (editMediaYoutube) {
+        mediaEmbed.youtube = editMediaYoutube
+      }
+      if (editMediaNewsTitle && editMediaNewsUrl) {
+        mediaEmbed.news = {
+          title: editMediaNewsTitle,
+          source: editMediaNewsSource || '',
+          url: editMediaNewsUrl
+        }
+      }
+
       const response = await csrfFetch(`/api/admin/issues/${selectedIssue.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -230,6 +314,7 @@ export default function AdminIssuesPage() {
           behind_story: editBehindStory || undefined,
           capacity: editCapacity || undefined,
           thumbnail: editThumbnail || undefined,
+          media_embed: Object.keys(mediaEmbed).length > 0 ? mediaEmbed : undefined,
           ...(editPollQuestion.trim() && {
             poll: {
               question: editPollQuestion,
@@ -341,20 +426,56 @@ export default function AdminIssuesPage() {
           <h1 className="text-3xl font-bold">이슈 관리</h1>
         </div>
 
-        {/* 필터/정렬 영역 (아직 동작 안 함) */}
+        {/* 필터/정렬 영역 */}
         <Card className="p-4 mb-6">
-          <div className="flex gap-4">
+          <div className="flex gap-4 items-end">
             <div>
               <label className="block text-sm font-medium mb-1">카테고리</label>
-              <Input placeholder="필터링..." className="w-40" disabled />
+              <Select value={filterCategory || 'all'} onValueChange={handleCategoryChange}>
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="전체" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">전체</SelectItem>
+                  {CATEGORY_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">승인상태</label>
-              <Input placeholder="필터링..." className="w-40" disabled />
+              <Select value={filterApprovalStatus || 'all'} onValueChange={handleApprovalStatusChange}>
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="전체" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">전체</SelectItem>
+                  <SelectItem value="pending">대기</SelectItem>
+                  <SelectItem value="approved">승인</SelectItem>
+                  <SelectItem value="rejected">거부</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">노출상태</label>
-              <Input placeholder="필터링..." className="w-40" disabled />
+              <Select value={filterVisibility || 'all'} onValueChange={handleVisibilityChange}>
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="전체" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">전체</SelectItem>
+                  <SelectItem value="active">게시중</SelectItem>
+                  <SelectItem value="paused">중지</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Button variant="outline" onClick={handleResetFilters}>
+                초기화
+              </Button>
             </div>
           </div>
         </Card>
@@ -475,12 +596,11 @@ export default function AdminIssuesPage() {
                   <SelectValue placeholder="카테고리 선택" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="politics">정치</SelectItem>
-                  <SelectItem value="economy">경제</SelectItem>
-                  <SelectItem value="entertainment">연예</SelectItem>
-                  <SelectItem value="tech">IT/테크</SelectItem>
-                  <SelectItem value="sports">스포츠</SelectItem>
-                  <SelectItem value="society">사회</SelectItem>
+                  {CATEGORY_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -571,6 +691,47 @@ export default function AdminIssuesPage() {
                   value={editThumbnail}
                   onChange={(e) => setEditThumbnail(e.target.value)}
                   placeholder="이미지 URL"
+                />
+              </div>
+            </div>
+
+            {/* 미디어 정보 */}
+            <div className="border-t pt-4">
+              <h3 className="text-sm font-semibold mb-3">미디어 정보</h3>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">유튜브 URL</label>
+                <Input
+                  value={editMediaYoutube}
+                  onChange={(e) => setEditMediaYoutube(e.target.value)}
+                  placeholder="https://www.youtube.com/watch?v=..."
+                />
+              </div>
+
+              <div className="mt-3">
+                <label className="block text-sm font-medium mb-2">뉴스 제목</label>
+                <Input
+                  value={editMediaNewsTitle}
+                  onChange={(e) => setEditMediaNewsTitle(e.target.value)}
+                  placeholder="뉴스 제목"
+                />
+              </div>
+
+              <div className="mt-3">
+                <label className="block text-sm font-medium mb-2">뉴스 출처</label>
+                <Input
+                  value={editMediaNewsSource}
+                  onChange={(e) => setEditMediaNewsSource(e.target.value)}
+                  placeholder="예: 연합뉴스"
+                />
+              </div>
+
+              <div className="mt-3">
+                <label className="block text-sm font-medium mb-2">뉴스 URL</label>
+                <Input
+                  value={editMediaNewsUrl}
+                  onChange={(e) => setEditMediaNewsUrl(e.target.value)}
+                  placeholder="https://..."
                 />
               </div>
             </div>

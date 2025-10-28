@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { normalizeCategory } from '@/lib/categories'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -71,6 +72,15 @@ export async function GET(
         )
       }
       throw issueError
+    }
+
+    const normalizedCategory = normalizeCategory(issue.category)
+    if (normalizedCategory && normalizedCategory !== issue.category) {
+      await supabaseAdmin
+        .from('issues')
+        .update({ category: normalizedCategory })
+        .eq('id', issue.id)
+      issue.category = normalizedCategory
     }
 
     // 조회수 증가 (에러 무시)

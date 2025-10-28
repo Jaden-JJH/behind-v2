@@ -19,12 +19,12 @@ export default function AllIssuesPage() {
 
   const categories = [
     { value: "all", label: "전체" },
-    { value: "politics", label: "정치" },
-    { value: "economy", label: "경제" },
-    { value: "entertainment", label: "연예" },
-    { value: "tech", label: "IT/테크" },
-    { value: "sports", label: "스포츠" },
-    { value: "society", label: "사회" },
+    { value: "정치", label: "정치" },
+    { value: "경제", label: "경제" },
+    { value: "연예", label: "연예" },
+    { value: "IT/테크", label: "IT/테크" },
+    { value: "스포츠", label: "스포츠" },
+    { value: "사회", label: "사회" },
   ];
 
   const sortOptions = [
