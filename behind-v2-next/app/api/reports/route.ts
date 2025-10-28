@@ -122,23 +122,54 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   return withCsrfProtection(request, async (req) => {
     try {
-      // 1. 어드민 인증 확인
+      // 1. 어드민 인증 확인 (있으면 어드민 제보)
       const cookieStore = await cookies()
       const adminAuth = cookieStore.get('admin-auth')
-      if (!adminAuth || adminAuth.value !== 'true') {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      const isAdmin = adminAuth?.value === 'true'
+
+      // 2. 일반 사용자는 로그인 필수
+      let userId = null
+      let reporterName = null
+
+      if (!isAdmin) {
+        const { createClient: createServerClient } = await import('@/lib/supabase/server')
+        const supabaseServer = await createServerClient()
+        const { data: { user }, error: authError } = await supabaseServer.auth.getUser()
+
+        if (authError || !user) {
+          return createErrorResponse(ErrorCode.LOGIN_REQUIRED, 401)
+        }
+
+        // 사용자 닉네임 조회
+        const { data: userData, error: userError } = await supabaseServer
+          .from('users')
+          .select('nickname')
+          .eq('id', user.id)
+          .single()
+
+        if (userError || !userData?.nickname) {
+          return createErrorResponse(ErrorCode.UNAUTHORIZED, 401, {
+            message: '닉네임을 먼저 설정해주세요'
+          })
+        }
+
+        userId = user.id
+        reporterName = userData.nickname
       }
 
-      // 2. 요청 바디 파싱
+      // 3. 요청 바디 파싱
       const body = await req.json()
-      const { title, reporterName, description, threshold } = body
+      const { title, reporterName: inputReporterName, description, threshold } = body
 
-      // 3. XSS 방어 (sanitize)
+      // 어드민은 입력받은 reporterName 사용, 일반 사용자는 자동 설정
+      const finalReporterName = isAdmin ? inputReporterName : reporterName
+
+      // 4. XSS 방어 (sanitize)
       const sanitizedTitle = sanitizeHtml(title)
-      const sanitizedReporterName = sanitizeHtml(reporterName)
+      const sanitizedReporterName = sanitizeHtml(finalReporterName)
       const sanitizedDescription = sanitizeHtml(description)
 
-      // 4. 필수 필드 검증
+      // 5. 필수 필드 검증
       const missing = validateRequired({
         title: sanitizedTitle,
         reporterName: sanitizedReporterName,
@@ -149,7 +180,7 @@ export async function POST(request: Request) {
         return createErrorResponse(ErrorCode.MISSING_FIELDS, 400, { missing })
       }
 
-      // 5. 길이 및 값 검증
+      // 6. 길이 및 값 검증
       if (sanitizedTitle.length < 2 || sanitizedTitle.length > 100) {
         return NextResponse.json(
           { error: '제목은 2자 이상 100자 이하여야 합니다' },
@@ -178,28 +209,35 @@ export async function POST(request: Request) {
         )
       }
 
-      // 6. Supabase insert
+      // 7. Supabase insert (user_id 포함)
+      const insertData: any = {
+        title: sanitizedTitle,
+        reporter_name: sanitizedReporterName,
+        description: sanitizedDescription,
+        threshold: threshold,
+        approval_status: 'pending',
+        visibility: 'paused',
+        curious_count: 0
+      }
+
+      // 일반 사용자인 경우 user_id 추가
+      if (userId) {
+        insertData.user_id = userId
+      }
+
       const { data, error } = await supabase
         .from('reports')
-        .insert({
-          title: sanitizedTitle,
-          reporter_name: sanitizedReporterName,
-          description: sanitizedDescription,
-          threshold: threshold,
-          approval_status: 'pending',
-          visibility: 'paused',
-          curious_count: 0
-        })
+        .insert(insertData)
         .select()
         .single()
 
-      // 7. 에러 처리
+      // 8. 에러 처리
       if (error) {
         console.error('Supabase error:', error)
         return createErrorResponse(ErrorCode.INTERNAL_ERROR, 500, error.message)
       }
 
-      // 8. 성공 응답
+      // 9. 성공 응답
       return createSuccessResponse(data, 201)
     } catch (error) {
       console.error('API error:', error)
