@@ -10,10 +10,10 @@ import { chatPresenceLimiter } from '@/lib/rate-limiter'
 
 export async function POST(
   request: Request,
-  { params }: { params: { issueId: string } }
+  context: { params: Promise<{ issueId: string }> }
 ) {
   return withCsrfProtection(request, async (req) => {
-    const issueId = params.issueId
+    const { issueId } = await context.params
     if (!issueId) {
       return createErrorResponse(ErrorCode.INVALID_REQUEST, 400, { field: 'issueId' })
     }

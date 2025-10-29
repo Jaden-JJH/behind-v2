@@ -115,7 +115,6 @@ export default function ChatRoom() {
 
   useEffect(() => {
     if (initialized || !sessionId || !user) return
-    setInitialized(true)
 
     let cancelled = false
 
@@ -124,9 +123,13 @@ export default function ChatRoom() {
         setLoading(true)
         setJoinError(null)
 
+        if (cancelled) return
+
         await fetchChatRoomState(issueId).then((state) => {
           if (!cancelled) setRoomState(state)
         }).catch(() => undefined)
+
+        if (cancelled) return
 
         const deviceHash = getDeviceHash()
         const joined = await joinChatRoom(issueId, {
@@ -156,6 +159,10 @@ export default function ChatRoom() {
         const history = await fetchChatMessages(issueId, joined.roomId, { limit: 100 })
         if (!cancelled) {
           setMessages(sortMessages(history))
+        }
+
+        if (!cancelled) {
+          setInitialized(true)
         }
       } catch (error: any) {
         console.error('Failed to enter chat room:', error)
@@ -263,6 +270,12 @@ export default function ChatRoom() {
     setMessageError(null)
 
     try {
+      if (!membership.memberId) {
+        console.error('Missing memberId in membership', membership)
+        setMessageError('채팅 멤버 정보가 올바르지 않습니다. 새로고침 후 다시 시도해주세요.')
+        setInput(text)
+        return
+      }
       const saved = await sendChatMessage(issueId, membership.memberId, text)
       setMessages((prev) => mergeMessages(prev, [saved]))
     } catch (error: any) {
