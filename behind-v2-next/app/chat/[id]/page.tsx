@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
-import { ArrowLeft, Send, Shuffle, MessageCircle, Users } from "lucide-react"
+import { ArrowLeft, Send, MessageCircle, Users } from "lucide-react"
 import {
   fetchChatMessages,
   fetchChatRoomState,
@@ -17,7 +17,8 @@ import {
   touchChatPresence
 } from "@/lib/chat-client"
 import type { ChatMembership, ChatMessage, ChatRoomState } from "@/lib/chat-types"
-import { getLS, setLS, delLS, nickKey, randomNickname, sessionKey, formatTime } from "@/lib/utils"
+import { getLS, setLS, delLS, sessionKey, formatTime } from "@/lib/utils"
+import { useAuth } from "@/hooks/useAuth"
 import { getDeviceHash } from "@/lib/device-hash"
 
 function getOrCreateSession(roomId: string): string {
@@ -45,6 +46,7 @@ export default function ChatRoom() {
   const params = useParams()
   const router = useRouter()
   const issueId = params.id as string
+  const { user, loading: authLoading, signInWithGoogle } = useAuth()
 
   const scrollerRef = useRef<HTMLDivElement>(null)
   const membershipRef = useRef<ChatMembership | null>(null)
@@ -58,9 +60,48 @@ export default function ChatRoom() {
   const [messageError, setMessageError] = useState<string | null>(null)
   const [initialized, setInitialized] = useState(false)
 
-  const [sessionId, setSessionId] = useState<string>('')
-  const [nick, setNick] = useState<string>('')
-  const [nickReady, setNickReady] = useState(false)
+  const [sessionId, setSessionId] = useState<string>("")
+
+  const authGuard = (() => {
+    if (authLoading) {
+      return (
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-muted-foreground">로딩 중...</p>
+          </div>
+        </div>
+      )
+    }
+
+    if (!user) {
+      return (
+        <div className="min-h-screen bg-background">
+          <header className="border-b bg-card sticky top-0 z-10">
+            <div className="max-w-4xl mx-auto px-4 py-4">
+              <Button variant="ghost" onClick={() => router.push("/")} className="mb-2 -ml-2">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                목록으로
+              </Button>
+            </div>
+          </header>
+          <main className="max-w-4xl mx-auto px-4 py-6">
+            <Card>
+              <CardContent className="p-8 text-center space-y-4">
+                <MessageCircle className="w-16 h-16 mx-auto text-muted-foreground opacity-50" />
+                <h2 className="text-xl font-semibold">로그인이 필요합니다</h2>
+                <p className="text-muted-foreground">채팅방에 입장하려면 로그인이 필요합니다.</p>
+                <Button onClick={() => signInWithGoogle(`/chat/${issueId}`)}>
+                  Google 로그인
+                </Button>
+              </CardContent>
+            </Card>
+          </main>
+        </div>
+      )
+    }
+
+    return null
+  })()
 
   useEffect(() => {
     if (!issueId) return
@@ -69,22 +110,11 @@ export default function ChatRoom() {
   }, [issueId])
 
   useEffect(() => {
-    if (!issueId) return
-    let saved = getLS<string>(nickKey(issueId), null)
-    if (!saved) {
-      saved = randomNickname()
-      setLS(nickKey(issueId), saved)
-    }
-    setNick(saved)
-    setNickReady(true)
-  }, [issueId])
-
-  useEffect(() => {
     membershipRef.current = membership ?? null
   }, [membership])
 
   useEffect(() => {
-    if (initialized || !nickReady || !sessionId) return
+    if (initialized || !sessionId || !user) return
     setInitialized(true)
 
     let cancelled = false
@@ -101,14 +131,14 @@ export default function ChatRoom() {
         const deviceHash = getDeviceHash()
         const joined = await joinChatRoom(issueId, {
           deviceHash,
-          nickname: nick,
-          sessionId
+          sessionId,
+          userId: user.id
         })
 
         if (cancelled) return
 
-       setMembership(joined)
-       membershipRef.current = joined
+        setMembership(joined)
+        membershipRef.current = joined
         setRoomState((prev) => {
           if (!prev) return { ...joined }
           return {
@@ -146,7 +176,7 @@ export default function ChatRoom() {
     return () => {
       cancelled = true
     }
-  }, [initialized, issueId, nick, nickReady, sessionId])
+  }, [initialized, issueId, sessionId, user])
 
   useEffect(() => {
     if (!membership) return
@@ -220,6 +250,10 @@ export default function ChatRoom() {
     setJoinError(null)
   }, [joinError, issueId])
 
+  if (authGuard) {
+    return authGuard
+  }
+
   const send = async () => {
     if (!membership) return
     const text = input.trim()
@@ -235,41 +269,6 @@ export default function ChatRoom() {
       console.error('Failed to send message:', error)
       setMessageError(error?.message || '메시지를 전송하지 못했습니다.')
       setInput(text)
-    }
-  }
-
-  const handleShuffleNick = async () => {
-    const next = randomNickname()
-    setNick(next)
-    setLS(nickKey(issueId), next)
-
-    const member = membershipRef.current
-    if (!member) return
-
-    try {
-      const deviceHash = getDeviceHash()
-      const updated = await joinChatRoom(issueId, {
-        deviceHash,
-        nickname: next,
-        sessionId: member.sessionId || sessionId
-      })
-      setMembership(updated)
-      membershipRef.current = updated
-      setRoomState((prev) => {
-        if (!prev) return { ...updated }
-        return {
-          ...prev,
-          roomId: updated.roomId ?? prev.roomId,
-          capacity: updated.capacity ?? prev.capacity,
-          activeMembers: updated.activeMembers ?? prev.activeMembers,
-          lastMessageAt: updated.lastMessageAt ?? prev.lastMessageAt,
-          issueTitle: prev.issueTitle ?? updated.issueTitle ?? null,
-          issueThumbnail: prev.issueThumbnail ?? updated.issueThumbnail ?? null,
-          issuePreview: prev.issuePreview ?? updated.issuePreview ?? null
-        }
-      })
-    } catch (error) {
-      console.error('Failed to update nickname:', error)
     }
   }
 
@@ -319,19 +318,12 @@ export default function ChatRoom() {
                 <Separator orientation="vertical" className="h-4" />
                 <span className="truncate text-sm">
                   내 닉네임:
-                  <strong className="text-foreground ml-1">{nickReady ? nick : '로딩 중'}</strong>
+                  <strong className="text-foreground ml-1">
+                    {user?.user_metadata?.nickname || "설정 중"}
+                  </strong>
                 </span>
               </div>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleShuffleNick}
-              disabled={!membership}
-            >
-              <Shuffle className="w-4 h-4 mr-1.5" />
-              닉네임 변경
-            </Button>
           </div>
         </div>
       </header>

@@ -74,20 +74,19 @@ export async function POST(
     const body = await req.json().catch(() => null)
 
     const deviceHash = body?.deviceHash as string | undefined
-    const nickname = body?.nickname as string | undefined
     const sessionId = body?.sessionId as string | undefined
-    const userId = body?.userId as string | undefined | null
+    const userId = body?.userId as string | undefined
 
     if (!deviceHash) {
       return createErrorResponse(ErrorCode.MISSING_FIELDS, 400, { field: 'deviceHash' })
     }
 
-    if (!nickname) {
-      return createErrorResponse(ErrorCode.MISSING_FIELDS, 400, { field: 'nickname' })
-    }
-
     if (!sessionId) {
       return createErrorResponse(ErrorCode.MISSING_FIELDS, 400, { field: 'sessionId' })
+    }
+
+    if (!userId) {
+      return createErrorResponse(ErrorCode.MISSING_FIELDS, 400, { field: 'userId' })
     }
 
     try {
@@ -96,9 +95,8 @@ export async function POST(
       const membership = await joinChatRoom({
         issueId,
         deviceHash,
-        nickname,
         sessionId,
-        userId: userId ?? null
+        userId
       })
 
       return createSuccessResponse(mergeMembershipWithState(baseState, membership))
@@ -110,9 +108,8 @@ export async function POST(
             const membership = await joinChatRoom({
               issueId,
               deviceHash,
-              nickname,
               sessionId,
-              userId: userId ?? null
+              userId
             })
             return createSuccessResponse(mergeMembershipWithState(recoveredState, membership))
           } catch (ensureError) {

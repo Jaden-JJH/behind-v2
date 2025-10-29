@@ -9,9 +9,8 @@ import type {
 
 interface JoinPayload {
   deviceHash: string
-  nickname: string
   sessionId: string
-  userId?: string | null
+  userId: string
 }
 
 export async function fetchChatRoomState(issueId: string): Promise<ChatRoomState> {

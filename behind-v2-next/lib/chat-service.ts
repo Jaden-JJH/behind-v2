@@ -29,9 +29,8 @@ export class ChatServiceError extends Error {
 interface ChatJoinParams {
   issueId: string
   deviceHash: string
-  nickname: string
   sessionId: string
-  userId?: string | null
+  userId: string
 }
 
 function mapChatError(error: PostgrestError): ChatServiceError {
@@ -181,17 +180,13 @@ export async function getChatRoomStates(issueIds: string[]): Promise<ChatRoomSta
 }
 
 export async function joinChatRoom(params: ChatJoinParams): Promise<ChatMembership> {
-  const { issueId, deviceHash, nickname, sessionId, userId } = params
-
-  if (!nickname || nickname.trim().length === 0) {
-    throw new ChatServiceError(ChatServiceErrorCode.UNKNOWN, 'Nickname is required')
-  }
+  const { issueId, deviceHash, sessionId, userId } = params
 
   const { data, error } = await supabaseAdmin.rpc('chat_join_room', {
     p_issue_id: issueId,
     p_device_hash: deviceHash,
-    p_user_id: userId ?? null,
-    p_nickname: nickname,
+    p_user_id: userId,
+    p_nickname: '',
     p_session_id: sessionId
   })
 
@@ -200,7 +195,7 @@ export async function joinChatRoom(params: ChatJoinParams): Promise<ChatMembersh
       issueId,
       deviceHash,
       sessionId,
-      userId: userId ?? null,
+      userId,
       code: error.code,
       details: error.details,
       message: error.message,
