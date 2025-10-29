@@ -209,13 +209,10 @@ export function QuickVote({ pollId, question, options, ctaLabel = "댓글 토론
                   <Button
                     key={option.id || idx}
                     variant="outline"
-                    className="w-full justify-between border-slate-300 hover:bg-indigo-50 hover:border-indigo-400"
+                    className="w-full justify-center border-slate-300 hover:bg-indigo-50 hover:border-indigo-400"
                     onClick={() => handleVote(idx)}
                   >
                     <span className="text-slate-800">{option.label}</span>
-                    <span className="text-sm text-slate-500 tabular-nums">
-                      {count.toLocaleString()}표
-                    </span>
                   </Button>
                 )
               })}
@@ -240,7 +237,14 @@ export function QuickVote({ pollId, question, options, ctaLabel = "댓글 토론
                   <div key={`res-${idx}`} className={`relative p-3 rounded-lg border-2 transition-all ${chosen ? "border-indigo-500 bg-indigo-50" : "border-slate-200 bg-slate-50"}`}>
                     <div className="flex justify-between items-center mb-2 relative z-10">
                       <span className={chosen ? "text-indigo-900 font-medium" : "text-slate-700"}>{o.label}</span>
-                      <span className={`${chosen ? "text-indigo-700 font-semibold" : "text-slate-500"} tabular-nums text-sm`}>{pct}%</span>
+                      <div className="flex items-center gap-2">
+                        <span className={`${chosen ? "text-indigo-700 font-semibold" : "text-slate-500"} tabular-nums text-sm`}>
+                          {c.toLocaleString()}표
+                        </span>
+                        <span className={`${chosen ? "text-indigo-700 font-semibold" : "text-slate-500"} tabular-nums text-sm`}>
+                          {pct}%
+                        </span>
+                      </div>
                     </div>
                     <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
                       <div
