@@ -69,7 +69,7 @@ export function Header() {
   return (
     <>
       <header className="bg-white shadow-sm sticky top-0 z-50">
-        <div className="mx-auto flex h-16 items-center justify-between px-4 sm:px-6 max-w-7xl">
+        <div className="mx-auto flex h-16 items-center justify-between px-4 sm:px-6 max-w-6xl">
           <div className="flex items-center gap-3">
             <button
               type="button"
@@ -111,11 +111,23 @@ export function Header() {
             </Button>
           </nav>
 
+          {/* 오른쪽: 로그인 또는 닉네임+로그아웃 */}
           <div className="flex items-center gap-3">
             {user ? (
-              <span className="text-sm font-medium text-gray-700">
-                {nickname ?? "닉네임 미설정"}
-              </span>
+              <>
+                <span className="text-sm font-medium text-gray-700">
+                  {nickname ?? "닉네임 미설정"}
+                </span>
+                {/* 데스크탑에서만 로그아웃 버튼 표시 */}
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleSignOut}
+                  className="hidden md:inline-flex"
+                >
+                  로그아웃
+                </Button>
+              </>
             ) : (
               <Button onClick={handleSignIn} disabled={loading}>
                 구글 로그인

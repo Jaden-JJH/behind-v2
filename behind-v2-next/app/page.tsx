@@ -243,30 +243,6 @@ export default function LandingPage() {
       />
       <div className="min-h-screen bg-slate-50">
       {/* Header */}
-      <header className="border-b border-slate-200 bg-white sticky top-0 z-10 shadow-sm">
-        <div className="max-w-6xl mx-auto px-3 md:px-4 py-3 md:py-4">
-          <div className="flex items-center justify-between gap-4">
-            <Link href="/">
-              <h1 className="text-3xl font-bold tracking-tight text-slate-700 cursor-pointer">비하인드</h1>
-            </Link>
-            <nav className="hidden md:flex items-center gap-1">
-              <Link href="/issues">
-                <Button variant="ghost" className="text-slate-600 hover:text-slate-900 hover:bg-slate-100">전체 이슈</Button>
-              </Link>
-              <Button variant="ghost" className="text-slate-600 hover:text-slate-900 hover:bg-slate-100">내 대화방</Button>
-              <Button 
-                variant="ghost" 
-                className="text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-                onClick={() => window.open('https://forms.gle/xot7tw9vZ48uhChG7', '_blank', 'noopener,noreferrer')}
-              >
-                제보하기
-              </Button>
-            </nav>
-            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">로그인</Button>
-          </div>
-        </div>
-      </header>
-
       <main className="max-w-6xl mx-auto px-3 md:px-4 py-4 md:py-6 grid md:grid-cols-3 gap-4 md:gap-6">
         {/* 메인 컨텐츠 */}
         <section className="md:col-span-2 space-y-4 md:space-y-6">
