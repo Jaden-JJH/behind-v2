@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase'
 type UseAuthReturn = {
   user: User | null
   loading: boolean
-  signInWithGoogle: () => Promise<void>
+  signInWithGoogle: (returnUrl?: string) => Promise<void>
   signOut: () => Promise<void>
   refreshUser: () => Promise<void>
 }
@@ -49,11 +49,17 @@ export const useAuth = (): UseAuthReturn => {
     }
   }, [])
 
-  const signInWithGoogle = async (): Promise<void> => {
+  const signInWithGoogle = async (returnUrl?: string): Promise<void> => {
+    const callbackUrl = new URL(`${window.location.origin}/auth/callback`)
+
+    if (returnUrl) {
+      callbackUrl.searchParams.set('returnUrl', returnUrl)
+    }
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: callbackUrl.toString(),
       },
     })
 

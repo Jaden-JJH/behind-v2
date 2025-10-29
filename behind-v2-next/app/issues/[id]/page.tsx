@@ -15,6 +15,7 @@ import { fetchChatRoomState } from "@/lib/chat-client";
 import { formatTime } from "@/lib/utils";
 import { showSuccess, showError, handleApiResponse } from '@/lib/toast-utils';
 import { csrfFetch } from '@/lib/csrf-client';
+import { useAuth } from '@/hooks/useAuth';
 import type { ChatRoomState } from "@/lib/chat-types";
 
 // deviceHash 생성/가져오기 함수
@@ -97,6 +98,7 @@ export default function IssueDetailPage() {
   const router = useRouter();
   const issueId = params.id as string;
 
+  const { user, loading: authLoading, signInWithGoogle } = useAuth();
   const [issue, setIssue] = useState<IssueDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -253,6 +255,11 @@ export default function IssueDetailPage() {
 
   // 댓글 작성
   async function handleSubmitComment() {
+    if (!user) {
+      showError('로그인이 필요합니다');
+      return;
+    }
+
     if (!commentBody.trim()) {
       showError('댓글 내용을 입력해주세요');
       return;
@@ -263,8 +270,7 @@ export default function IssueDetailPage() {
       return;
     }
 
-    // 익명 닉네임 자동 생성
-    const nick = `익명${Math.floor(Math.random() * 10000)}`;
+    const nick = user.user_metadata?.nickname || '익명';
 
     try {
       setSubmitting(true);
@@ -563,23 +569,38 @@ export default function IssueDetailPage() {
           </div>
 
           {/* 댓글 작성 */}
-          <Card>
-            <CardContent className="p-3 md:p-4">
-              <Textarea
-                value={commentBody}
-                onChange={(e) => setCommentBody(e.target.value)}
-                placeholder="익명으로 댓글을 남겨보세요"
-                className="min-h-[80px] md:min-h-[100px] mb-2 md:mb-3 resize-none"
-                disabled={submitting}
-              />
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-muted-foreground">익명 · 커뮤니티 가이드라인 준수</p>
-                <Button onClick={handleSubmitComment} disabled={submitting}>
-                  {submitting ? '등록 중...' : '등록'}
+          {!user ? (
+            <Card>
+              <CardContent className="p-6 text-center space-y-4">
+                <p className="text-muted-foreground">
+                  로그인하고 댓글을 남겨보세요
+                </p>
+                <Button onClick={() => signInWithGoogle(window.location.pathname)} disabled={authLoading}>
+                  구글로 로그인
                 </Button>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardContent className="p-3 md:p-4">
+                <Textarea
+                  value={commentBody}
+                  onChange={(e) => setCommentBody(e.target.value)}
+                  placeholder="댓글을 남겨보세요"
+                  className="min-h-[80px] md:min-h-[100px] mb-2 md:mb-3 resize-none"
+                  disabled={submitting}
+                />
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-muted-foreground">
+                    {user.user_metadata?.nickname || '익명'} · 커뮤니티 가이드라인 준수
+                  </p>
+                  <Button onClick={handleSubmitComment} disabled={submitting}>
+                    {submitting ? '등록 중...' : '등록'}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* 댓글 목록 */}
           {commentsLoading && (

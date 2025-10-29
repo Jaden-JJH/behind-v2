@@ -5,12 +5,16 @@ import { createClient } from '@/lib/supabase/server'
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get('code')
+  const returnUrl = requestUrl.searchParams.get('returnUrl')
 
   if (code) {
     const supabase = await createClient()
     await supabase.auth.exchangeCodeForSession(code)
   }
 
-  // 메인 페이지로 리다이렉트
-  return NextResponse.redirect(requestUrl.origin)
+  const redirectUrl = returnUrl
+    ? `${requestUrl.origin}${returnUrl}`
+    : requestUrl.origin
+
+  return NextResponse.redirect(redirectUrl)
 }
