@@ -8,17 +8,61 @@ import { ChevronLeft, Heart, ChevronDown } from "lucide-react"
 import { fetchReports, curiousReport } from "@/lib/api-client"
 import { getDeviceHash } from "@/lib/device-hash"
 import { formatTime, maskReporterName } from "@/lib/utils"
+import { useAuth } from "@/hooks/useAuth"
+import { LoginPrompt } from "@/components/LoginPrompt"
+import { showSuccess, showError } from "@/lib/toast-utils"
 
 type SortOption = 'latest' | 'progress'
 type FilterOption = 'all' | 'pending' | 'approved' | 'rejected'
 
+const CURIOUS_COUNT_KEY = "bh_curious_count"
+
+const getCuriousCount = (): number => {
+  if (typeof window === "undefined") return 0
+  try {
+    const count = window.localStorage.getItem(CURIOUS_COUNT_KEY)
+    return count ? Number.parseInt(count, 10) : 0
+  } catch {
+    return 0
+  }
+}
+
+const incrementCuriousCount = (): number => {
+  if (typeof window === "undefined") return 0
+  try {
+    const current = getCuriousCount()
+    const newCount = current + 1
+    window.localStorage.setItem(CURIOUS_COUNT_KEY, String(newCount))
+    return newCount
+  } catch {
+    return 0
+  }
+}
+
+const resetCuriousCount = (): void => {
+  if (typeof window === "undefined") return
+  try {
+    window.localStorage.removeItem(CURIOUS_COUNT_KEY)
+  } catch {
+    // ignore storage errors
+  }
+}
+
 export default function ReportedIssuesPage() {
+  const { user, signInWithGoogle } = useAuth()
   const [reports, setReports] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [sortBy, setSortBy] = useState<SortOption>('latest')
   const [filterBy, setFilterBy] = useState<FilterOption>('all')
   const [showMyCurious, setShowMyCurious] = useState(false)
   const [curiousLoading, setCuriousLoading] = useState<Record<string, boolean>>({})
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false)
+
+  useEffect(() => {
+    if (user) {
+      resetCuriousCount()
+    }
+  }, [user])
 
   useEffect(() => {
     loadReports()
@@ -57,6 +101,13 @@ export default function ReportedIssuesPage() {
   const handleCurious = async (reportId: string) => {
     setCuriousLoading(prev => ({ ...prev, [reportId]: true }))
 
+    if (!user) {
+      const currentCount = getCuriousCount()
+      if (currentCount >= 2) {
+        setShowLoginPrompt(true)
+      }
+    }
+
     try {
       const deviceHash = getDeviceHash()
 
@@ -70,8 +121,14 @@ export default function ReportedIssuesPage() {
       // 2. API 호출 (백그라운드)
       await curiousReport(reportId, deviceHash)
 
-      // 3. alert 메시지 간결하게
-      alert('궁금해요를 눌렀습니다!')
+      showSuccess('궁금해요를 눌렀습니다!')
+
+      if (!user) {
+        const currentCount = getCuriousCount()
+        if (currentCount < 3) {
+          incrementCuriousCount()
+        }
+      }
 
       // loadReports() 제거됨 - 이미 UI 업데이트 완료
 
@@ -84,12 +141,12 @@ export default function ReportedIssuesPage() {
       ))
 
       if (err.status === 409 || err.code === 'ALREADY_CURIOUS') {
-        alert('이미 궁금해요를 누르셨습니다.')
+        showError('이미 궁금해요를 누르셨습니다.')
       } else if (err.status === 429 || err.code === 'RATE_LIMIT_EXCEEDED') {
-        alert('너무 많은 요청입니다. 잠시 후 다시 시도해주세요.')
+        showError('너무 많은 요청입니다. 잠시 후 다시 시도해주세요.')
       } else {
         console.error('Curious error:', err)
-        alert('오류가 발생했습니다.')
+        showError('오류가 발생했습니다.')
       }
     } finally {
       setCuriousLoading(prev => ({ ...prev, [reportId]: false }))
@@ -123,7 +180,15 @@ export default function ReportedIssuesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <>
+      <LoginPrompt
+        type="curious"
+        open={showLoginPrompt}
+        onClose={() => setShowLoginPrompt(false)}
+        onLogin={() => signInWithGoogle(typeof window === "undefined" ? "/" : window.location.pathname)}
+        voteCount={getCuriousCount()}
+      />
+      <div className="min-h-screen bg-slate-50">
       {/* Header */}
       <header className="border-b border-slate-200 bg-white sticky top-0 z-10 shadow-sm">
         <div className="max-w-6xl mx-auto px-3 md:px-4 py-3 md:py-4">
@@ -312,6 +377,7 @@ export default function ReportedIssuesPage() {
       <footer className="py-6 text-center text-slate-500 border-t border-slate-200 bg-white mt-8">
         Copyright © 2025 by Behind
       </footer>
-    </div>
+      </div>
+    </>
   )
 }

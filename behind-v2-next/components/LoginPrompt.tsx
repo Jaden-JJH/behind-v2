@@ -14,9 +14,10 @@ interface LoginPromptProps {
   onClose: () => void
   onLogin: () => void
   voteCount?: number
+  type?: 'vote' | 'curious'
 }
 
-export function LoginPrompt({ open, onClose, onLogin, voteCount = 2 }: LoginPromptProps) {
+export function LoginPrompt({ open, onClose, onLogin, voteCount = 2, type = 'vote' }: LoginPromptProps) {
   const handleLogin = () => {
     onLogin()
     onClose()
@@ -25,20 +26,19 @@ export function LoginPrompt({ open, onClose, onLogin, voteCount = 2 }: LoginProm
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="text-lg font-semibold">
-            로그인하고 더 많이 투표하세요! 🗳️
+        <DialogHeader className="text-center">
+          <DialogTitle className="text-lg font-semibold text-center">
+            로그인하고 더 많이 참여하세요! 🙌
           </DialogTitle>
-          <DialogDescription className="text-sm text-slate-600">
-            지금까지 {voteCount}개 이슈에 투표하셨습니다.
+          <DialogDescription className="text-sm text-slate-600 text-center">
+            지금까지 {voteCount}개 이슈에 참여하셨습니다.
+            <span className="block mt-1 text-slate-700">
+              로그인하시면 <strong>무제한으로 참여</strong>할 수 있습니다.
+            </span>
           </DialogDescription>
         </DialogHeader>
         
-        <div className="space-y-4 py-4">
-          <p className="text-sm text-slate-700">
-            로그인하시면 <strong>무제한으로 투표</strong>할 수 있습니다.
-          </p>
-          
+        <div className="py-4 text-center">
           <div className="space-y-2">
             <Button
               onClick={handleLogin}

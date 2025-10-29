@@ -60,6 +60,9 @@ export const useAuth = (): UseAuthReturn => {
       provider: 'google',
       options: {
         redirectTo: callbackUrl.toString(),
+        queryParams: {
+          prompt: 'select_account',
+        },
       },
     })
 

@@ -12,8 +12,45 @@ import { fetchChatRoomState, fetchChatRoomStates } from "@/lib/chat-client";
 import { formatTime, formatDate } from "@/lib/utils";
 import { getDeviceHash } from "@/lib/device-hash";
 import type { ChatRoomState } from "@/lib/chat-types";
+import { useAuth } from "@/hooks/useAuth";
+import { LoginPrompt } from "@/components/LoginPrompt";
+import { showSuccess, showError } from "@/lib/toast-utils";
+
+const CURIOUS_COUNT_KEY = "bh_curious_count";
+
+const getCuriousCount = (): number => {
+  if (typeof window === "undefined") return 0;
+  try {
+    const count = window.localStorage.getItem(CURIOUS_COUNT_KEY);
+    return count ? Number.parseInt(count, 10) : 0;
+  } catch {
+    return 0;
+  }
+};
+
+const incrementCuriousCount = (): number => {
+  if (typeof window === "undefined") return 0;
+  try {
+    const current = getCuriousCount();
+    const newCount = current + 1;
+    window.localStorage.setItem(CURIOUS_COUNT_KEY, String(newCount));
+    return newCount;
+  } catch {
+    return 0;
+  }
+};
+
+const resetCuriousCount = (): void => {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.removeItem(CURIOUS_COUNT_KEY);
+  } catch {
+    // ignore storage errors
+  }
+};
 
 export default function LandingPage() {
+  const { user, signInWithGoogle } = useAuth();
   const [showAllReported, setShowAllReported] = useState(false);
   const [issues, setIssues] = useState<any[]>([]);
   const [polls, setPolls] = useState<any[]>([]);
@@ -23,6 +60,13 @@ export default function LandingPage() {
   const [curiousLoading, setCuriousLoading] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(true);
   const [chatStates, setChatStates] = useState<Record<string, ChatRoomState>>({});
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      resetCuriousCount();
+    }
+  }, [user]);
 
   useEffect(() => {
     async function loadIssues() {
@@ -138,6 +182,13 @@ export default function LandingPage() {
   const handleCurious = async (reportId: string) => {
     setCuriousLoading(prev => ({ ...prev, [reportId]: true }));
 
+    if (!user) {
+      const currentCount = getCuriousCount();
+      if (currentCount >= 2) {
+        setShowLoginPrompt(true);
+      }
+    }
+
     try {
       const deviceHash = getDeviceHash();
 
@@ -151,7 +202,14 @@ export default function LandingPage() {
       // API 호출
       await curiousReport(reportId, deviceHash);
 
-      alert('궁금해요를 눌렀습니다!');
+      showSuccess('궁금해요를 눌렀습니다!');
+
+      if (!user) {
+        const currentCount = getCuriousCount();
+        if (currentCount < 3) {
+          incrementCuriousCount();
+        }
+      }
 
     } catch (err: any) {
       // 에러 시 롤백
@@ -162,12 +220,12 @@ export default function LandingPage() {
       ));
 
       if (err.status === 409 || err.code === 'ALREADY_CURIOUS') {
-        alert('이미 궁금해요를 누르셨습니다.');
+        showError('이미 궁금해요를 누르셨습니다.');
       } else if (err.status === 429 || err.code === 'RATE_LIMIT_EXCEEDED') {
-        alert('너무 많은 요청입니다. 잠시 후 다시 시도해주세요.');
+        showError('너무 많은 요청입니다. 잠시 후 다시 시도해주세요.');
       } else {
         console.error('Curious error:', err);
-        alert('오류가 발생했습니다.');
+        showError('오류가 발생했습니다.');
       }
     } finally {
       setCuriousLoading(prev => ({ ...prev, [reportId]: false }));
@@ -175,7 +233,15 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <>
+      <LoginPrompt
+        type="curious"
+        open={showLoginPrompt}
+        onClose={() => setShowLoginPrompt(false)}
+        onLogin={() => signInWithGoogle(typeof window === "undefined" ? "/" : window.location.pathname)}
+        voteCount={getCuriousCount()}
+      />
+      <div className="min-h-screen bg-slate-50">
       {/* Header */}
       <header className="border-b border-slate-200 bg-white sticky top-0 z-10 shadow-sm">
         <div className="max-w-6xl mx-auto px-3 md:px-4 py-3 md:py-4">
@@ -462,6 +528,7 @@ export default function LandingPage() {
       <footer className="py-6 text-center text-slate-500 border-t border-slate-200 bg-white mt-8">
         Copyright © 2025 by Behind
       </footer>
-    </div>
+      </div>
+    </>
   );
 }

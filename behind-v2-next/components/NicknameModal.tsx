@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { apiClient } from "@/lib/api-client";
+import { supabase } from "@/lib/supabase";
 
 const NICKNAME_REGEX = /^[가-힣a-zA-Z0-9]{2,20}$/;
 
@@ -43,6 +44,16 @@ export function NicknameModal({ open, onSuccess }: NicknameModalProps) {
     useState<AvailabilityStatus>("idle");
   const [validationError, setValidationError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+
+  const handleClose = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast.info("로그아웃되었습니다. 닉네임 설정 후 다시 로그인해주세요.");
+    } catch (error) {
+      console.error("Logout failed", error);
+      toast.error("로그아웃에 실패했습니다");
+    }
+  };
 
   const isSubmitDisabled = useMemo(() => {
     if (!nickname) return true;
@@ -147,8 +158,8 @@ export function NicknameModal({ open, onSuccess }: NicknameModalProps) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={() => {}}>
-      <DialogContent className="[&_[data-radix-dialog-close]]:hidden">
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>닉네임 설정</DialogTitle>
           <p className="text-muted-foreground text-sm">
