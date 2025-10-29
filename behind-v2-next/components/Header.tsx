@@ -3,14 +3,18 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Menu } from "lucide-react";
 
 import { useAuth } from "@/hooks/useAuth";
 import { NicknameModal } from "@/components/NicknameModal";
 import { Button } from "@/components/ui/button";
+import { MobileMenu } from "@/components/MobileMenu";
+import { showError } from "@/lib/toast-utils";
 
 export function Header() {
   const { user, loading, signInWithGoogle, signOut, refreshUser } = useAuth();
   const [showNicknameModal, setShowNicknameModal] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const router = useRouter();
 
   const nickname = useMemo(() => {
@@ -64,25 +68,54 @@ export function Header() {
 
   return (
     <>
-      <header className="bg-white shadow-sm">
-        <div className="mx-auto flex h-16 items-center justify-between px-4 sm:px-6">
-          <Link
-            href="/"
-            className="text-xl font-semibold text-gray-900 hover:text-gray-700"
-          >
-            Behind
-          </Link>
+      <header className="bg-white shadow-sm sticky top-0 z-50">
+        <div className="mx-auto flex h-16 items-center justify-between px-4 sm:px-6 max-w-7xl">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              className="md:hidden rounded-lg p-2 hover:bg-slate-100"
+              onClick={() => setIsMobileMenuOpen(true)}
+            >
+              <Menu className="h-6 w-6 text-slate-700" />
+            </button>
+
+            <Link
+              href="/"
+              className="text-xl font-semibold text-gray-900 hover:text-gray-700"
+            >
+              Behind
+            </Link>
+          </div>
+
+          <nav className="hidden items-center gap-1 md:flex">
+            <Button asChild variant="ghost">
+              <Link href="/issues">전체 이슈</Link>
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => showError("준비중입니다")}
+            >
+              내 대화방
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() =>
+                window.open(
+                  "https://forms.gle/xot7tw9vZ48uhChG7",
+                  "_blank",
+                  "noopener,noreferrer",
+                )
+              }
+            >
+              제보하기
+            </Button>
+          </nav>
 
           <div className="flex items-center gap-3">
             {user ? (
-              <>
-                <span className="text-sm font-medium text-gray-700">
-                  {nickname ?? "닉네임 미설정"}
-                </span>
-                <Button variant="outline" size="sm" onClick={handleSignOut}>
-                  로그아웃
-                </Button>
-              </>
+              <span className="text-sm font-medium text-gray-700">
+                {nickname ?? "닉네임 미설정"}
+              </span>
             ) : (
               <Button onClick={handleSignIn} disabled={loading}>
                 구글 로그인
@@ -91,6 +124,13 @@ export function Header() {
           </div>
         </div>
       </header>
+
+      <MobileMenu
+        isOpen={isMobileMenuOpen}
+        onClose={() => setIsMobileMenuOpen(false)}
+        user={user}
+        onSignOut={handleSignOut}
+      />
 
       <NicknameModal open={showNicknameModal} onSuccess={handleNicknameSuccess} />
     </>
