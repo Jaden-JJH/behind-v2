@@ -231,8 +231,17 @@ export default function ChatRoom() {
   }, [issueId, membership])
 
   useEffect(() => {
-    if (scrollerRef.current) {
-      scrollerRef.current.scrollTop = scrollerRef.current.scrollHeight
+    if (!scrollerRef.current) return
+
+    const scroller = scrollerRef.current
+    // 사용자가 최하단 근처에 있을 때만 자동 스크롤 (20px 허용)
+    const isNearBottom = scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight < 20
+
+    if (isNearBottom) {
+      // 다음 틱에서 스크롤 (메시지 렌더링 후)
+      requestAnimationFrame(() => {
+        scroller.scrollTop = scroller.scrollHeight
+      })
     }
   }, [messages])
 
