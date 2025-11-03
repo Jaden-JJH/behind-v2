@@ -241,6 +241,11 @@ export default function ChatRoom() {
       const member = membershipRef.current
       if (member) {
         leaveChatRoom(issueId, member.memberId).catch((error) => {
+          // 404 에러 (member not found)는 이미 나간 경우이므로 무시
+          if (error?.message?.includes('채팅 참여 정보')) {
+            console.debug('Member already left chat room')
+            return
+          }
           console.error('Failed to leave chat room:', error)
         })
       }
