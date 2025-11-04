@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { csrfFetch } from '@/lib/csrf-client'
 import { CATEGORY_KO_VALUES } from '@/lib/categories'
+import { ArticleFormFields, type ArticleFormData } from '@/components/admin/article-form-fields'
 
 export default function AdminPage() {
   const router = useRouter()
@@ -28,6 +29,7 @@ export default function AdminPage() {
   const [mediaNewsSource, setMediaNewsSource] = useState('')
   const [mediaNewsUrl, setMediaNewsUrl] = useState('')
   const [behindStory, setBehindStory] = useState('')
+  const [articles, setArticles] = useState<ArticleFormData[]>([])
 
   useEffect(() => {
     // 인증 확인
@@ -67,6 +69,31 @@ export default function AdminPage() {
       })
 
       if (response.ok) {
+        const createdIssue = await response.json()
+
+        // 후속 기사가 있으면 추가
+        if (articles.length > 0) {
+          try {
+            await Promise.all(
+              articles.map((article, index) =>
+                csrfFetch(`/api/admin/issues/${createdIssue.id}/articles`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    ...article,
+                    display_order: index
+                  })
+                })
+              )
+            )
+          } catch (articleError) {
+            console.error('Failed to create articles:', articleError)
+            setMessage('⚠️ 이슈는 등록되었으나 일부 후속 기사 등록에 실패했습니다.')
+            setLoading(false)
+            return
+          }
+        }
+
         setMessage('✅ 이슈가 성공적으로 등록되었습니다!')
         // 폼 초기화
         setTitle('')
@@ -86,6 +113,7 @@ export default function AdminPage() {
         setOption2('')
         setShowInMainHot(false)
         setShowInMainPoll(false)
+        setArticles([])
       } else {
         const error = await response.json()
         setMessage('❌ ' + (error.error || '등록 실패'))
@@ -339,6 +367,11 @@ export default function AdminPage() {
               </div>
             </div>
           )}
+
+          <hr className="my-6" />
+
+          {/* 후속 기사 섹션 */}
+          <ArticleFormFields articles={articles} onChange={setArticles} />
 
           <button
             type="submit"

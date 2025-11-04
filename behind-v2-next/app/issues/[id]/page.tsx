@@ -17,6 +17,8 @@ import { showSuccess, showError, handleApiResponse } from '@/lib/toast-utils';
 import { csrfFetch } from '@/lib/csrf-client';
 import { useAuth } from '@/hooks/useAuth';
 import type { ChatRoomState } from "@/lib/chat-types";
+import { ArticleTimeline } from "@/components/article-timeline";
+import type { IssueArticle } from "@/types/issue-articles";
 
 // deviceHash 생성/가져오기 함수
 function getDeviceHash(): string {
@@ -120,6 +122,9 @@ export default function IssueDetailPage() {
   const [lastVoteCommentId, setLastVoteCommentId] = useState<string | null>(null);
   const [lastVoteTime, setLastVoteTime] = useState(0);
 
+  // 후속 기사 state
+  const [articles, setArticles] = useState<IssueArticle[]>([]);
+
   // 로컬 스토리지에 투표 상태 저장/불러오기
   const saveVoteState = (commentId: string, voteType: 'up' | 'down' | null) => {
     if (typeof window === 'undefined') return;
@@ -186,6 +191,24 @@ export default function IssueDetailPage() {
       loadComments();
     }
   }, [issue?.id, sortBy]);
+
+  // 후속 기사 불러오기
+  useEffect(() => {
+    if (!issue?.id) return;
+
+    const fetchArticles = async () => {
+      try {
+        const response = await fetch(`/api/issues/${issue.id}/articles`);
+        if (!response.ok) return;
+        const data = await response.json();
+        setArticles(data.data || []);
+      } catch (error) {
+        console.error('Failed to fetch articles:', error);
+      }
+    };
+
+    fetchArticles();
+  }, [issue?.id]);
 
   useEffect(() => {
     if (!issue?.id) {
@@ -530,6 +553,11 @@ export default function IssueDetailPage() {
               </p>
             </CardContent>
           </Card>
+        )}
+
+        {/* 후속 기사 타임라인 */}
+        {articles.length > 0 && (
+          <ArticleTimeline articles={articles} />
         )}
 
         {/* 투표 - poll 데이터가 있을 때만 표시 */}

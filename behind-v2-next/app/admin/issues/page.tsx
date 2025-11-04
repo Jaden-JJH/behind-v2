@@ -32,6 +32,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import { ArticleFormFields, type ArticleFormData } from '@/components/admin/article-form-fields'
 
 // 카테고리 매핑 (프론트엔드 표시값 → DB 저장값)
 const CATEGORY_OPTIONS = CATEGORY_KO_VALUES.map((value) => ({
@@ -100,6 +101,7 @@ export default function AdminIssuesPage() {
   const [editMediaNewsTitle, setEditMediaNewsTitle] = useState('')
   const [editMediaNewsSource, setEditMediaNewsSource] = useState('')
   const [editMediaNewsUrl, setEditMediaNewsUrl] = useState('')
+  const [editArticles, setEditArticles] = useState<ArticleFormData[]>([])
 
   // 필터 상태
   const [filterCategory, setFilterCategory] = useState('')
@@ -229,6 +231,30 @@ export default function AdminIssuesPage() {
       const latestIssue = data.data
       setSelectedIssue(latestIssue)
       initializeForm(latestIssue)
+
+      // 후속 기사 불러오기
+      try {
+        const articlesResponse = await fetch(`/api/issues/${issue.id}/articles`)
+        if (articlesResponse.ok) {
+          const articlesData = await articlesResponse.json()
+          const loadedArticles = (articlesData.data || []).map((article: any) => ({
+            id: article.id,
+            article_type: article.article_type,
+            title: article.title,
+            description: article.description || '',
+            url: article.url,
+            source: article.source || '',
+            thumbnail_url: article.thumbnail_url || '',
+            published_at: article.published_at ? new Date(article.published_at).toISOString().slice(0, 16) : '',
+            is_highlighted: article.is_highlighted
+          }))
+          setEditArticles(loadedArticles)
+        }
+      } catch (articleError) {
+        console.error('Failed to fetch articles:', articleError)
+        setEditArticles([])
+      }
+
       setShowEditModal(true)
     } catch (error) {
       // 네트워크 오류 등 예외 발생 시 기본값으로 모달 열기
@@ -236,6 +262,7 @@ export default function AdminIssuesPage() {
       showError(error)
       setSelectedIssue(issue)
       initializeForm(issue)
+      setEditArticles([])
       setShowEditModal(true)
     }
   }
@@ -328,6 +355,56 @@ export default function AdminIssuesPage() {
 
       if (!response.ok) {
         showError(data)
+        return
+      }
+
+      // 후속 기사 업데이트
+      try {
+        // 1. 기존 후속 기사 목록 가져오기
+        const existingArticlesRes = await fetch(`/api/issues/${selectedIssue.id}/articles`)
+        const existingArticlesData = existingArticlesRes.ok ? await existingArticlesRes.json() : { data: [] }
+        const existingArticles = existingArticlesData.data || []
+        const existingIds = existingArticles.map((a: any) => a.id)
+
+        // 2. 삭제된 기사 제거
+        const currentIds = editArticles.map(a => a.id).filter(Boolean)
+        const deletedIds = existingIds.filter((id: string) => !currentIds.includes(id))
+
+        for (const deletedId of deletedIds) {
+          await csrfFetch(`/api/admin/issues/${selectedIssue.id}/articles/${deletedId}`, {
+            method: 'DELETE'
+          })
+        }
+
+        // 3. 기사 생성/수정
+        for (const [index, article] of editArticles.entries()) {
+          if (article.id) {
+            // 기존 기사 수정
+            await csrfFetch(`/api/admin/issues/${selectedIssue.id}/articles/${article.id}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                ...article,
+                display_order: index
+              })
+            })
+          } else {
+            // 새 기사 생성
+            await csrfFetch(`/api/admin/issues/${selectedIssue.id}/articles`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                ...article,
+                display_order: index
+              })
+            })
+          }
+        }
+      } catch (articleError) {
+        console.error('Failed to update articles:', articleError)
+        showError('이슈는 수정되었으나 후속 기사 업데이트에 실패했습니다.')
+        setShowEditModal(false)
+        loadIssues()
         return
       }
 
@@ -789,6 +866,11 @@ export default function AdminIssuesPage() {
                   </div>
                 </div>
               )}
+            </div>
+
+            {/* 후속 기사 섹션 */}
+            <div className="border-t pt-4">
+              <ArticleFormFields articles={editArticles} onChange={setEditArticles} />
             </div>
           </div>
 
