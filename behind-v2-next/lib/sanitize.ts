@@ -35,3 +35,40 @@ export function sanitizeFields<T extends Record<string, any>>(
 
   return sanitized
 }
+
+/**
+ * 소셜 미디어 임베드 HTML을 안전하게 정제
+ * Twitter/Instagram 임베드 코드에 필요한 태그와 속성만 허용
+ * @param html - 임베드 HTML 코드
+ * @returns 정제된 임베드 HTML
+ */
+export function sanitizeEmbedHTML(html: string): string {
+  if (!html) return ''
+
+  return DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: [
+      // 구조 태그
+      'div', 'span', 'p', 'a', 'img', 'iframe',
+      // 소셜 미디어 임베드에 필요한 태그
+      'blockquote', 'script', 'figure', 'figcaption',
+      // 텍스트 포맷팅
+      'strong', 'em', 'b', 'i', 'u', 'br'
+    ],
+    ALLOWED_ATTR: [
+      // 공통 속성
+      'class', 'id', 'style', 'data-*',
+      // 링크 속성
+      'href', 'target', 'rel',
+      // 이미지 속성
+      'src', 'alt', 'width', 'height', 'loading',
+      // iframe 속성
+      'allowfullscreen', 'frameborder', 'scrolling',
+      // Twitter/Instagram 전용 속성
+      'cite', 'data-tweet-id', 'data-instagram-id'
+    ],
+    ALLOW_DATA_ATTR: true, // data-* 속성 허용
+    ADD_ATTR: ['target'], // target 속성 추가 허용
+    ALLOW_UNKNOWN_PROTOCOLS: false, // 알 수 없는 프로토콜 차단
+    ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i
+  })
+}

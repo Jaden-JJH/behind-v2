@@ -111,6 +111,14 @@ export function MobileMenu({
             전체 이슈
           </Link>
 
+          <Link
+            href="/my"
+            className="px-4 py-3 text-slate-700 transition-colors hover:bg-slate-100"
+            onClick={onClose}
+          >
+            마이페이지
+          </Link>
+
           <button
             type="button"
             className="text-left px-4 py-3 text-slate-700 transition-colors hover:bg-slate-100"

@@ -3,6 +3,7 @@
 import { IssueArticle } from '@/types/issue-articles'
 import { Card, CardContent } from '@/components/ui/card'
 import { cn, formatDate } from '@/lib/utils'
+import { sanitizeEmbedHTML } from '@/lib/sanitize'
 import { ExternalLink } from 'lucide-react'
 
 interface ArticleTimelineItemProps {
@@ -45,15 +46,15 @@ export function ArticleTimelineItem({ article, index, isLast }: ArticleTimelineI
         {isHighlighted ? (
           <Card className="border-2 border-primary shadow-sm">
             <CardContent className="p-4 space-y-3">
-              {/* Thumbnail */}
-              {article.thumbnail_url && (
-                <div className="w-full aspect-video rounded-md overflow-hidden bg-muted">
+              {/* Thumbnail - YouTube가 아닌 경우만 표시 */}
+              {article.thumbnail_url && article.article_type !== 'youtube' && (
+                <div className="w-full max-h-48 sm:max-h-64 rounded-md overflow-hidden bg-muted flex items-center justify-center">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={article.thumbnail_url}
                     alt={article.title}
                     loading="lazy"
-                    className="w-full h-full object-cover"
+                    className="w-full h-auto max-h-48 sm:max-h-64 object-contain"
                     onError={(e) => {
                       const target = e.target as HTMLImageElement
                       target.style.display = 'none'
@@ -131,7 +132,7 @@ function renderEmbed(article: IssueArticle) {
         <div className="mt-3">
           <iframe
             src={`https://www.youtube.com/embed/${extractYouTubeId(article.url)}`}
-            className="w-full aspect-video rounded-md"
+            className="w-full aspect-video max-h-48 sm:max-h-64 rounded-md"
             allowFullScreen
             title={article.title}
           />
@@ -158,9 +159,4 @@ function extractYouTubeId(url: string): string {
   const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/
   const match = url.match(regex)
   return match ? match[1] : ''
-}
-
-function sanitizeEmbedHTML(html: string): string {
-  // Basic sanitization - in production, use DOMPurify or similar
-  return html
 }

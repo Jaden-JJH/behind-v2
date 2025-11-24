@@ -570,10 +570,9 @@ export default function IssueDetailPage() {
               label: opt.label,
               count: opt.vote_count
             }))}
-            ctaLabel="댓글 보러가기"
+            ctaLabel="진행 중인 투표 모아보기"
             onCta={() => {
-              const el = document.getElementById("comments");
-              if (el) el.scrollIntoView({ behavior: "smooth" });
+              window.location.href = "/issues";
             }}
           />
         ) : (

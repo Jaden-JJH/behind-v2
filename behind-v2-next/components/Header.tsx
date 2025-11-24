@@ -91,6 +91,9 @@ export function Header() {
             <Button asChild variant="ghost">
               <Link href="/issues">전체 이슈</Link>
             </Button>
+            <Button asChild variant="ghost">
+              <Link href="/my">마이페이지</Link>
+            </Button>
             <Button
               variant="ghost"
               onClick={() => showError("준비중입니다")}

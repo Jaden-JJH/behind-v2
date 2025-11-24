@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import type { UpdateArticleInput } from '@/types/issue-articles'
-import { sanitizeHtml } from '@/lib/sanitize'
+import { sanitizeHtml, sanitizeEmbedHTML } from '@/lib/sanitize'
 
 async function checkAdminAuth() {
   const cookieStore = await cookies()
@@ -35,7 +35,7 @@ export async function PUT(
     }
     if (body.thumbnail_url !== undefined) updateData.thumbnail_url = body.thumbnail_url
     if (body.embed_html !== undefined) {
-      updateData.embed_html = body.embed_html ? sanitizeHtml(body.embed_html) : null
+      updateData.embed_html = body.embed_html ? sanitizeEmbedHTML(body.embed_html) : null
     }
     if (body.published_at !== undefined) updateData.published_at = body.published_at
     if (body.display_order !== undefined) updateData.display_order = body.display_order

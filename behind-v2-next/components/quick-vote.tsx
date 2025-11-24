@@ -106,7 +106,7 @@ interface QuickVoteProps {
   onCta?: () => void;
 }
 
-export function QuickVote({ pollId, question, options, ctaLabel = "댓글 토론 참여하기", onCta }: QuickVoteProps) {
+export function QuickVote({ pollId, question, options, ctaLabel = "이슈 자세히 보기", onCta }: QuickVoteProps) {
   const { user, signInWithGoogle } = useAuth();
   const safeOptions = useMemo(() => normalizeOptions(options), [options]);
   const [counts, setCounts] = useState(() => initCountsFromOptions(safeOptions));

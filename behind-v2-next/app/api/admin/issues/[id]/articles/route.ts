@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import type { CreateArticleInput } from '@/types/issue-articles'
-import { sanitizeHtml } from '@/lib/sanitize'
+import { sanitizeHtml, sanitizeEmbedHTML } from '@/lib/sanitize'
 
 // Admin Auth Check
 async function checkAdminAuth() {
@@ -67,7 +67,7 @@ export async function POST(
       url: body.url,
       source: body.source ? sanitizeHtml(body.source) : null,
       thumbnail_url: body.thumbnail_url || null,
-      embed_html: body.embed_html ? sanitizeHtml(body.embed_html) : null,
+      embed_html: body.embed_html ? sanitizeEmbedHTML(body.embed_html) : null,
       published_at: body.published_at || new Date().toISOString(),
       display_order: body.display_order ?? 0,
       is_highlighted: body.is_highlighted ?? false
