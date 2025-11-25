@@ -28,8 +28,11 @@ export default function MyPage() {
     try {
       const response = await fetch('/api/my/profile')
       if (response.ok) {
-        const data = await response.json()
-        setProfileData(data)
+        const apiResponse = await response.json()
+        // API는 { success: true, data: ProfileData } 형태로 응답
+        if (apiResponse.success && apiResponse.data) {
+          setProfileData(apiResponse.data)
+        }
       } else if (response.status === 401) {
         // 401 에러: 세션이 만료되었거나 없음
         // 사용자가 직접 로그인했다면 이는 세션 설정 문제이므로

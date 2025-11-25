@@ -6,28 +6,26 @@ import { useAuth } from '@/hooks/useAuth'
 import { useFetchWithRetry } from '@/hooks/useFetchWithRetry'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { ThumbsUp, ThumbsDown, AlertCircle, RotateCcw } from 'lucide-react'
 import { ImageWithFallback } from '@/components/figma/ImageWithFallback'
+import { AlertCircle, RotateCcw } from 'lucide-react'
 
 interface Issue {
   id: string
   display_id: number
   title: string
+  preview: string
   thumbnail?: string
-}
-
-interface CommentItem {
-  id: string
-  body: string
-  up: number
-  down: number
+  status: string
   created_at: string
-  issue_id: string
-  issues: Issue
+  comment_count: number
 }
 
-interface CommentsResponse {
-  comments: CommentItem[]
+interface FollowedIssue extends Issue {
+  follow_created_at: string
+}
+
+interface FollowsResponse {
+  follows: FollowedIssue[]
   pagination: {
     page: number
     limit: number
@@ -36,10 +34,11 @@ interface CommentsResponse {
   }
 }
 
-export default function MyCommentsPage() {
+export default function MyFollowsPage() {
   const { user, loading, signInWithGoogle } = useAuth()
   const router = useRouter()
-  const { data: apiResponse, isLoading, error, fetch: fetchWithRetry } = useFetchWithRetry<{ success: boolean; data: CommentsResponse }>()
+  const { data: apiResponse, isLoading, error, fetch: fetchWithRetry } = useFetchWithRetry<{ success: boolean; data: { follows: FollowedIssue[]; pagination: { page: number; limit: number; total: number; totalPages: number } } }>()
+  const [filter, setFilter] = useState<'all' | 'active' | 'ended'>('all')
   const [page, setPage] = useState(1)
   const [loginAttempted, setLoginAttempted] = useState(false)
   const authCheckRef = useRef(false)
@@ -66,17 +65,15 @@ export default function MyCommentsPage() {
   useEffect(() => {
     if (!user || loading) return
 
-    fetchWithRetry(
-      `/api/my/comments?page=${page}&limit=20`,
-      {
-        maxRetries: 3,
-        timeout: 10000,
-        retryDelay: 1000,
-      }
-    )
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, loading, page])
+    const url = `/api/my/follows?page=${page}&limit=20&filter=${filter}`
 
+    fetchWithRetry(url, {
+      maxRetries: 3,
+      timeout: 10000,
+      retryDelay: 1000,
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, loading, page, filter])
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
@@ -97,7 +94,41 @@ export default function MyCommentsPage() {
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">내가 쓴 댓글</h1>
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">팔로우한 이슈</h1>
+
+      {/* 필터 버튼 */}
+      <div className="flex gap-2 mb-6">
+        <Button
+          variant={filter === 'all' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => {
+            setFilter('all')
+            setPage(1)
+          }}
+        >
+          전체
+        </Button>
+        <Button
+          variant={filter === 'active' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => {
+            setFilter('active')
+            setPage(1)
+          }}
+        >
+          진행중
+        </Button>
+        <Button
+          variant={filter === 'ended' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => {
+            setFilter('ended')
+            setPage(1)
+          }}
+        >
+          종료
+        </Button>
+      </div>
 
       {/* 로딩 상태 */}
       {isLoading && (
@@ -124,7 +155,7 @@ export default function MyCommentsPage() {
                 variant="outline"
                 className="text-red-700 border-red-300 hover:bg-red-100"
                 onClick={() => fetchWithRetry(
-                  `/api/my/comments?page=${page}&limit=20`,
+                  `/api/my/follows?page=${page}&limit=20&filter=${filter}`,
                   {
                     maxRetries: 3,
                     timeout: 10000,
@@ -140,54 +171,51 @@ export default function MyCommentsPage() {
         </Card>
       )}
 
-      {/* 댓글 목록 */}
-      {!error && !isLoading && apiResponse?.data && (!apiResponse.data.comments || apiResponse.data.comments.length === 0) ? (
+      {/* 팔로우 이슈 목록 */}
+      {!error && !isLoading && apiResponse && apiResponse.data && (!apiResponse.data.follows || apiResponse.data.follows.length === 0) ? (
         <Card className="p-12 text-center">
-          <p className="text-gray-500">작성한 댓글이 없습니다.</p>
+          <p className="text-gray-500">팔로우한 이슈가 없습니다.</p>
         </Card>
-      ) : !error && !isLoading && apiResponse?.data ? (
+      ) : !error && !isLoading && apiResponse && apiResponse.data ? (
         <>
           <div className="space-y-4">
-            {apiResponse.data.comments.map((comment) => (
+            {apiResponse.data.follows.map((follow) => (
               <Card
-                key={comment.id}
+                key={follow.id}
                 className="hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => router.push(`/issues/${comment.issues.display_id}#comment-${comment.id}`)}
+                onClick={() => router.push(`/issues/${follow.display_id}`)}
               >
-                <div className="p-4">
-                  {/* 이슈 정보 */}
-                  <div className="flex gap-3 mb-3 pb-3 border-b border-gray-100">
-                    <div className="w-16 h-10 flex-shrink-0 rounded overflow-hidden bg-slate-100">
-                      <ImageWithFallback
-                        src={comment.issues.thumbnail}
-                        alt={comment.issues.title}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-sm font-semibold text-slate-900 line-clamp-1">
-                        {comment.issues.title}
-                      </h3>
-                    </div>
+                <div className="flex gap-4 p-4">
+                  {/* 썸네일 */}
+                  <div className="w-32 h-20 flex-shrink-0 rounded-lg overflow-hidden bg-slate-100">
+                    <ImageWithFallback
+                      src={follow.thumbnail}
+                      alt={follow.title}
+                      className="w-full h-full object-cover"
+                    />
                   </div>
 
-                  {/* 댓글 내용 */}
-                  <p className="text-slate-700 mb-3 whitespace-pre-wrap break-words">
-                    {comment.body}
-                  </p>
-
-                  {/* 메타 정보 */}
-                  <div className="flex items-center justify-between text-xs text-gray-500">
-                    <span>{formatDate(comment.created_at)}</span>
-                    <div className="flex items-center gap-3">
-                      <span className="flex items-center gap-1">
-                        <ThumbsUp className="w-3.5 h-3.5" />
-                        {comment.up}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <ThumbsDown className="w-3.5 h-3.5" />
-                        {comment.down}
-                      </span>
+                  {/* 콘텐츠 */}
+                  <div className="flex-1">
+                    <div className="flex items-start justify-between mb-2">
+                      <h3 className="text-lg font-bold text-slate-900 leading-snug">
+                        {follow.title}
+                      </h3>
+                      {follow.status === 'active' ? (
+                        <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-700 rounded">
+                          진행중
+                        </span>
+                      ) : (
+                        <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-600 rounded">
+                          종료
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-slate-600 text-sm mb-3 line-clamp-1">{follow.preview}</p>
+                    <div className="flex items-center gap-4 text-xs text-gray-500">
+                      <span>팔로우: {formatDate(follow.follow_created_at)}</span>
+                      <span>•</span>
+                      <span>댓글 {follow.comment_count}</span>
                     </div>
                   </div>
                 </div>

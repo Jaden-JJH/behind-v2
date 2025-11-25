@@ -39,7 +39,7 @@ interface VotesResponse {
 export default function MyVotesPage() {
   const { user, loading, signInWithGoogle } = useAuth()
   const router = useRouter()
-  const { data: votesData, isLoading, error, fetch: fetchWithRetry } = useFetchWithRetry<VotesResponse>()
+  const { data: apiResponse, isLoading, error, fetch: fetchWithRetry } = useFetchWithRetry<{ success: boolean; data: VotesResponse }>()
   const [filter, setFilter] = useState<'all' | 'active' | 'ended'>('all')
   const [page, setPage] = useState(1)
   const [loginAttempted, setLoginAttempted] = useState(false)
@@ -64,7 +64,7 @@ export default function MyVotesPage() {
   }, [user, loading, loginAttempted, signInWithGoogle, router])
 
   // 데이터 조회
-  const fetchVotes = useCallback(() => {
+  useEffect(() => {
     if (!user || loading) return
 
     fetchWithRetry(
@@ -75,11 +75,8 @@ export default function MyVotesPage() {
         retryDelay: 1000,
       }
     )
-  }, [user, loading, page, filter, fetchWithRetry])
-
-  useEffect(() => {
-    fetchVotes()
-  }, [fetchVotes])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, loading, page, filter])
 
 
   const formatDate = (dateString: string) => {
@@ -179,14 +176,14 @@ export default function MyVotesPage() {
       )}
 
       {/* 투표 목록 */}
-      {!error && !isLoading && votesData && (!votesData.votes || votesData.votes.length === 0) ? (
+      {!error && !isLoading && apiResponse?.data && (!apiResponse.data.votes || apiResponse.data.votes.length === 0) ? (
         <Card className="p-12 text-center">
           <p className="text-gray-500">참여한 투표가 없습니다.</p>
         </Card>
-      ) : !error && !isLoading && votesData ? (
+      ) : !error && !isLoading && apiResponse?.data ? (
         <>
           <div className="space-y-4">
-            {votesData.votes.map((vote, index) => (
+            {apiResponse.data.votes.map((vote, index) => (
               <Card
                 key={`${vote.issue.id}-${index}`}
                 className="hover:shadow-lg transition-shadow cursor-pointer"
@@ -231,7 +228,7 @@ export default function MyVotesPage() {
           </div>
 
           {/* 페이지네이션 */}
-          {votesData.pagination.totalPages > 1 && (
+          {apiResponse.data.pagination.totalPages > 1 && (
             <div className="flex justify-center gap-2 mt-8">
               <Button
                 variant="outline"
@@ -242,12 +239,12 @@ export default function MyVotesPage() {
                 이전
               </Button>
               <span className="px-4 py-2 text-sm text-gray-700">
-                {page} / {votesData.pagination.totalPages}
+                {page} / {apiResponse.data.pagination.totalPages}
               </span>
               <Button
                 variant="outline"
                 size="sm"
-                disabled={page === votesData.pagination.totalPages || isLoading}
+                disabled={page === apiResponse.data.pagination.totalPages || isLoading}
                 onClick={() => setPage(page + 1)}
               >
                 다음
