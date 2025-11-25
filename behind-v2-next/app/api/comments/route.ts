@@ -144,8 +144,7 @@ export async function POST(request: Request) {
         return createErrorResponse(ErrorCode.COMMENT_CREATE_FAILED, 500, error.message)
       }
 
-      // 이슈의 댓글 수 증가 (에러 무시)
-      console.log('[DEBUG] 댓글 수 증가 시작:', { issueId })
+      // 이슈의 댓글 수 증가
       try {
         const { data: issueData, error: selectError } = await supabaseAdmin
           .from('issues')
@@ -153,18 +152,20 @@ export async function POST(request: Request) {
           .eq('id', issueId)
           .single()
 
-        console.log('[DEBUG] 현재 댓글 수 조회:', { issueData, selectError })
-
-        if (issueData) {
+        if (selectError) {
+          console.error('Failed to fetch issue comment_count:', selectError)
+        } else if (issueData) {
           const { error: updateError } = await supabaseAdmin
             .from('issues')
             .update({ comment_count: (issueData.comment_count || 0) + 1 })
             .eq('id', issueId)
 
-          console.log('[DEBUG] 댓글 수 업데이트 결과:', { updateError })
+          if (updateError) {
+            console.error('Failed to update comment_count:', updateError)
+          }
         }
       } catch (error) {
-        console.error('Failed to update comment_count:', error)
+        console.error('Unexpected error updating comment_count:', error)
       }
 
       return createSuccessResponse({

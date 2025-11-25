@@ -69,7 +69,7 @@ export async function GET(request: Request) {
           totalPages: 0
         }
       }
-      return createSuccessResponse(response, 200)
+      return createSuccessResponse(response, 200, 0)
     }
 
     // 3-2. 해당하는 이슈들 조회
@@ -134,7 +134,7 @@ export async function GET(request: Request) {
       }
     }
 
-    return createSuccessResponse(response, 200)
+    return createSuccessResponse(response, 200, total)
   } catch (error) {
     console.error('API error:', error)
     return createErrorResponse(ErrorCode.INTERNAL_ERROR, 500)

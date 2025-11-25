@@ -79,7 +79,7 @@ export async function GET(request: Request) {
         total,
         totalPages: Math.ceil(total / limit)
       }
-    })
+    }, 200, total)
   } catch (error) {
     console.error('API error:', error)
     return createErrorResponse(ErrorCode.INTERNAL_ERROR, 500)

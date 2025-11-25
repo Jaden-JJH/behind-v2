@@ -70,8 +70,12 @@ export async function POST(
       }
 
       // 5. 성공 응답
+      if (!data || data.length === 0) {
+        return createErrorResponse(ErrorCode.INTERNAL_ERROR, 500,
+          'Invalid RPC response')
+      }
+
       const result = data[0]
-      console.log('RPC 반환값:', result)  // 디버깅용
 
       return createSuccessResponse({
         curious_count: result.result_curious_count,
