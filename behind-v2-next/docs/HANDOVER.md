@@ -1,26 +1,33 @@
 # Behind v2 마이페이지 - 최종 인수인계 문서
 
-**작성일**: 2025-11-24  
-**상태**: ✅ Phase 1 완료  
-**작성자**: Claude Code (AI)
+**작성일**: 2025-11-27  
+**상태**: ✅ Phase 1 완료 + 버그 수정 완료  
+**최종 업데이트**: Session #1 작업 반영
 
 ---
 
 ## 🎯 현재 상황
 
-모든 마이페이지 기능이 **완료되고 정상 작동**합니다.
+**Phase 1 완료 및 주요 버그 수정 완료**
 
-### ✨ 오늘 완료한 작업 (2025-11-24)
+### ✅ 완료된 작업
 
-```
-✅ useEffect 의존성 배열 최적화 (votes/comments 페이지)
-✅ API 호출 성공 확인 (GET /api/my/votes)
-✅ 정상 동작 검증 완료
-```
+**Phase 1 (기본 마이페이지):**
+- 마이페이지 레이아웃 (대시보드 + 사이드바)
+- 투표/댓글/궁금해요 페이지
+- API 엔드포인트 구현
+- 사용자 인증 및 권한 관리
+
+**Session #1 버그 수정:**
+- useFetchWithRetry 무한 루프 해결
+- RLS 정책 문제 해결
+- 닉네임 표시 오류 수정
+- 대시보드 카운트 정확성 개선
+- 궁금해요 user_id 추적 구현
 
 ---
 
-## 📊 완료된 기능
+## �� 완료된 기능
 
 ### 마이페이지 대시보드 (`/my`)
 - ✅ 계정 정보 (닉네임, 이메일, 가입일)
@@ -37,43 +44,52 @@
 - ✅ 페이지네이션
 
 ### 궁금해요 (`/my/curious`)
-- ✅ `/reported-issues?my_curious=true` 리다이렉트
+- ✅ user_id 추적 기능 추가
+- ✅ 마이페이지 카운트 반영
 
 ### API 엔드포인트
 - ✅ `GET /api/my/profile` - 프로필 + 통계
 - ✅ `GET /api/my/votes` - 투표 목록
 - ✅ `GET /api/my/comments` - 댓글 목록
+- ✅ `POST /api/reports/[id]/curious` - 궁금해요 (user_id 추가)
 
 ---
 
-## 🛠️ 주요 기술
+## 🛠️ 주요 기술 및 패턴
+
+### Supabase 클라이언트 사용 원칙
+```typescript
+// ❌ 사용자별 데이터 조회 시 절대 사용 금지
+const supabase = createClient(ANON_KEY)
+
+// ✅ 사용자별 데이터 조회 시 필수
+const supabaseServer = await createServerClient()
+```
 
 ### useFetchWithRetry 훅
-```
+```typescript
+// ✅ 네이티브 API 명시
+const response = await window.fetch(url, {
+  signal: controller.signal,
+})
+
+// 설정
 재시도: 3회
 타임아웃: 10초
 재시도 간격: 1초
 401 에러: 재시도 안함
 ```
 
-### 최적화 사항 (2025-11-24)
-```typescript
-// useCallback으로 함수 메모이제이션
-const fetchVotes = useCallback(() => {
-  if (!user || loading) return
-  fetchWithRetry(...)
-}, [user, loading, page, filter, fetchWithRetry])
-
-// useEffect에서 호출
-useEffect(() => {
-  fetchVotes()
-}, [fetchVotes])
-```
+### RLS 정책 체크리스트
+새 테이블 생성 시 반드시 확인:
+- [ ] SELECT 정책
+- [ ] INSERT 정책
+- [ ] UPDATE 정책 (필요시)
+- [ ] DELETE 정책 (필요시)
 
 ---
 
 ## 📂 파일 구조
-
 ```
 app/my/
 ├── layout.tsx           # 사이드바
@@ -83,48 +99,34 @@ app/my/
 └── curious/page.tsx     # 궁금해요
 
 app/api/my/
-├── profile/route.ts     # API
-├── votes/route.ts       # API
-└── comments/route.ts    # API
+├── profile/route.ts     # 프로필 + 통계
+├── votes/route.ts       # 투표 목록
+└── comments/route.ts    # 댓글 목록
+
+app/api/reports/[id]/
+└── curious/route.ts     # 궁금해요 (user_id 추가됨)
+
+hooks/
+└── useFetchWithRetry.ts # 재시도 로직 (window.fetch 사용)
 ```
 
 ---
 
-## 🧪 테스트
+## ⚠️ 알려진 제약사항 및 주의사항
 
-### API 동작 확인
-```javascript
-// 브라우저 콘솔
-const res = await fetch('/api/my/votes?page=1&limit=20&filter=all')
-const data = await res.json()
-console.log(data)
-// 결과: { success: true, data: { votes: [], pagination: {...} } }
-```
+### 1. 기존 궁금해요 데이터
+- user_id=null인 기존 데이터는 마이페이지에 카운트 안됨
+- 새로 클릭한 것만 추적됨
 
-### 기능 체크리스트
-- [ ] 로그인 후 마이페이지 접근
-- [ ] 대시보드 통계 표시
-- [ ] 투표 필터/페이지네이션 동작
-- [ ] 댓글 목록 표시
+### 2. Rate Limiter 의존성
+- Upstash Redis 상태 확인 필요
+- 연결 실패 시 API 전체 블로킹 가능성
+- **권장**: Fallback 로직 추가
 
----
-
-## 📖 필수 문서
-
-| 문서 | 내용 |
-|------|------|
-| **README.md** | 문서 네비게이션 |
-| **CURRENT_STATUS.md** | 기술 상세 정보 |
-| **DEVELOPMENT_NOTES.md** | 개발 규칙 |
-
----
-
-## ⚠️ 알아야 할 사항
-
-1. **정상 동작**: 모든 기능이 정상입니다
-2. **빈 데이터**: "참여한 투표가 없습니다" 메시지는 정상 (투표 데이터 없음)
-3. **로그인 필수**: 모든 API는 401 체크 구현됨
-4. **DB 제약**: `report_curious`에 `user_id` 없음 (Phase 2에서 추가 예정)
+### 3. 디버깅 로그
+배포 전 제거 필요:
+- `app/my/votes/page.tsx` - [DEBUG] 로그
+- `hooks/useFetchWithRetry.ts` - [FETCH] 로그
 
 ---
 
@@ -133,30 +135,61 @@ console.log(data)
 ### 이슈 팔로우 기능
 **예상 소요**: 1주일 (13시간)
 
-**필요 작업**:
+**작업 내용**:
 1. `issue_follows` 테이블 생성
 2. 팔로우/언팔로우 API
-3. 팔로우 버튼 + 목록 페이지
+3. 팔로우 버튼 컴포넌트
+4. 팔로우한 이슈 목록 페이지
 
-**참고**: `MYPAGE_IMPLEMENTATION_PLAN.md` Phase 2 섹션
+**참고 문서**: `MYPAGE_IMPLEMENTATION_PLAN.md` Phase 2 섹션
 
 ---
 
-## ✅ 최종 체크리스트
+## 📚 참고 문서
+
+| 문서 | 내용 |
+|------|------|
+| **SESSION_HISTORY.md** | 작업 세션 이력 및 버그 수정 상세 |
+| **MYPAGE_IMPLEMENTATION_PLAN.md** | Phase 2~5 구현 계획 |
+| **DEVELOPMENT_NOTES.md** | 개발 규칙 및 컨벤션 |
+| **ADMIN_GUIDE.md** | 관리자 가이드 |
+
+---
+
+## 🧪 테스트 체크리스트
+
+### 마이페이지 기능
+- [ ] 대시보드 통계 정확성 (투표/댓글/궁금해요)
+- [ ] 닉네임 정상 표시
+- [ ] 투표 목록 조회 및 필터
+- [ ] 댓글 목록 조회
+- [ ] 페이지네이션 동작
+
+### 참여 기능
+- [ ] 댓글 작성 후 마이페이지 반영
+- [ ] 투표 참여 후 마이페이지 반영
+- [ ] 궁금해요 클릭 후 마이페이지 반영
+- [ ] Rate Limiter 정상 작동
+
+### RLS 정책
+- [ ] 다른 사용자 데이터 접근 차단
+- [ ] 본인 데이터만 조회 가능
+
+---
+
+## ✅ Phase 1 완료 확인
 
 - [x] 모든 API 엔드포인트 구현
-- [x] useEffect 최적화
-- [x] null 체크
-- [x] 에러 처리
-- [x] 로딩 상태
+- [x] RLS 정책 설정
+- [x] 무한 루프 버그 수정
+- [x] 닉네임 표시 오류 수정
+- [x] 카운트 정확성 개선
+- [x] 궁금해요 user_id 추적
 - [x] 빌드 성공
+- [x] 타입 체크 성공
 
 ---
 
-## 🎉 결론
-
-**Phase 1 완료!**  
-모든 기능이 정상 작동합니다.  
-다음 개발자는 이 문서로 Phase 2를 시작할 수 있습니다.
-
-**마지막 업데이트**: 2025-11-24 05:35 UTC
+**최종 업데이트**: 2025-11-27  
+**담당자**: Claude + Jaden  
+**상태**: Phase 1 완료, Phase 2 대기 중
