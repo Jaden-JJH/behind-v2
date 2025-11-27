@@ -62,6 +62,19 @@ export default function MyLayout({
             <span>내가 쓴 댓글</span>
           </Link>
 
+          {/* 팔로우한 이슈 */}
+          <Link
+            href="/my/follows"
+            className={`flex items-center px-4 py-3 rounded-lg transition-colors ${
+              isActive('/my/follows')
+                ? 'bg-indigo-50 text-indigo-700 font-medium'
+                : 'text-gray-700 hover:bg-gray-100'
+            }`}
+          >
+            <span className="mr-3">⭐</span>
+            <span>팔로우한 이슈</span>
+          </Link>
+
           {/* 궁금해요 누른 제보 */}
           <Link
             href="/my/curious"
@@ -132,6 +145,20 @@ export default function MyLayout({
             >
               <span className="mr-3">💬</span>
               <span>내가 쓴 댓글</span>
+            </Link>
+
+            {/* 팔로우한 이슈 */}
+            <Link
+              href="/my/follows"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className={`flex items-center px-4 py-3 rounded-lg transition-colors ${
+                isActive('/my/follows')
+                  ? 'bg-indigo-50 text-indigo-700 font-medium'
+                  : 'text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              <span className="mr-3">⭐</span>
+              <span>팔로우한 이슈</span>
             </Link>
 
             {/* 궁금해요 누른 제보 */}
