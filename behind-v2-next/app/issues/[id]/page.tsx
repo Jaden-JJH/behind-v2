@@ -20,6 +20,7 @@ import { useAuth } from '@/hooks/useAuth';
 import type { ChatRoomState } from "@/lib/chat-types";
 import { ArticleTimeline } from "@/components/article-timeline";
 import type { IssueArticle } from "@/types/issue-articles";
+import { UserProfileDrawer } from "@/components/user-profile-drawer";
 
 // deviceHash 생성/가져오기 함수
 function getDeviceHash(): string {
@@ -125,6 +126,9 @@ export default function IssueDetailPage() {
 
   // 후속 기사 state
   const [articles, setArticles] = useState<IssueArticle[]>([]);
+
+  // UserProfileDrawer state
+  const [selectedNickname, setSelectedNickname] = useState<string | null>(null);
 
   // 로컬 스토리지에 투표 상태 저장/불러오기
   const saveVoteState = (commentId: string, voteType: 'up' | 'down' | null) => {
@@ -663,7 +667,16 @@ export default function IssueDetailPage() {
                           <AvatarFallback>{c.user_nick.slice(-1)}</AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className="text-sm">{c.user_nick}</p>
+                          {c.user_nick ? (
+                            <button
+                              onClick={() => setSelectedNickname(c.user_nick)}
+                              className="text-sm hover:underline cursor-pointer text-left bg-transparent border-none p-0"
+                            >
+                              {c.user_nick}
+                            </button>
+                          ) : (
+                            <p className="text-sm text-muted-foreground">익명</p>
+                          )}
                           <p className="text-xs text-muted-foreground">
                             {formatTime(c.created_at)}
                           </p>
@@ -704,6 +717,12 @@ export default function IssueDetailPage() {
           )}
         </div>
       </main>
+
+      <UserProfileDrawer
+        nickname={selectedNickname || ''}
+        open={selectedNickname !== null}
+        onOpenChange={(open) => !open && setSelectedNickname(null)}
+      />
 
       <footer className="py-6 text-center text-slate-500 border-t border-slate-200 bg-white mt-8">
         © 2025 비하인드. 모두의 뒷얘기 살롱.

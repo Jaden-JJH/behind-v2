@@ -11,9 +11,18 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from '@/components/ui/drawer'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { MessageSquare, Vote, ExternalLink } from 'lucide-react'
+import { MessageSquare, Vote, ExternalLink, X } from 'lucide-react'
 import { formatTime } from '@/lib/utils'
+import { useMediaQuery } from '@/hooks/use-media-query'
 
 interface RecentComment {
   id: string
@@ -45,6 +54,7 @@ interface UserProfileDrawerProps {
 
 export function UserProfileDrawer({ nickname, open, onOpenChange }: UserProfileDrawerProps) {
   const router = useRouter()
+  const isDesktop = useMediaQuery('(min-width: 768px)')
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -90,6 +100,94 @@ export function UserProfileDrawer({ nickname, open, onOpenChange }: UserProfileD
     router.push(`/users/${encodeURIComponent(nickname)}`)
   }
 
+  // 공통 컨텐츠
+  const content = (
+    <div className="space-y-4">
+      {loading && (
+        <div className="text-center py-8 text-muted-foreground">
+          로딩 중...
+        </div>
+      )}
+
+      {error && (
+        <div className="text-center py-8 text-muted-foreground">
+          {error}
+        </div>
+      )}
+
+      {profile && (
+        <>
+          {/* 활동 통계 */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex items-center gap-2 text-sm">
+              <MessageSquare className="h-4 w-4 text-muted-foreground" />
+              <span>댓글 {profile.stats.comment_count}개</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <Vote className="h-4 w-4 text-muted-foreground" />
+              <span>투표 {profile.stats.vote_count}개</span>
+            </div>
+          </div>
+
+          {/* 최근 댓글 */}
+          {profile.recent_comments.length > 0 && (
+            <div>
+              <h4 className="text-sm font-medium mb-2">최근 댓글</h4>
+              <div className="space-y-3">
+                {profile.recent_comments.slice(0, 2).map((comment) => (
+                  <div key={comment.id} className="text-sm border-l-2 pl-3">
+                    <p className="text-muted-foreground text-xs mb-1">
+                      {comment.issues.title}
+                    </p>
+                    <p className="line-clamp-2 mb-1">{comment.body}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {formatTime(comment.created_at)}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  )
+
+  // 데스크탑: Dialog
+  if (isDesktop) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{nickname}</DialogTitle>
+            {profile && (
+              <DialogDescription>{profile.joined_at} 가입</DialogDescription>
+            )}
+          </DialogHeader>
+
+          <div className="px-1">
+            {content}
+          </div>
+
+          <DialogFooter className="flex-col sm:flex-col gap-2">
+            <Button onClick={handleViewFullProfile} className="w-full">
+              <ExternalLink className="mr-2 h-4 w-4" />
+              프로필 자세히 보기
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => onOpenChange(false)}
+              className="w-full"
+            >
+              닫기
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    )
+  }
+
+  // 모바일: Drawer
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent>
@@ -101,53 +199,7 @@ export function UserProfileDrawer({ nickname, open, onOpenChange }: UserProfileD
         </DrawerHeader>
 
         <div className="px-4 pb-4">
-          {loading && (
-            <div className="text-center py-8 text-muted-foreground">
-              로딩 중...
-            </div>
-          )}
-
-          {error && (
-            <div className="text-center py-8 text-muted-foreground">
-              {error}
-            </div>
-          )}
-
-          {profile && (
-            <div className="space-y-4">
-              {/* 활동 통계 */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex items-center gap-2 text-sm">
-                  <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                  <span>댓글 {profile.stats.comment_count}개</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <Vote className="h-4 w-4 text-muted-foreground" />
-                  <span>투표 {profile.stats.vote_count}개</span>
-                </div>
-              </div>
-
-              {/* 최근 댓글 */}
-              {profile.recent_comments.length > 0 && (
-                <div>
-                  <h4 className="text-sm font-medium mb-2">최근 댓글</h4>
-                  <div className="space-y-3">
-                    {profile.recent_comments.slice(0, 2).map((comment) => (
-                      <div key={comment.id} className="text-sm border-l-2 pl-3">
-                        <p className="text-muted-foreground text-xs mb-1">
-                          {comment.issues.title}
-                        </p>
-                        <p className="line-clamp-2 mb-1">{comment.body}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {formatTime(comment.created_at)}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
+          {content}
         </div>
 
         <DrawerFooter>

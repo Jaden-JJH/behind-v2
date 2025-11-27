@@ -20,6 +20,7 @@ import type { ChatMembership, ChatMessage, ChatRoomState } from "@/lib/chat-type
 import { getLS, setLS, delLS, sessionKey, formatTime } from "@/lib/utils"
 import { useAuth } from "@/hooks/useAuth"
 import { getDeviceHash } from "@/lib/device-hash"
+import { UserProfileDrawer } from "@/components/user-profile-drawer"
 
 function getOrCreateSession(roomId: string): string {
   const existing = getLS<string>(sessionKey(roomId), null)
@@ -59,6 +60,9 @@ export default function ChatRoom() {
   const [joinError, setJoinError] = useState<string | null>(null)
   const [messageError, setMessageError] = useState<string | null>(null)
   const [initialized, setInitialized] = useState(false)
+
+  // UserProfileDrawer state
+  const [selectedNickname, setSelectedNickname] = useState<string | null>(null)
 
   const [sessionId, setSessionId] = useState<string>("")
 
@@ -391,7 +395,18 @@ export default function ChatRoom() {
                       </Avatar>
                       <div className={`flex flex-col gap-1 max-w-[70%] ${isOwn ? "items-end" : ""}`}>
                         {!isOwn && (
-                          <span className="text-sm text-muted-foreground px-1">{m.authorNick}</span>
+                          <span className="text-sm text-muted-foreground px-1">
+                            {m.authorNick ? (
+                              <button
+                                onClick={() => setSelectedNickname(m.authorNick)}
+                                className="text-sm text-muted-foreground px-1 hover:underline cursor-pointer bg-transparent border-none p-0"
+                              >
+                                {m.authorNick}
+                              </button>
+                            ) : (
+                              <span className="text-sm text-muted-foreground px-1">익명</span>
+                            )}
+                          </span>
                         )}
                         <div className={`rounded-2xl px-4 py-2 ${isOwn ? "bg-indigo-600 text-white" : "bg-muted"}`}>
                           <p className="break-words">{m.body}</p>
@@ -425,6 +440,12 @@ export default function ChatRoom() {
           </div>
         </div>
       </main>
+
+      <UserProfileDrawer
+        nickname={selectedNickname || ''}
+        open={selectedNickname !== null}
+        onOpenChange={(open) => !open && setSelectedNickname(null)}
+      />
 
       <footer className="py-6 text-center text-slate-500 border-t border-slate-200 bg-white mt-8">
         © 2025 비하인드. 모두의 뒷얘기 살롱.
