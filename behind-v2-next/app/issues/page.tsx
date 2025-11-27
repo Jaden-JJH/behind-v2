@@ -179,7 +179,7 @@ export default function AllIssuesPage() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b bg-card sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-4 py-4">
+        <div className="max-w-6xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between mb-4">
             <Button variant="ghost" onClick={() => router.push('/')} className="-ml-2">
               <ArrowLeft className="w-4 h-4 mr-2" />
@@ -236,7 +236,7 @@ export default function AllIssuesPage() {
       </header>
 
       {/* Issue List */}
-      <main className="max-w-4xl mx-auto px-4 py-6">
+      <main className="max-w-6xl mx-auto px-4 py-6">
         <div className="space-y-4">
           {filteredIssues.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">

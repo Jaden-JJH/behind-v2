@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { Menu } from "lucide-react";
 
 import { useAuth } from "@/hooks/useAuth";
@@ -16,6 +16,8 @@ export function Header() {
   const [showNicknameModal, setShowNicknameModal] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
+  const isMyPage = pathname?.startsWith('/my') ?? false;
 
   const nickname = useMemo(() => {
     if (!user) return undefined;
@@ -69,7 +71,7 @@ export function Header() {
   return (
     <>
       <header className="bg-white shadow-sm sticky top-0 z-50">
-        <div className="mx-auto flex h-16 items-center justify-between px-4 sm:px-6 max-w-6xl">
+        <div className={isMyPage ? "px-4 sm:px-6 flex h-16 items-center justify-between" : "mx-auto flex h-16 items-center justify-between px-4 sm:px-6 max-w-6xl"}>
           <div className="flex items-center gap-3">
             <button
               type="button"
@@ -94,11 +96,8 @@ export function Header() {
             <Button asChild variant="ghost">
               <Link href="/my">마이페이지</Link>
             </Button>
-            <Button
-              variant="ghost"
-              onClick={() => showError("준비중입니다")}
-            >
-              내 대화방
+            <Button asChild variant="ghost">
+              <Link href="/my/chat-rooms">채팅방</Link>
             </Button>
             <Button
               variant="ghost"

@@ -169,7 +169,7 @@ export default function MyChatRoomsPage() {
               <Card
                 key={`${chatRoom.room_id}-${index}`}
                 className="hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => router.push(`/chat/${chatRoom.issue.display_id}`)}
+                onClick={() => router.push(`/chat/${chatRoom.issue_id}`)}
               >
                 <div className="flex gap-4 p-4">
                   {/* 썸네일 */}

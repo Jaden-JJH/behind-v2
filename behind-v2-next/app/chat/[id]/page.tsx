@@ -77,14 +77,14 @@ export default function ChatRoom() {
       return (
         <div className="min-h-screen bg-background">
           <header className="border-b bg-card sticky top-0 z-10">
-            <div className="max-w-4xl mx-auto px-4 py-4">
+            <div className="max-w-6xl mx-auto px-4 py-4">
               <Button variant="ghost" onClick={() => router.push("/")} className="mb-2 -ml-2">
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 목록으로
               </Button>
             </div>
           </header>
-          <main className="max-w-4xl mx-auto px-4 py-6">
+          <main className="max-w-6xl mx-auto px-4 py-6">
             <Card>
               <CardContent className="p-8 text-center space-y-4">
                 <MessageCircle className="w-16 h-16 mx-auto text-muted-foreground opacity-50" />
@@ -331,7 +331,7 @@ export default function ChatRoom() {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-4 py-4">
+        <div className="max-w-6xl mx-auto px-4 py-4">
           <Button variant="ghost" onClick={() => router.push('/')} className="mb-2 -ml-2">
             <ArrowLeft className="w-4 h-4 mr-2" />
             목록으로
@@ -360,7 +360,7 @@ export default function ChatRoom() {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 py-6 space-y-4">
+      <main className="max-w-6xl mx-auto px-4 py-6 space-y-4">
         <Card>
           <CardContent className="p-0">
             <div ref={scrollerRef} className="h-[500px] overflow-y-auto p-4 space-y-3">

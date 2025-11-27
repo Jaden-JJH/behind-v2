@@ -412,7 +412,7 @@ export default function IssueDetailPage() {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-3 md:px-4 py-3 md:py-4">
+        <div className="max-w-6xl mx-auto px-3 md:px-4 py-3 md:py-4">
           <Button variant="ghost" onClick={() => router.push('/')} className="mb-3 -ml-2">
             <ArrowLeft className="w-4 h-4 mr-2" />
             목록으로
@@ -464,7 +464,7 @@ export default function IssueDetailPage() {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-3 md:px-4 py-4 md:py-8 space-y-4 md:space-y-6">
+      <main className="max-w-6xl mx-auto px-3 md:px-4 py-4 md:py-8 space-y-4 md:space-y-6">
         {/* 썸네일 이미지 */}
         <div className="relative w-full aspect-video bg-muted rounded-xl overflow-hidden">
           <ImageWithFallback

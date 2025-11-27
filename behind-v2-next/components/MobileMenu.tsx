@@ -1,8 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useState, type MouseEvent } from "react";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
+import { ChevronDown } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { showError } from "@/lib/toast-utils";
@@ -20,7 +22,12 @@ export function MobileMenu({
   user,
   onSignOut,
 }: MobileMenuProps) {
+  const pathname = usePathname();
   const [isVisible, setIsVisible] = useState(false);
+  const [isMyPageExpanded, setIsMyPageExpanded] = useState(false);
+
+  const isActive = (path: string) => pathname === path;
+  const isMyPagePath = pathname.startsWith("/my");
 
   useEffect(() => {
     if (!isOpen) {
@@ -54,11 +61,6 @@ export function MobileMenu({
     };
   }, [isOpen, onClose]);
 
-  const handleMyRoomsClick = useCallback(() => {
-    showError("준비중입니다");
-    onClose();
-  }, [onClose]);
-
   const handleReportClick = useCallback(
     (event: MouseEvent<HTMLAnchorElement>) => {
       event.preventDefault();
@@ -81,6 +83,11 @@ export function MobileMenu({
       showError(error);
     }
   }, [onClose, onSignOut]);
+
+  const handleMyPageLinkClick = () => {
+    setIsMyPageExpanded(false);
+    onClose();
+  };
 
   if (!isOpen) {
     return null;
@@ -111,21 +118,91 @@ export function MobileMenu({
             전체 이슈
           </Link>
 
+          {/* 마이페이지 아코디언 */}
+          <div>
+            <button
+              type="button"
+              onClick={() => setIsMyPageExpanded(!isMyPageExpanded)}
+              className={`w-full flex items-center justify-between px-4 py-3 text-slate-700 transition-colors hover:bg-slate-100 ${
+                isMyPagePath ? "text-indigo-700 font-medium" : ""
+              }`}
+            >
+              <span>마이페이지</span>
+              <ChevronDown
+                className={`h-4 w-4 transition-transform ${
+                  isMyPageExpanded ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+
+            {isMyPageExpanded && (
+              <div className="bg-slate-50 space-y-1">
+                <Link
+                  href="/my"
+                  onClick={handleMyPageLinkClick}
+                  className={`block px-8 py-2 text-sm transition-colors ${
+                    isActive("/my")
+                      ? "text-indigo-700 font-medium bg-indigo-50"
+                      : "text-slate-700 hover:bg-slate-100"
+                  }`}
+                >
+                  🏠 대시보드
+                </Link>
+                <Link
+                  href="/my/votes"
+                  onClick={handleMyPageLinkClick}
+                  className={`block px-8 py-2 text-sm transition-colors ${
+                    isActive("/my/votes")
+                      ? "text-indigo-700 font-medium bg-indigo-50"
+                      : "text-slate-700 hover:bg-slate-100"
+                  }`}
+                >
+                  🗳️ 참여한 투표
+                </Link>
+                <Link
+                  href="/my/comments"
+                  onClick={handleMyPageLinkClick}
+                  className={`block px-8 py-2 text-sm transition-colors ${
+                    isActive("/my/comments")
+                      ? "text-indigo-700 font-medium bg-indigo-50"
+                      : "text-slate-700 hover:bg-slate-100"
+                  }`}
+                >
+                  💬 내가 쓴 댓글
+                </Link>
+                <Link
+                  href="/my/follows"
+                  onClick={handleMyPageLinkClick}
+                  className={`block px-8 py-2 text-sm transition-colors ${
+                    isActive("/my/follows")
+                      ? "text-indigo-700 font-medium bg-indigo-50"
+                      : "text-slate-700 hover:bg-slate-100"
+                  }`}
+                >
+                  ⭐ 팔로우한 이슈
+                </Link>
+                <Link
+                  href="/my/curious"
+                  onClick={handleMyPageLinkClick}
+                  className={`block px-8 py-2 text-sm transition-colors ${
+                    isActive("/my/curious")
+                      ? "text-indigo-700 font-medium bg-indigo-50"
+                      : "text-slate-700 hover:bg-slate-100"
+                  }`}
+                >
+                  ❓ 궁금해요 누른 제보
+                </Link>
+              </div>
+            )}
+          </div>
+
           <Link
-            href="/my"
+            href="/my/chat-rooms"
             className="px-4 py-3 text-slate-700 transition-colors hover:bg-slate-100"
             onClick={onClose}
           >
-            마이페이지
+            채팅방
           </Link>
-
-          <button
-            type="button"
-            className="text-left px-4 py-3 text-slate-700 transition-colors hover:bg-slate-100"
-            onClick={handleMyRoomsClick}
-          >
-            내 대화방
-          </button>
 
           <a
             href="https://forms.gle/xot7tw9vZ48uhChG7"
