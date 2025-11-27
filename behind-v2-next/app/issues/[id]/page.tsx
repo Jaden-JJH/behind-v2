@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, Eye, Users, ThumbsUp, ThumbsDown, Flag, ExternalLink } from "lucide-react";
 import { ImageWithFallback } from "@/components/figma/ImageWithFallback";
 import { QuickVote } from "@/components/quick-vote";
+import { IssueFollowButton } from "@/components/issue-follow-button";
 import { fetchChatRoomState } from "@/lib/chat-client";
 import { formatTime } from "@/lib/utils";
 import { showSuccess, showError, handleApiResponse } from '@/lib/toast-utils';
@@ -440,21 +441,24 @@ export default function IssueDetailPage() {
                 )}
               </div>
             </div>
-            <div className="flex flex-col items-end gap-1">
-              <Button
-                disabled={joinDisabled}
-                className="min-w-[120px]"
-                onClick={() => {
-                  if (!joinDisabled) {
-                    router.push(`/chat/${issue.id}`);
-                  }
-                }}
-              >
-                {joinLabel}
-              </Button>
-              {isChatFull && (
-                <span className="text-xs text-rose-500">정원이 가득 찼습니다.</span>
-              )}
+            <div className="flex items-center gap-2">
+              <IssueFollowButton issueId={issue.id} />
+              <div className="flex flex-col items-end gap-1">
+                <Button
+                  disabled={joinDisabled}
+                  className="min-w-[120px]"
+                  onClick={() => {
+                    if (!joinDisabled) {
+                      router.push(`/chat/${issue.id}`);
+                    }
+                  }}
+                >
+                  {joinLabel}
+                </Button>
+                {isChatFull && (
+                  <span className="text-xs text-rose-500">정원이 가득 찼습니다.</span>
+                )}
+              </div>
             </div>
           </div>
         </div>
