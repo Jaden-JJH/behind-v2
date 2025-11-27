@@ -9,7 +9,7 @@ interface IssueFollowButtonProps {
   issueId: string
   initialFollowing?: boolean
   variant?: 'default' | 'outline' | 'ghost'
-  size?: 'sm' | 'md' | 'lg'
+  size?: 'default' | 'sm' | 'lg'
 }
 
 export function IssueFollowButton({
@@ -54,6 +54,8 @@ export function IssueFollowButton({
     setIsLoading(true)
     setError(null)
 
+    const previousState = following
+
     try {
       const method = following ? 'DELETE' : 'POST'
 
@@ -62,6 +64,9 @@ export function IssueFollowButton({
         .split('; ')
         .find(row => row.startsWith('csrf-token='))
         ?.split('=')[1]
+
+      // Optimistic UI update
+      setFollowing(!following)
 
       const response = await fetch(`/api/issues/${issueId}/follow`, {
         method,
@@ -74,14 +79,10 @@ export function IssueFollowButton({
       if (!response.ok) {
         throw new Error('Failed to update follow status')
       }
-
-      // Optimistic UI update
-      setFollowing(!following)
     } catch (error) {
       console.error('Error updating follow status:', error)
       setError('요청 중 오류가 발생했습니다')
-      // Revert optimistic update
-      setFollowing(following)
+      setFollowing(previousState)
     } finally {
       setIsLoading(false)
     }
