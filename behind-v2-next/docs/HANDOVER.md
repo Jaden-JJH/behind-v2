@@ -8,7 +8,9 @@
 
 ## 🎯 현재 상황
 
-**Phase 1 완료 및 주요 버그 수정 완료**
+## 🎯 현재 상황
+
+**Phase 2 완료 - 이슈 팔로우 기능**
 
 ### ✅ 완료된 작업
 
@@ -17,6 +19,14 @@
 - 투표/댓글/궁금해요 페이지
 - API 엔드포인트 구현
 - 사용자 인증 및 권한 관리
+
+**Phase 2 (이슈 팔로우):**
+- issue_follows 테이블 생성 및 RLS 정책
+- 팔로우/언팔로우 API (POST, DELETE, GET)
+- 팔로우 버튼 컴포넌트
+- 이슈 상세 페이지에 팔로우 버튼 추가
+- 팔로우한 이슈 목록 페이지
+- 마이페이지 사이드바 메뉴 추가
 
 **Session #1 버그 수정:**
 - useFetchWithRetry 무한 루프 해결
@@ -27,7 +37,7 @@
 
 ---
 
-## �� 완료된 기능
+## 완료된 기능
 
 ### 마이페이지 대시보드 (`/my`)
 - ✅ 계정 정보 (닉네임, 이메일, 가입일)
@@ -47,10 +57,20 @@
 - ✅ user_id 추적 기능 추가
 - ✅ 마이페이지 카운트 반영
 
+### 팔로우한 이슈 (`/my/follows`)
+- ✅ 팔로우한 이슈 목록 조회
+- ✅ 필터: 전체/진행중/종료
+- ✅ 페이지네이션
+- ✅ 팔로우/언팔로우 버튼 (이슈 상세 페이지)
+
 ### API 엔드포인트
 - ✅ `GET /api/my/profile` - 프로필 + 통계
 - ✅ `GET /api/my/votes` - 투표 목록
 - ✅ `GET /api/my/comments` - 댓글 목록
+- ✅ `GET /api/my/follows` - 팔로우한 이슈 목록
+- ✅ `POST /api/issues/[id]/follow` - 이슈 팔로우
+- ✅ `DELETE /api/issues/[id]/follow` - 이슈 언팔로우
+- ✅ `GET /api/issues/[id]/follow` - 팔로우 상태 확인
 - ✅ `POST /api/reports/[id]/curious` - 궁금해요 (user_id 추가)
 
 ---
@@ -92,22 +112,25 @@ const response = await window.fetch(url, {
 ## 📂 파일 구조
 ```
 app/my/
-├── layout.tsx           # 사이드바
+├── layout.tsx           # 사이드바 (팔로우 메뉴 추가됨)
 ├── page.tsx             # 대시보드
 ├── votes/page.tsx       # 투표
 ├── comments/page.tsx    # 댓글
-└── curious/page.tsx     # 궁금해요
+├── curious/page.tsx     # 궁금해요
+└── follows/page.tsx     # 팔로우한 이슈 (신규)
 
 app/api/my/
 ├── profile/route.ts     # 프로필 + 통계
 ├── votes/route.ts       # 투표 목록
-└── comments/route.ts    # 댓글 목록
+├── comments/route.ts    # 댓글 목록
+└── follows/route.ts     # 팔로우한 이슈 목록 (신규)
 
-app/api/reports/[id]/
-└── curious/route.ts     # 궁금해요 (user_id 추가됨)
+app/api/issues/[id]/
+└── follow/route.ts      # 팔로우/언팔로우/상태확인 (신규)
 
-hooks/
-└── useFetchWithRetry.ts # 재시도 로직 (window.fetch 사용)
+components/
+├── issue-follow-button.tsx  # 팔로우 버튼 (신규)
+└── useFetchWithRetry.ts     # 재시도 로직
 ```
 
 ---
@@ -130,18 +153,18 @@ hooks/
 
 ---
 
-## 🚀 다음 단계 (Phase 2)
+## 🚀 다음 단계 (Phase 3)
 
-### 이슈 팔로우 기능
-**예상 소요**: 1주일 (13시간)
+### 추가 마이페이지 기능
+**예상 소요**: 1.5주일 (18시간)
 
 **작업 내용**:
-1. `issue_follows` 테이블 생성
-2. 팔로우/언팔로우 API
-3. 팔로우 버튼 컴포넌트
-4. 팔로우한 이슈 목록 페이지
+1. 참여한 채팅방 목록 페이지
+2. 다른 사용자 프로필 조회
+3. 프로필 설정 페이지
+4. 헤더 네비게이션 업데이트
 
-**참고 문서**: `MYPAGE_IMPLEMENTATION_PLAN.md` Phase 2 섹션
+**참고 문서**: `MYPAGE_IMPLEMENTATION_PLAN.md` Phase 3 섹션
 
 ---
 
@@ -192,4 +215,4 @@ hooks/
 
 **최종 업데이트**: 2025-11-27  
 **담당자**: Claude + Jaden  
-**상태**: Phase 1 완료, Phase 2 대기 중
+**상태**: Phase 2 완료, Phase 3 대기 중

@@ -265,3 +265,193 @@ window.fetch()
 **작성일**: 2025-11-27  
 **작성자**: Claude + Jaden  
 **소요 시간**: 약 3시간
+
+---
+
+## Session #2 - 2025-11-27
+
+### 작업 내용
+**Phase 2 - 이슈 팔로우 기능 구현**
+
+### 구현 사항
+
+#### 1. DB 스키마 생성
+**테이블:** `issue_follows`
+```sql
+CREATE TABLE issue_follows (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  issue_id UUID NOT NULL REFERENCES issues(id) ON DELETE CASCADE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  UNIQUE(user_id, issue_id)
+);
+```
+
+**인덱스:** 5개 생성
+- `idx_issue_follows_user_id`
+- `idx_issue_follows_issue_id`
+- `idx_issue_follows_created_at`
+- Primary Key, UNIQUE constraint 인덱스
+
+**RLS 정책:** 4개 생성
+- SELECT: 본인 데이터만 조회
+- INSERT: 본인만 추가
+- DELETE: 본인만 삭제
+- UPDATE: 차단 (No one can update)
+
+---
+
+#### 2. 팔로우/언팔로우 API
+**파일:** `app/api/issues/[id]/follow/route.ts`
+
+**엔드포인트:**
+- `GET /api/issues/[id]/follow` - 팔로우 상태 확인
+- `POST /api/issues/[id]/follow` - 팔로우 추가
+- `DELETE /api/issues/[id]/follow` - 언팔로우
+
+**특징:**
+- Next.js 15 비동기 params 패턴 사용
+- CSRF 보호 (POST, DELETE)
+- 중복 팔로우 체크 (멱등성)
+- supabaseServer 사용 (인증된 요청)
+
+---
+
+#### 3. 팔로우 버튼 컴포넌트
+**파일:** `components/issue-follow-button.tsx`
+
+**수정 사항:**
+- size prop 타입 수정: `'md'` → `'default'`
+- Optimistic UI 로직 개선: `previousState` 저장 후 복원
+- CSRF 토큰 처리
+- 로딩/에러 상태 관리
+
+**적용 위치:**
+- `app/issues/[id]/page.tsx` - 헤더 영역에 추가
+
+---
+
+#### 4. 팔로우한 이슈 목록
+**API:** `app/api/my/follows/route.ts`
+- 2단계 조회: issue_follows → issues (JOIN)
+- 메모리 필터링 및 페이지네이션
+- 필터: all, active, ended
+
+**페이지:** `app/my/follows/page.tsx`
+- 기존 votes 페이지 패턴 재사용
+- useFetchWithRetry 훅 사용
+- 필터 및 페이지네이션 UI
+
+**사이드바:** `app/my/layout.tsx`
+- Desktop/Mobile 메뉴에 "팔로우한 이슈" 추가
+- 아이콘: ⭐
+
+---
+
+### 검수 및 검증
+
+#### 네이밍 컨벤션 검증
+- ✅ 테이블명: `issue_follows` (snake_case, 복수형)
+- ✅ 컬럼명: `user_id`, `issue_id`, `created_at` (snake_case)
+- ✅ API URL: `/api/issues/[id]/follow`, `/api/my/follows` (kebab-case)
+- ✅ 컴포넌트: `issue-follow-button.tsx` (kebab-case)
+- ✅ 함수: `IssueFollowButton` (PascalCase)
+- ✅ 변수: `isLoading`, `issueId` (camelCase)
+
+#### 호출 구조 검증
+```
+이슈 상세 페이지
+  ↓
+IssueFollowButton
+  ↓ useEffect
+GET /api/issues/[id]/follow (상태 확인)
+  ↓ onClick
+POST/DELETE /api/issues/[id]/follow
+  ↓
+Supabase issue_follows 테이블
+  ↓
+마이페이지 /my/follows
+  ↓
+GET /api/my/follows
+  ↓
+Supabase issue_follows + issues JOIN
+```
+
+---
+
+### 주요 패턴 및 규칙
+
+#### 1. Next.js 15 비동기 params
+```typescript
+// ✅ 올바른 패턴
+export async function POST(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params
+}
+```
+
+#### 2. Optimistic UI
+```typescript
+// ✅ 올바른 패턴
+const previousState = following
+setFollowing(!following)  // UI 먼저 업데이트
+try {
+  await fetch(...)
+} catch (error) {
+  setFollowing(previousState)  // 실패 시 복원
+}
+```
+
+#### 3. CSRF 토큰
+```typescript
+const csrfToken = document.cookie
+  .split('; ')
+  .find(row => row.startsWith('csrf-token='))
+  ?.split('=')[1]
+
+headers: {
+  'x-csrf-token': csrfToken || ''
+}
+```
+
+---
+
+### 테스트 체크리스트
+
+#### 팔로우 기능
+- [ ] 이슈 상세 페이지에서 팔로우 버튼 표시
+- [ ] 로그인 필요 상태 확인
+- [ ] 팔로우/언팔로우 토글 동작
+- [ ] Optimistic UI 업데이트
+- [ ] 중복 팔로우 방지
+
+#### 마이페이지
+- [ ] 팔로우한 이슈 목록 표시
+- [ ] 필터 동작 (전체/진행중/종료)
+- [ ] 페이지네이션
+- [ ] 빈 목록 UI
+- [ ] 이슈 클릭 시 이동
+
+#### RLS 정책
+- [ ] 본인 팔로우만 조회 가능
+- [ ] 다른 사용자 팔로우 접근 차단
+
+---
+
+### Git Commits
+```bash
+feat: issue_follows 테이블 생성 및 RLS 정책 설정
+feat: 이슈 팔로우/언팔로우 API 구현
+fix: 팔로우 버튼 size prop 타입 수정 및 Optimistic UI 로직 개선
+feat: 이슈 상세 페이지에 팔로우 버튼 추가
+feat: 마이페이지 사이드바에 팔로우한 이슈 메뉴 추가
+```
+
+---
+
+**작성일**: 2025-11-27  
+**작성자**: Claude + Jaden  
+**소요 시간**: 약 2시간  
+**상태**: Phase 2 완료
