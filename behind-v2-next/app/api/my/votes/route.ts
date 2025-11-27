@@ -26,7 +26,7 @@ export async function GET(request: Request) {
     const offset = (page - 1) * limit
 
     // 3. 내가 투표한 poll_id 목록 가져오기
-    const { data: myVotes, error: votesError } = await supabase
+    const { data: myVotes, error: votesError } = await supabaseServer
       .from('poll_votes')
       .select('poll_id, created_at')
       .eq('user_id', user.id)

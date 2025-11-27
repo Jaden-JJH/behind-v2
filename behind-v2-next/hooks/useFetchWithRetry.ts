@@ -42,7 +42,7 @@ export function useFetchWithRetry<T = unknown>() {
           const controller = new AbortController()
           const timeoutId = setTimeout(() => controller.abort(), timeout)
 
-          const response = await fetch(url, {
+          const response = await window.fetch(url, {
             signal: controller.signal,
           })
 

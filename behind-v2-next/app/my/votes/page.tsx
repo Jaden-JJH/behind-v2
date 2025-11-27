@@ -65,8 +65,10 @@ export default function MyVotesPage() {
 
   // 데이터 조회
   useEffect(() => {
+    console.log('[DEBUG] useEffect triggered:', { user: !!user, loading, page, filter })
     if (!user || loading) return
 
+    console.log('[DEBUG] Calling fetchWithRetry')
     fetchWithRetry(
       `/api/my/votes?page=${page}&limit=20&filter=${filter}`,
       {
