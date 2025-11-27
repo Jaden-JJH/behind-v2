@@ -206,7 +206,7 @@ export default function AdminIssuesPage() {
     setEditMediaNewsUrl(mediaEmbed.news?.url || '')
 
     const pollData = issueData.poll
-    const pollOptions = pollData?.poll_options || []
+    const pollOptions = pollData?.options || []
     setEditPollQuestion(pollData?.question || '')
     setEditPollOptions(pollOptions.length > 0 ? pollOptions.map(opt => opt.label) : ['', ''])
   }

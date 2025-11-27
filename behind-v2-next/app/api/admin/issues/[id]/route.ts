@@ -5,7 +5,10 @@ import { sanitizeFields, sanitizeHtml } from '@/lib/sanitize'
 import { normalizeCategory } from '@/lib/categories'
 import { withCsrfProtection } from '@/lib/api-helpers'
 
-export async function GET(request: Request, { params }: { params: { id: string } }) {
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     // 1. 인증 확인
     const cookieStore = await cookies()
@@ -14,7 +17,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const id = params.id
+    const { id } = await params
 
     // 2. issues 테이블에서 id 기준 조회
     const { data: issue, error: issueError } = await supabaseAdmin
@@ -80,7 +83,10 @@ export async function GET(request: Request, { params }: { params: { id: string }
   }
 }
 
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
+export async function PUT(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   return withCsrfProtection(request, async (req) => {
     try {
       // 1. 인증 확인
@@ -90,7 +96,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
       }
 
-      const id = params.id
+      const { id } = await params
       const {
         title,
         preview,
@@ -408,7 +414,10 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   })
 }
 
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   return withCsrfProtection(request, async (req) => {
     try {
       // 1. 인증 확인
@@ -418,7 +427,7 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
       }
 
-      const id = params.id
+      const { id } = await params
 
       // 2. 이슈 조회 및 삭제 가능 여부 확인
       const { data: issue, error: fetchError } = await supabaseAdmin

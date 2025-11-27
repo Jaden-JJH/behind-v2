@@ -41,7 +41,7 @@ export async function GET(request: Request) {
     const filter = searchParams.get('filter') || 'all' // all, active, ended
 
     if (page < 1 || limit < 1 || limit > 100) {
-      return createErrorResponse(ErrorCode.INVALID_PARAMS, 400, {
+      return createErrorResponse(ErrorCode.INVALID_REQUEST, 400, {
         message: 'Invalid page or limit'
       })
     }

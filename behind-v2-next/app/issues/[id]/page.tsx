@@ -398,8 +398,8 @@ export default function IssueDetailPage() {
     );
   }
 
-  const chatActiveMembers = chatState?.activeMembers ?? issue?.active_members ?? 0;
-  const chatCapacity = chatState?.capacity ?? issue?.capacity ?? 0;
+  const chatActiveMembers = chatState?.activeMembers ?? 0;
+  const chatCapacity = chatState?.capacity ?? 0;
   const isChatFull = chatCapacity > 0 && chatActiveMembers >= chatCapacity;
   const chatStatusLabel = chatLoading
     ? '채팅 인원 확인 중...'

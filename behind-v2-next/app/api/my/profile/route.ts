@@ -31,9 +31,9 @@ export async function GET(request: Request) {
     }
 
     // users 테이블에 없으면 Auth 정보로 기본 프로필 생성
-    let profileEmail = userData?.email || user.email || ''
-    let profileNickname = userData?.nickname || 'Guest'
-    let profileCreatedAt = userData?.created_at || new Date().toISOString()
+    const profileEmail = userData?.email || user.email || ''
+    const profileNickname = userData?.nickname || 'Guest'
+    const profileCreatedAt = userData?.created_at || new Date().toISOString()
 
     // 3. 활동 통계 계산
     // 3-1. 투표 수

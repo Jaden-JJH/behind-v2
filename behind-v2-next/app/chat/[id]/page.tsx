@@ -132,6 +132,10 @@ export default function ChatRoom() {
         if (cancelled) return
 
         const deviceHash = getDeviceHash()
+        if (!user?.id) {
+          setJoinError('로그인이 필요합니다')
+          return
+        }
         const joined = await joinChatRoom(issueId, {
           deviceHash,
           sessionId,
@@ -195,6 +199,7 @@ export default function ChatRoom() {
       if (isFetching) return
       isFetching = true
       try {
+        if (!membership?.roomId) return
         const latest = await fetchChatMessages(issueId, membership.roomId, { limit: 50 })
         if (!cancelled) {
           setMessages((prev) => mergeMessages(prev, latest))
