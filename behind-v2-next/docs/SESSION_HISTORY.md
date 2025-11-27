@@ -455,3 +455,114 @@ feat: 마이페이지 사이드바에 팔로우한 이슈 메뉴 추가
 **작성자**: Claude + Jaden  
 **소요 시간**: 약 2시간  
 **상태**: Phase 2 완료
+
+
+---
+
+## Session #3 - 2025-11-27
+
+### 작업 내용
+**Phase 3-1: 참여한 채팅방 목록 기능 구현 + 레이아웃 통일**
+
+### 구현 사항
+
+#### 1. 참여한 채팅방 목록
+**API:** `app/api/my/chat-rooms/route.ts`
+- room_members 테이블 조회 (left_at IS NULL)
+- rooms → issues JOIN
+- 활성 멤버 수 계산
+- 기존 votes API 패턴 준수
+
+**페이지:** `app/my/chat-rooms/page.tsx`
+- 채팅방 카드 목록
+- 활성 멤버 수, 마지막 활동 시간 표시
+- 페이지네이션 (20개씩)
+
+#### 2. GNB 메뉴 구조 변경
+**변경 사항:**
+- "내 대화방" → "채팅방" (네이밍 개선)
+- GNB에서 바로 접근 (1클릭)
+- 마이페이지 사이드바에서 제거
+
+**이유:**
+- 빠른 접근성 (실시간성 강조)
+- 간결한 네이밍
+- UX 개선
+
+#### 3. 버그 수정
+**문제:** 채팅방 카드 클릭 시 무한 루프
+- 원인: `display_id` → `issue_id` (UUID) 변환 누락
+- 해결: `router.push(/chat/${chatRoom.issue_id})`
+
+**문제:** 404 에러 + Rate Limiter 429
+- 원인: 잘못된 issue_id 전달로 인한 무한 재시도
+- 해결: 올바른 UUID 사용
+
+#### 4. 레이아웃 통일
+**문제:** 헤더-본문 정렬 불일치
+- 전체 이슈, 이슈 상세, 채팅방: 본문이 헤더보다 좁음
+- 마이페이지: 헤더와 사이드바 정렬 불일치
+
+**해결:**
+- 본문 영역 확대 (max-w-6xl → max-w-7xl)
+- 마이페이지 진입 시 헤더 full width 적용
+- 조건부 렌더링: `usePathname().startsWith('/my')`
+
+---
+
+### 교훈 및 주의사항
+
+#### 1. URL 파라미터 구조 확인 필수
+- `display_id` vs `issue_id` (UUID)
+- 기존 라우팅 패턴 먼저 확인
+- API 응답에 필요한 필드 포함 여부 검증
+
+#### 2. 레이아웃 일관성
+- 헤더-본문 정렬 기준점 통일
+- 사이드바 레이아웃은 full width 유지 (UX 표준)
+- 조건부 렌더링으로 페이지별 최적화
+
+#### 3. UX 의사결정
+- 메뉴 배치: 사용 빈도와 실시간성 고려
+- 네이밍: 간결하고 직관적으로
+- 정보 구조: 1-2클릭 내 접근 가능하게
+
+---
+
+### 최종 파일 목록
+
+**Backend:**
+- `app/api/my/chat-rooms/route.ts` - 채팅방 목록 API
+
+**Frontend:**
+- `app/my/chat-rooms/page.tsx` - 채팅방 목록 페이지
+- `components/Header.tsx` - 조건부 레이아웃
+
+**Layout:**
+- `app/issues/page.tsx` - max-w-7xl 적용
+- `app/issues/[id]/page.tsx` - max-w-7xl 적용
+- `app/chat/[id]/page.tsx` - max-w-7xl 적용
+
+---
+
+**작성일**: 2025-11-27
+**작성자**: Claude + Jaden
+**소요 시간**: 약 2시간
+**상태**: Phase 3-1 완료
+
+다음 단계: Phase 3-2
+남은 Phase 3 작업 (예상 13시간)
+3-2. 다른 사용자 프로필 조회 (7시간)
+
+GET /api/users/[nickname] - 사용자 프로필 API
+/app/users/[nickname]/page.tsx - 프로필 페이지
+댓글/채팅에서 닉네임 클릭 시 프로필 이동
+
+3-3. 프로필 설정 페이지 (4시간)
+
+/app/my/settings/page.tsx - 설정 페이지
+닉네임 변경, 계정 정보 표시
+
+3-4. 헤더 네비게이션 업데이트 (2시간)
+
+프로필 드롭다운 메뉴 추가
