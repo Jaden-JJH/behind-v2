@@ -19,7 +19,7 @@ export async function GET(request: Request) {
     }
 
     // 2. 사용자 기본 정보 조회
-    const { data: userData, error: userError } = await supabase
+    const { data: userData, error: userError } = await supabaseServer
       .from('users')
       .select('id, email, nickname, created_at')
       .eq('id', user.id)
@@ -37,20 +37,26 @@ export async function GET(request: Request) {
 
     // 3. 활동 통계 계산
     // 3-1. 투표 수
-    const { count: voteCount, error: voteError } = await supabase
+    const { count: voteCount, error: voteError } = await supabaseServer
       .from('poll_votes')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', user.id)
 
     // 3-2. 댓글 수
-    const { count: commentCount, error: commentError } = await supabase
+    const { count: commentCount, error: commentError } = await supabaseServer
       .from('comments')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', user.id)
 
-    // 3-3. 궁금해요 수 (report_curious는 user_id가 없으므로 0으로 처리)
-    // TODO: Phase 2에서 report_curious에 user_id 추가 필요
-    const curiousCount = 0
+    // 3-3. 궁금해요 수
+    const { count: curiousCount, error: curiousError } = await supabaseServer
+      .from('report_curious')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+
+    if (curiousError) {
+      console.error('Curious count error:', curiousError)
+    }
 
     if (voteError) {
       console.error('Vote count error:', voteError)

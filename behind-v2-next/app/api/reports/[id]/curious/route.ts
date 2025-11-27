@@ -17,6 +17,11 @@ export async function POST(
     try {
       // 1. params await (Next.js 15)
       const { id: reportId } = await params
+      
+      // 1-1. 로그인 체크 추가
+      const { createClient: createServerClient } = await import('@/lib/supabase/server')
+      const supabaseServer = await createServerClient()
+      const { data: { user } } = await supabaseServer.auth.getUser()
 
       // 2. Rate Limiting
       const ip = getClientIp(req)
@@ -53,7 +58,8 @@ export async function POST(
       // 4. Supabase RPC 함수 호출
       const { data, error } = await supabase.rpc('curious_report', {
         p_report_id: reportId,
-        p_device_hash: deviceHash
+        p_device_hash: deviceHash,
+        p_user_id: user?.id || null
       })
 
       if (error) {
