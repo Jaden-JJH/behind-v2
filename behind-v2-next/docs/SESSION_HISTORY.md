@@ -566,3 +566,389 @@ GET /api/users/[nickname] - 사용자 프로필 API
 3-4. 헤더 네비게이션 업데이트 (2시간)
 
 프로필 드롭다운 메뉴 추가
+
+
+## Session #3 - 2025-11-28
+
+### 작업 내용
+**Phase 3.2 - 사용자 프로필 조회 및 반응형 모달 구현**
+
+### 구현 사항
+
+#### 1. 미사용 API 정리
+**파일:** `app/api/auth/me/route.ts`
+
+**문제:**
+- 계정 정책 기획 시 생성된 API
+- 실제로는 `/api/my/profile`가 동일 역할 수행
+- 사용되지 않는 중복 API
+- camelCase 응답 (다른 API들은 snake_case)
+
+**해결:**
+- 파일 삭제
+- 일관성 유지
+
+---
+
+#### 2. 사용자 프로필 조회 API
+**파일:** `app/api/users/[nickname]/route.ts`
+
+**기능:**
+- 닉네임으로 사용자 프로필 조회
+- 공개 정보만 반환 (닉네임, 가입일, 활동 통계)
+- 이메일 비공개
+- 최근 댓글 3개 미리보기
+
+**응답 구조:**
+```typescript
+{
+  nickname: string
+  joined_at: string  // "YYYY년 M월"
+  stats: {
+    comment_count: number
+    vote_count: number
+  }
+  recent_comments: Array<{
+    id: string
+    body: string
+    created_at: string
+    issue_id: string
+    issues: {
+      id: string
+      display_id: number
+      title: string
+    }
+  }>
+}
+```
+
+**특징:**
+- Next.js 15 비동기 params 패턴
+- encodeURIComponent로 닉네임 인코딩
+- 삭제된 이슈 필터링 (issues가 null인 댓글 제외)
+- 404 처리: NextResponse.json 직접 사용
+- Rate Limit 없음 (공개 조회)
+
+---
+
+#### 3. 사용자 프로필 페이지
+**파일:** `app/users/[nickname]/page.tsx`
+
+**기능:**
+- 사용자 프로필 전체 정보 표시
+- 닉네임, 가입일
+- 활동 통계 (댓글/투표)
+- 최근 댓글 목록
+- 404 에러 처리
+
+**패턴:**
+- 'use client' 컴포넌트
+- useParams() 동적 라우팅
+- useState/useEffect 상태 관리
+- Card 컴포넌트 UI
+- formatTime 날짜 포맷팅
+
+---
+
+#### 4. useMediaQuery 훅 구현
+**파일:** `hooks/use-media-query.ts`
+
+**목적:**
+- 반응형 UI 처리
+- 화면 크기 감지
+
+**구현:**
+```typescript
+export function useMediaQuery(query: string): boolean {
+  const [matches, setMatches] = useState(false)
+
+  useEffect(() => {
+    const media = window.matchMedia(query)
+    
+    if (media.matches !== matches) {
+      setMatches(media.matches)
+    }
+
+    const listener = (e: MediaQueryListEvent) => {
+      setMatches(e.matches)
+    }
+
+    media.addEventListener('change', listener)
+    return () => media.removeEventListener('change', listener)
+  }, [matches, query])
+
+  return matches
+}
+```
+
+**특징:**
+- matchMedia API 사용
+- 이벤트 리스너 등록/해제
+- 의존성 배열 [matches, query]
+- 클린업 함수
+
+---
+
+#### 5. 반응형 프로필 모달
+**파일:** `components/user-profile-drawer.tsx`
+
+**목적:**
+- 데스크탑: Dialog (중앙 모달)
+- 모바일: Drawer (바텀시트)
+
+**구현:**
+```typescript
+const isDesktop = useMediaQuery('(min-width: 768px)')
+
+if (isDesktop) {
+  return <Dialog>...</Dialog>
+}
+return <Drawer>...</Drawer>
+```
+
+**컨텐츠:**
+- 닉네임, 가입일
+- 활동 통계 (댓글/투표)
+- 최근 댓글 2개 미리보기
+- "프로필 자세히 보기" 버튼
+- "닫기" 버튼
+
+**상태 관리:**
+- selectedNickname: string | null
+- null = 닫힘, string = 열림
+- 단일 상태로 관리
+
+**최적화:**
+- open === true일 때만 API 호출
+- 컨텐츠 중복 제거 (content 변수)
+
+---
+
+#### 6. 댓글/채팅 닉네임 클릭 연동
+**파일:**
+- `app/issues/[id]/page.tsx` (댓글)
+- `app/chat/[id]/page.tsx` (채팅)
+
+**변경사항:**
+1. UserProfileDrawer import 추가
+2. selectedNickname 상태 추가
+3. 닉네임을 button으로 변경
+4. 익명 사용자 처리
+
+**댓글 구조:**
+```typescript
+{c.user_nick ? (
+  <button
+    onClick={() => setSelectedNickname(c.user_nick)}
+    className="text-sm hover:underline cursor-pointer text-left bg-transparent border-none p-0"
+  >
+    {c.user_nick}
+  </button>
+) : (
+  <p className="text-sm text-muted-foreground">익명</p>
+)}
+```
+
+**채팅 구조:**
+```typescript
+{m.authorNick ? (
+  <button
+    onClick={() => setSelectedNickname(m.authorNick)}
+    className="text-sm text-muted-foreground px-1 hover:underline cursor-pointer bg-transparent border-none p-0"
+  >
+    {m.authorNick}
+  </button>
+) : (
+  <span className="text-sm text-muted-foreground px-1">익명</span>
+)}
+```
+
+**스타일:**
+- hover만 underline (subtle)
+- bg-transparent border-none p-0 (button 기본 스타일 제거)
+- 기존 텍스트 스타일 유지
+
+---
+
+### 주요 결정 사항
+
+#### 1. Dialog vs Drawer
+**결정:** 반응형 조합 (Desktop: Dialog, Mobile: Drawer)
+
+**이유:**
+- 각 디바이스에 최적화된 UX
+- 유튜브, 인스타그램 등 주요 서비스 패턴
+- 업계 표준
+
+**대안 (기각):**
+- CSS만으로 해결 (max-width) → UX 개선 한계
+- Drawer만 사용 → 데스크탑에서 부자연스러움
+
+#### 2. 닉네임 클릭 interaction
+**결정:** Simple button
+
+**이유:**
+- button 태그가 기본 접근성 지원
+- 코드 간결성
+- 기존 프로젝트 패턴 일관성
+
+**대안 (기각):**
+- span + role="button" → 불필요한 복잡성
+
+#### 3. 익명 사용자 처리
+**결정:** Null 체크 + "익명" 표시
+
+**이유:**
+- SESSION_HISTORY.md 확인: user_id=null 댓글 존재
+- 클릭 방지 필요 (프로필 없음)
+
+#### 4. 닉네임 스타일
+**결정:** Subtle (hover only)
+
+**이유:**
+- 현재 디자인 일관성
+- 댓글 가독성 우선
+- 유튜브/네이버 등 주요 커뮤니티 패턴
+
+---
+
+### 네이밍 규칙 준수
+
+#### 파일명
+- ✅ `use-media-query.ts` (kebab-case)
+- ✅ `user-profile-drawer.tsx` (kebab-case)
+- ✅ `[nickname]/route.ts` (동적 라우팅)
+
+#### 함수명
+- ✅ `useMediaQuery` (camelCase)
+- ✅ `UserProfileDrawer` (PascalCase)
+- ✅ `fetchProfile` (camelCase)
+- ✅ `handleViewFullProfile` (camelCase)
+
+#### 변수명
+- ✅ `isDesktop` (camelCase)
+- ✅ `selectedNickname` (camelCase)
+- ✅ `decodedNickname` (camelCase)
+
+#### API 응답
+- ✅ `joined_at` (snake_case)
+- ✅ `comment_count` (snake_case)
+- ✅ `recent_comments` (snake_case)
+
+---
+
+### 패턴 준수
+
+#### 1. API 패턴
+- ✅ Next.js 15: `await params`
+- ✅ createSuccessResponse/createErrorResponse 사용
+- ✅ supabaseServer 사용 (인증 필요 시)
+- ✅ 404: NextResponse.json 직접 사용
+
+#### 2. JOIN 패턴
+```typescript
+.select(`
+  id,
+  body,
+  created_at,
+  issue_id,
+  issues:issue_id (
+    id,
+    display_id,
+    title
+  )
+`)
+```
+
+#### 3. 날짜 포맷
+```typescript
+const joinDate = new Date(created_at)
+const joined_at = `${joinDate.getFullYear()}년 ${joinDate.getMonth() + 1}월`
+```
+
+#### 4. 에러 처리
+- 404: 명확한 메시지
+- 500: createErrorResponse
+- 로딩/에러 상태 분리
+
+---
+
+### Git Commits
+```bash
+chore: 미사용 API 삭제 (/api/auth/me)
+feat: 사용자 프로필 조회 API 구현 (GET /api/users/[nickname])
+feat: 사용자 프로필 페이지 구현
+feat: 사용자 프로필 Drawer 컴포넌트 구현
+feat: 댓글/채팅에서 사용자 프로필 Drawer 연동
+feat: 반응형 사용자 프로필 모달 구현 (데스크탑 Dialog, 모바일 Drawer)
+```
+
+---
+
+### 테스트 체크리스트
+
+#### 프로필 기능
+- [x] 댓글 닉네임 hover → underline 표시
+- [x] 댓글 닉네임 클릭 → 모달 오픈
+- [x] 채팅 닉네임 클릭 → 모달 오픈
+- [x] 익명 댓글 "익명" 표시
+- [x] 익명 클릭 불가
+- [x] 프로필 정보 표시 (닉네임, 가입일, 통계)
+- [x] 최근 댓글 2개 표시
+- [x] "프로필 자세히 보기" → 페이지 이동
+- [x] "닫기" 버튼 동작
+
+#### 반응형
+- [x] 데스크탑 (768px+): Dialog 중앙 모달
+- [x] 모바일 (768px-): Drawer 바텀시트
+- [x] 화면 크기 조절 시 전환
+
+#### API
+- [x] 존재하는 사용자 조회
+- [x] 존재하지 않는 사용자 404
+- [x] 최근 댓글 3개 반환
+- [x] 삭제된 이슈 필터링
+
+---
+
+### 후임자 주의사항
+
+#### 1. 반응형 모달 패턴
+```typescript
+const isDesktop = useMediaQuery('(min-width: 768px)')
+
+if (isDesktop) {
+  return <Dialog>...</Dialog>
+}
+return <Drawer>...</Drawer>
+```
+- 768px breakpoint (Tailwind md:)
+- 컨텐츠 중복 제거 필수
+
+#### 2. 익명 사용자 처리
+```typescript
+{user_nick ? (
+  <button>...</button>
+) : (
+  <p>익명</p>
+)}
+```
+- user_id=null 또는 nickname=null 모두 처리
+- 클릭 불가 처리
+
+#### 3. useMediaQuery 재사용
+- 다른 반응형 컴포넌트에서 활용 가능
+- 표준 media query 문자열 사용
+
+#### 4. 프로필 사진 추가 시
+- users 테이블에 avatar_url 컬럼 추가
+- Supabase Storage 설정
+- API 응답에 avatar_url 포함
+- 모달/페이지에 이미지 표시
+
+---
+
+**작성일**: 2025-11-28  
+**작성자**: Claude + Jaden  
+**소요 시간**: 약 2.5시간  
+**상태**: Phase 3.2 완료
