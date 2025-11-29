@@ -340,25 +340,26 @@ export default function MyPage() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>회원 탈퇴</AlertDialogTitle>
-            <AlertDialogDescription className="space-y-3 text-left">
-              <p>정말 탈퇴하시겠습니까?</p>
-
-              <div className="space-y-2 text-sm">
-                <p className="hidden sm:block">탈퇴 시 다음 사항을 확인해주세요:</p>
-                <p className="sm:hidden font-semibold">탈퇴 시 확인사항:</p>
-
-                <ul className="space-y-1 ml-4">
-                  <li className="hidden sm:list-item">• 계정 정보는 즉시 삭제됩니다</li>
-                  <li className="hidden sm:list-item">• 작성한 댓글과 투표 내역은 "탈퇴한 사용자"로 표시됩니다</li>
-                  <li className="sm:hidden">• 계정 정보 즉시 삭제</li>
-                  <li className="sm:hidden">• 댓글/투표는 "탈퇴한 사용자"로 표시</li>
-                  <li className="text-red-600 font-semibold">
-                    • 탈퇴 후 30일 이내 고객센터 문의 시 복구 가능
-                  </li>
-                </ul>
-              </div>
-            </AlertDialogDescription>
           </AlertDialogHeader>
+          
+          <div className="space-y-3 text-left text-sm text-muted-foreground">
+            <p>정말 탈퇴하시겠습니까?</p>
+            
+            <div className="space-y-2">
+              <p className="hidden sm:block">탈퇴 시 다음 사항을 확인해주세요:</p>
+              <p className="sm:hidden font-semibold">탈퇴 시 확인사항:</p>
+              
+              <ul className="space-y-1 ml-4">
+                <li className="hidden sm:list-item">• 계정 정보는 즉시 삭제됩니다</li>
+                <li className="hidden sm:list-item">• 작성한 댓글과 투표 내역은 "탈퇴한 사용자"로 표시됩니다</li>
+                <li className="sm:hidden">• 계정 정보 즉시 삭제</li>
+                <li className="sm:hidden">• 댓글/투표는 "탈퇴한 사용자"로 표시</li>
+                <li className="text-red-600 font-semibold">
+                  • 탈퇴 후 30일 이내 고객센터 문의 시 복구 가능
+                </li>
+              </ul>
+            </div>
+          </div>
           <AlertDialogFooter>
             <AlertDialogCancel>취소</AlertDialogCancel>
             <AlertDialogAction
@@ -379,15 +380,16 @@ export default function MyPage() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="text-red-600">최종 확인</AlertDialogTitle>
-            <AlertDialogDescription className="space-y-3">
-              <p className="text-base font-semibold text-gray-900">
-                정말로 탈퇴하시겠습니까?
-              </p>
-              <p className="text-sm">
-                이 작업은 되돌릴 수 없습니다.
-              </p>
-            </AlertDialogDescription>
           </AlertDialogHeader>
+          
+          <div className="space-y-3">
+            <p className="text-base font-semibold text-gray-900">
+              정말로 탈퇴하시겠습니까?
+            </p>
+            <p className="text-sm text-muted-foreground">
+              이 작업은 되돌릴 수 없습니다.
+            </p>
+          </div>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isDeleting}>취소</AlertDialogCancel>
             <AlertDialogAction
