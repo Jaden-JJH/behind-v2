@@ -30,6 +30,8 @@ export enum ErrorCode {
   NICKNAME_INVALID = 'NICKNAME_INVALID',
   NICKNAME_CHANGE_TOO_SOON = 'NICKNAME_CHANGE_TOO_SOON',
   LOGIN_REQUIRED = 'LOGIN_REQUIRED',
+  ACCOUNT_ALREADY_DELETED = 'ACCOUNT_ALREADY_DELETED',
+  ACCOUNT_DELETE_FAILED = 'ACCOUNT_DELETE_FAILED',
 
   // 댓글 관련
   COMMENT_TOO_SHORT = 'COMMENT_TOO_SHORT',
@@ -71,6 +73,8 @@ const ERROR_MESSAGES: Record<ErrorCode, string> = {
   [ErrorCode.NICKNAME_INVALID]: '닉네임 형식이 올바르지 않습니다',
   [ErrorCode.NICKNAME_CHANGE_TOO_SOON]: '닉네임은 30일에 1회만 변경할 수 있습니다',
   [ErrorCode.LOGIN_REQUIRED]: '로그인이 필요합니다',
+  [ErrorCode.ACCOUNT_ALREADY_DELETED]: '이미 탈퇴한 계정입니다',
+  [ErrorCode.ACCOUNT_DELETE_FAILED]: '회원 탈퇴 처리에 실패했습니다',
 
   [ErrorCode.COMMENT_TOO_SHORT]: '댓글은 2자 이상 작성해주세요',
   [ErrorCode.COMMENT_TOO_LONG]: '댓글은 500자 이하로 작성해주세요',
