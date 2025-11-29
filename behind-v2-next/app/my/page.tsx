@@ -5,6 +5,29 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogFooter, 
+  DialogHeader, 
+  DialogTitle 
+} from '@/components/ui/dialog'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+
+
+
 
 interface ProfileData {
   email: string
@@ -23,6 +46,17 @@ export default function MyPage() {
   const [profileData, setProfileData] = useState<ProfileData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [loginAttempted, setLoginAttempted] = useState(false)
+
+  // 닉네임 변경 모달
+  const [showNicknameModal, setShowNicknameModal] = useState(false)
+  const [newNickname, setNewNickname] = useState('')
+  const [nicknameError, setNicknameError] = useState('')
+  const [isNicknameSubmitting, setIsNicknameSubmitting] = useState(false)
+
+  // 회원 탈퇴 모달 (2단계)
+  const [showDeleteStep1, setShowDeleteStep1] = useState(false)
+  const [showDeleteStep2, setShowDeleteStep2] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const fetchProfile = useCallback(async () => {
     try {
@@ -46,6 +80,81 @@ export default function MyPage() {
       setIsLoading(false)
     }
   }, [])
+
+  // 닉네임 변경 핸들러
+  const handleNicknameChange = async () => {
+    setNicknameError('')
+
+    // 클라이언트 검증
+    if (!newNickname || newNickname.length < 2) {
+      setNicknameError('닉네임은 2자 이상이어야 합니다')
+      return
+    }
+    if (newNickname.length > 20) {
+      setNicknameError('닉네임은 20자 이하여야 합니다')
+      return
+    }
+    if (!/^[가-힣a-zA-Z0-9]{2,20}$/.test(newNickname)) {
+      setNicknameError('한글, 영문, 숫자만 사용 가능합니다')
+      return
+    }
+
+    setIsNicknameSubmitting(true)
+
+    try {
+      const response = await fetch('/api/auth/update-nickname', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nickname: newNickname })
+      })
+
+      const result = await response.json()
+
+      if (response.ok && result.success) {
+        // 성공: 프로필 새로고침
+        await fetchProfile()
+        setShowNicknameModal(false)
+        setNewNickname('')
+        alert('닉네임이 변경되었습니다')
+      } else {
+        // 에러 메시지 표시
+        setNicknameError(result.error?.message || '닉네임 변경에 실패했습니다')
+      }
+    } catch (error) {
+      console.error('Nickname change error:', error)
+      setNicknameError('네트워크 오류가 발생했습니다')
+    } finally {
+      setIsNicknameSubmitting(false)
+    }
+  }
+
+  // 회원 탈퇴 핸들러
+  const handleDeleteAccount = async () => {
+    setIsDeleting(true)
+
+    try {
+      const response = await fetch('/api/auth/delete-account', {
+        method: 'DELETE'
+      })
+
+      const result = await response.json()
+
+      if (response.ok && result.success) {
+        // 성공: 홈으로 리다이렉트
+        alert('회원 탈퇴가 완료되었습니다')
+        router.push('/')
+      } else {
+        alert(result.error?.message || '회원 탈퇴에 실패했습니다')
+        setShowDeleteStep2(false)
+      }
+    } catch (error) {
+      console.error('Delete account error:', error)
+      alert('네트워크 오류가 발생했습니다')
+      setShowDeleteStep2(false)
+    } finally {
+      setIsDeleting(false)
+    }
+  }
 
   useEffect(() => {
     if (loading) return
@@ -113,7 +222,20 @@ export default function MyPage() {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-gray-600">닉네임</span>
-            <span className="font-medium text-gray-900">{profileData.nickname || '알 수 없음'}</span>
+            <div className="flex items-center gap-2">
+              <span className="font-medium text-gray-900">{profileData.nickname || '알 수 없음'}</span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setNewNickname(profileData.nickname || '')
+                  setNicknameError('')
+                  setShowNicknameModal(true)
+                }}
+              >
+                변경
+              </Button>
+            </div>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-gray-600">이메일</span>
@@ -123,6 +245,18 @@ export default function MyPage() {
             <span className="text-gray-600">가입일</span>
             <span className="font-medium text-gray-900">{formattedDate}</span>
           </div>
+        </div>
+
+        {/* 회원 탈퇴 버튼 */}
+        <div className="mt-6 pt-6 border-t">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+            onClick={() => setShowDeleteStep1(true)}
+          >
+            회원 탈퇴
+          </Button>
         </div>
       </Card>
 
@@ -153,6 +287,119 @@ export default function MyPage() {
           <p className="text-gray-600 text-sm">궁금해요 누른 제보</p>
         </Card>
       </div>
+
+      {/* 닉네임 변경 모달 */}
+      <Dialog open={showNicknameModal} onOpenChange={setShowNicknameModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>닉네임 변경</DialogTitle>
+            <DialogDescription className="space-y-2">
+              <span className="block">닉네임 변경 규칙:</span>
+              <span className="block">• 2~20자 (한글, 영문, 숫자)</span>
+              <span className="block text-red-600 font-semibold">• 30일에 1회만 변경 가능</span>
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="nickname">새 닉네임</Label>
+              <Input
+                id="nickname"
+                value={newNickname}
+                onChange={(e) => setNewNickname(e.target.value)}
+                placeholder="새 닉네임을 입력하세요"
+                maxLength={20}
+                disabled={isNicknameSubmitting}
+              />
+            </div>
+            {nicknameError && (
+              <p className="text-sm text-red-600">{nicknameError}</p>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowNicknameModal(false)}
+              disabled={isNicknameSubmitting}
+            >
+              취소
+            </Button>
+            <Button
+              onClick={handleNicknameChange}
+              disabled={isNicknameSubmitting}
+            >
+              {isNicknameSubmitting ? '변경 중...' : '변경'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 회원 탈퇴 1단계: 경고 */}
+      <AlertDialog open={showDeleteStep1} onOpenChange={setShowDeleteStep1}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>회원 탈퇴</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3 text-left">
+              <p>정말 탈퇴하시겠습니까?</p>
+
+              <div className="space-y-2 text-sm">
+                <p className="hidden sm:block">탈퇴 시 다음 사항을 확인해주세요:</p>
+                <p className="sm:hidden font-semibold">탈퇴 시 확인사항:</p>
+
+                <ul className="space-y-1 ml-4">
+                  <li className="hidden sm:list-item">• 계정 정보는 즉시 삭제됩니다</li>
+                  <li className="hidden sm:list-item">• 작성한 댓글과 투표 내역은 "탈퇴한 사용자"로 표시됩니다</li>
+                  <li className="sm:hidden">• 계정 정보 즉시 삭제</li>
+                  <li className="sm:hidden">• 댓글/투표는 "탈퇴한 사용자"로 표시</li>
+                  <li className="text-red-600 font-semibold">
+                    • 탈퇴 후 30일 이내 고객센터 문의 시 복구 가능
+                  </li>
+                </ul>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>취소</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              onClick={() => {
+                setShowDeleteStep1(false)
+                setShowDeleteStep2(true)
+              }}
+            >
+              계속
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* 회원 탈퇴 2단계: 최종 확인 */}
+      <AlertDialog open={showDeleteStep2} onOpenChange={setShowDeleteStep2}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-red-600">최종 확인</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              <p className="text-base font-semibold text-gray-900">
+                정말로 탈퇴하시겠습니까?
+              </p>
+              <p className="text-sm">
+                이 작업은 되돌릴 수 없습니다.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>취소</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              onClick={handleDeleteAccount}
+              disabled={isDeleting}
+            >
+              {isDeleting ? '처리 중...' : '탈퇴'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
