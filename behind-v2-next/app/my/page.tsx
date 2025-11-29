@@ -140,9 +140,10 @@ export default function MyPage() {
       const result = await response.json()
 
       if (response.ok && result.success) {
-        // 성공: 홈으로 리다이렉트
+        // 성공: 클라이언트에서도 로그아웃 처리
         alert('회원 탈퇴가 완료되었습니다')
-        router.push('/')
+        // 페이지 새로고침으로 Auth 상태 완전 초기화
+        window.location.href = '/'
       } else {
         alert(result.error?.message || '회원 탈퇴에 실패했습니다')
         setShowDeleteStep2(false)
