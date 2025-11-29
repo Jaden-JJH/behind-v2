@@ -177,7 +177,7 @@ export default function MyPage() {
       // 로그인 성공 → 프로필 데이터 조회
       fetchProfile()
     }
-  }, [user, loading, loginAttempted, signInWithGoogle, router, fetchProfile])
+  }, [user, loading, loginAttempted])
 
   // 로딩 중이거나 로그인 처리 중
   if (loading || isLoading || !user) {
