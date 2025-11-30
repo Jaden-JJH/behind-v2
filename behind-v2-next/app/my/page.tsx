@@ -352,9 +352,9 @@ export default function MyPage() {
               
               <ul className="space-y-1 ml-4">
                 <li className="hidden sm:list-item">• 계정 정보는 즉시 삭제됩니다</li>
-                <li className="hidden sm:list-item">• 작성한 댓글과 투표 내역은 "탈퇴한 사용자"로 표시됩니다</li>
+                <li className="hidden sm:list-item">• 작성한 댓글과 투표 내역은 &quot;탈퇴한 사용자&quot;로 표시됩니다</li>
                 <li className="sm:hidden">• 계정 정보 즉시 삭제</li>
-                <li className="sm:hidden">• 댓글/투표는 "탈퇴한 사용자"로 표시</li>
+                <li className="sm:hidden">• 댓글/투표는 &quot;탈퇴한 사용자&quot;로 표시</li>
                 <li className="text-red-600 font-semibold">
                   • 탈퇴 후 30일 이내 고객센터 문의 시 복구 가능
                 </li>

@@ -22,7 +22,7 @@ if (hasRedisConfig) {
 }
 
 // Rate Limiter 생성 헬퍼
-function createRateLimiter(limit: number, window: string, prefix: string) {
+function createRateLimiter(limit: number, window: `${number} ${'ms' | 's' | 'm' | 'h' | 'd'}`, prefix: string) {
   if (!redis) {
     // Redis 없으면 항상 허용하는 Mock Limiter 반환
     console.warn(`[Rate Limiter] Redis 비활성화 - ${prefix} 제한 없음`)
