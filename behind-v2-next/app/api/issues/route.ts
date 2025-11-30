@@ -38,7 +38,9 @@ export async function GET(request: Request) {
 
     // includeAll 여부에 따라 필터 및 정렬 적용
     if (includeAll) {
-      query = query.order('created_at', { ascending: false })
+      query = query
+        .eq('approval_status', 'approved')
+        .order('created_at', { ascending: false })
 
       if (!statusParam || statusParam === 'active') {
         query = query.eq('status', 'active')
