@@ -208,10 +208,10 @@ export default function AdminIssuesPage() {
     const pollData = issueData.poll
     if (pollData) {
       setEditPollQuestion(pollData.question || '')
-      const pollOptions = pollData.options || []
-      setEditPollOptions(pollOptions.length > 0 ? pollOptions.map(opt => opt.label) : ['', ''])
+      // API는 poll_options (snake_case) 반환
+      const pollOptions = (pollData as any).poll_options || pollData.options || []
+      setEditPollOptions(pollOptions.length > 0 ? pollOptions.map((opt: any) => opt.label) : ['', ''])
     } else {
-      // 투표가 없는 경우에만 초기화
       setEditPollQuestion('')
       setEditPollOptions(['', ''])
     }
@@ -220,9 +220,13 @@ export default function AdminIssuesPage() {
   // 수정 모달 열기
   async function openEditModal(issue: Issue) {
     try {
+      console.log('[DEBUG] openEditModal - issue:', issue)
+
       // API에서 최신 투표 정보 조회
       const response = await csrfFetch(`/api/admin/issues/${issue.id}`)
       const data = await response.json()
+
+      console.log('[DEBUG] API response:', data)
 
       if (!response.ok) {
         // API 호출 실패 시 기본값으로 모달 열기
@@ -235,6 +239,9 @@ export default function AdminIssuesPage() {
 
       // 성공: API 응답 데이터로 폼 초기화하고 selectedIssue도 업데이트
       const latestIssue = data.data
+      console.log('[DEBUG] latestIssue:', latestIssue)
+      console.log('[DEBUG] latestIssue.poll:', latestIssue.poll)
+
       setSelectedIssue(latestIssue)
       initializeForm(latestIssue)
 
