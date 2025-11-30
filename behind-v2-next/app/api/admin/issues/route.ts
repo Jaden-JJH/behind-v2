@@ -59,7 +59,11 @@ export async function GET(request: Request) {
     let query = supabaseAdmin
       .from('issues')
       .select(
-        'id, display_id, title, category, approval_status, visibility, view_count, comment_count, show_in_main_hot, show_in_main_poll, created_at',
+        `id, display_id, title, category, approval_status, visibility, view_count, comment_count, show_in_main_hot, show_in_main_poll, created_at,
+        poll:polls(
+          id,
+          question
+        )`,
         { count: 'exact' }
       )
 

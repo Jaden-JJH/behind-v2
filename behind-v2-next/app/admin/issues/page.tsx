@@ -90,8 +90,6 @@ export default function AdminIssuesPage() {
   const [editCategory, setEditCategory] = useState('')
   const [editApprovalStatus, setEditApprovalStatus] = useState<'pending' | 'approved' | 'rejected'>('pending')
   const [editVisibility, setEditVisibility] = useState<'active' | 'paused'>('active')
-  const [editShowInMainHot, setEditShowInMainHot] = useState(false)
-  const [editShowInMainPoll, setEditShowInMainPoll] = useState(false)
   const [editBehindStory, setEditBehindStory] = useState('')
   const [editCapacity, setEditCapacity] = useState(0)
   const [editThumbnail, setEditThumbnail] = useState('')
@@ -102,6 +100,13 @@ export default function AdminIssuesPage() {
   const [editMediaNewsSource, setEditMediaNewsSource] = useState('')
   const [editMediaNewsUrl, setEditMediaNewsUrl] = useState('')
   const [editArticles, setEditArticles] = useState<ArticleFormData[]>([])
+
+  // 메인 노출 설정 상태
+  const [mainHotSlot1, setMainHotSlot1] = useState<string>('')
+  const [mainHotSlot2, setMainHotSlot2] = useState<string>('')
+  const [mainPollSlot1, setMainPollSlot1] = useState<string>('')
+  const [mainPollSlot2, setMainPollSlot2] = useState<string>('')
+  const [savingMainDisplay, setSavingMainDisplay] = useState(false)
 
   // 필터 상태
   const [filterCategory, setFilterCategory] = useState('')
@@ -119,6 +124,7 @@ export default function AdminIssuesPage() {
   // 목록 조회
   useEffect(() => {
     loadIssues()
+    loadMainDisplayIssues()
   }, [])
 
   async function loadIssues() {
@@ -151,6 +157,59 @@ export default function AdminIssuesPage() {
       showError(error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  // 메인 노출 이슈 로드
+  async function loadMainDisplayIssues() {
+    try {
+      const response = await fetch('/api/admin/issues?approval=approved&limit=100')
+      const data = await response.json()
+
+      if (!response.ok || !data.data) return
+
+      const mainIssues = data.data
+      const hotIssues = mainIssues.filter((issue: any) => issue.show_in_main_hot)
+      const pollIssues = mainIssues.filter((issue: any) => issue.show_in_main_poll)
+
+      setMainHotSlot1(hotIssues[0]?.id || '')
+      setMainHotSlot2(hotIssues[1]?.id || '')
+      setMainPollSlot1(pollIssues[0]?.id || '')
+      setMainPollSlot2(pollIssues[1]?.id || '')
+    } catch (error) {
+      console.error('Failed to load main display issues:', error)
+    }
+  }
+
+  // 메인 노출 설정 저장
+  async function handleSaveMainDisplay() {
+    try {
+      setSavingMainDisplay(true)
+
+      const response = await csrfFetch('/api/admin/issues/main-display', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          hotSlot1: mainHotSlot1 || null,
+          hotSlot2: mainHotSlot2 || null,
+          pollSlot1: mainPollSlot1 || null,
+          pollSlot2: mainPollSlot2 || null
+        })
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        showError(data)
+        return
+      }
+
+      showSuccess('메인 노출 설정이 저장되었습니다')
+      loadIssues()
+    } catch (error) {
+      showError(error)
+    } finally {
+      setSavingMainDisplay(false)
     }
   }
 
@@ -192,8 +251,6 @@ export default function AdminIssuesPage() {
     setEditCategory(issueData.category || '')
     setEditApprovalStatus(issueData.approval_status)
     setEditVisibility(issueData.visibility)
-    setEditShowInMainHot(issueData.show_in_main_hot)
-    setEditShowInMainPoll(issueData.show_in_main_poll)
     setEditBehindStory(issueData.behind_story || '')
     setEditCapacity(issueData.capacity || 0)
     setEditThumbnail(issueData.thumbnail || '')
@@ -349,8 +406,6 @@ export default function AdminIssuesPage() {
           category: editCategory,
           approval_status: editApprovalStatus,
           visibility: editVisibility,
-          show_in_main_hot: editShowInMainHot,
-          show_in_main_poll: editShowInMainPoll,
           behind_story: editBehindStory || undefined,
           capacity: editCapacity || undefined,
           thumbnail: editThumbnail || undefined,
@@ -570,6 +625,106 @@ export default function AdminIssuesPage() {
           </div>
         </Card>
 
+        {/* 메인 노출 설정 */}
+        <Card className="p-6 mb-6">
+          <h2 className="text-xl font-bold mb-4">📌 메인 페이지 노출 설정</h2>
+          <p className="text-sm text-gray-600 mb-4">
+            메인 페이지에 표시될 이슈를 선택하세요. 승인된 이슈만 선택 가능합니다.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* HOT 이슈 */}
+            <div>
+              <h3 className="text-sm font-semibold mb-3">🔥 HOT 이슈</h3>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium mb-1">HOT 이슈 #1</label>
+                  <Select value={mainHotSlot1} onValueChange={setMainHotSlot1}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="선택 안함" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {issues
+                        .filter((issue) => issue.approval_status === 'approved')
+                        .map((issue) => (
+                          <SelectItem key={issue.id} value={issue.id}>
+                            [{issue.display_id}] {issue.title}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">HOT 이슈 #2</label>
+                  <Select value={mainHotSlot2} onValueChange={setMainHotSlot2}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="선택 안함" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {issues
+                        .filter((issue) => issue.approval_status === 'approved')
+                        .map((issue) => (
+                          <SelectItem key={issue.id} value={issue.id}>
+                            [{issue.display_id}] {issue.title}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+
+            {/* 투표 */}
+            <div>
+              <h3 className="text-sm font-semibold mb-3">📊 투표</h3>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium mb-1">투표 #1</label>
+                  <Select value={mainPollSlot1} onValueChange={setMainPollSlot1}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="선택 안함" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {issues
+                        .filter((issue) => issue.approval_status === 'approved' && issue.poll)
+                        .map((issue) => (
+                          <SelectItem key={issue.id} value={issue.id}>
+                            [{issue.display_id}] {issue.title}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">투표 #2</label>
+                  <Select value={mainPollSlot2} onValueChange={setMainPollSlot2}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="선택 안함" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {issues
+                        .filter((issue) => issue.approval_status === 'approved' && issue.poll)
+                        .map((issue) => (
+                          <SelectItem key={issue.id} value={issue.id}>
+                            [{issue.display_id}] {issue.title}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 flex justify-end">
+            <Button onClick={handleSaveMainDisplay} disabled={savingMainDisplay}>
+              {savingMainDisplay ? '저장 중...' : '저장'}
+            </Button>
+          </div>
+        </Card>
+
         {/* 테이블 */}
         <Card className="p-6">
           {loading ? (
@@ -724,27 +879,6 @@ export default function AdminIssuesPage() {
                     <SelectItem value="paused">중지</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
-
-              <div className="mt-3 space-y-2">
-                <label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={editShowInMainHot}
-                    onChange={(e) => setEditShowInMainHot(e.target.checked)}
-                    className="w-4 h-4"
-                  />
-                  <span className="text-sm font-medium">메인 화면 핫 이슈 표시</span>
-                </label>
-                <label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={editShowInMainPoll}
-                    onChange={(e) => setEditShowInMainPoll(e.target.checked)}
-                    className="w-4 h-4"
-                  />
-                  <span className="text-sm font-medium">메인 화면 투표 표시</span>
-                </label>
               </div>
             </div>
 
