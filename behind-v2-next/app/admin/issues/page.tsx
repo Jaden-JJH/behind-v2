@@ -206,9 +206,15 @@ export default function AdminIssuesPage() {
     setEditMediaNewsUrl(mediaEmbed.news?.url || '')
 
     const pollData = issueData.poll
-    const pollOptions = pollData?.options || []
-    setEditPollQuestion(pollData?.question || '')
-    setEditPollOptions(pollOptions.length > 0 ? pollOptions.map(opt => opt.label) : ['', ''])
+    if (pollData) {
+      setEditPollQuestion(pollData.question || '')
+      const pollOptions = pollData.options || []
+      setEditPollOptions(pollOptions.length > 0 ? pollOptions.map(opt => opt.label) : ['', ''])
+    } else {
+      // 투표가 없는 경우에만 초기화
+      setEditPollQuestion('')
+      setEditPollOptions(['', ''])
+    }
   }
 
   // 수정 모달 열기
