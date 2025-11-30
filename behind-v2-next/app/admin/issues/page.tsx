@@ -108,6 +108,19 @@ export default function AdminIssuesPage() {
   const [mainPollSlot2, setMainPollSlot2] = useState<string>('')
   const [savingMainDisplay, setSavingMainDisplay] = useState(false)
 
+  // 실시간 인기 이슈 상태 (새로 추가)
+  const [realtimeSlot1, setRealtimeSlot1] = useState<string>('')
+  const [realtimeSlot1Change, setRealtimeSlot1Change] = useState<string>('0')
+  const [realtimeSlot2, setRealtimeSlot2] = useState<string>('')
+  const [realtimeSlot2Change, setRealtimeSlot2Change] = useState<string>('0')
+  const [realtimeSlot3, setRealtimeSlot3] = useState<string>('')
+  const [realtimeSlot3Change, setRealtimeSlot3Change] = useState<string>('0')
+  const [realtimeSlot4, setRealtimeSlot4] = useState<string>('')
+  const [realtimeSlot4Change, setRealtimeSlot4Change] = useState<string>('0')
+  const [realtimeSlot5, setRealtimeSlot5] = useState<string>('')
+  const [realtimeSlot5Change, setRealtimeSlot5Change] = useState<string>('0')
+  const [savingRealtimeTrending, setSavingRealtimeTrending] = useState(false)
+
   // 필터 상태
   const [filterCategory, setFilterCategory] = useState('')
   const [filterApprovalStatus, setFilterApprovalStatus] = useState('')
@@ -125,6 +138,7 @@ export default function AdminIssuesPage() {
   useEffect(() => {
     loadIssues()
     loadMainDisplayIssues()
+    loadRealtimeTrending() // 새로 추가
   }, [])
 
   async function loadIssues() {
@@ -181,6 +195,30 @@ export default function AdminIssuesPage() {
     }
   }
 
+  // 실시간 인기 이슈 로드
+  async function loadRealtimeTrending() {
+    try {
+      const response = await fetch('/api/admin/issues/realtime-trending')
+      const data = await response.json()
+
+      if (!response.ok || !data.data) return
+
+      const settings = data.data
+      setRealtimeSlot1(settings.slot_1?.issue_id || '')
+      setRealtimeSlot1Change(settings.slot_1?.change || '0')
+      setRealtimeSlot2(settings.slot_2?.issue_id || '')
+      setRealtimeSlot2Change(settings.slot_2?.change || '0')
+      setRealtimeSlot3(settings.slot_3?.issue_id || '')
+      setRealtimeSlot3Change(settings.slot_3?.change || '0')
+      setRealtimeSlot4(settings.slot_4?.issue_id || '')
+      setRealtimeSlot4Change(settings.slot_4?.change || '0')
+      setRealtimeSlot5(settings.slot_5?.issue_id || '')
+      setRealtimeSlot5Change(settings.slot_5?.change || '0')
+    } catch (error) {
+      console.error('Failed to load realtime trending:', error)
+    }
+  }
+
   // 메인 노출 설정 저장
   async function handleSaveMainDisplay() {
     try {
@@ -210,6 +248,53 @@ export default function AdminIssuesPage() {
       showError(error)
     } finally {
       setSavingMainDisplay(false)
+    }
+  }
+
+  // 실시간 인기 이슈 저장
+  async function handleSaveRealtimeTrending() {
+    try {
+      setSavingRealtimeTrending(true)
+
+      const response = await csrfFetch('/api/admin/issues/realtime-trending', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          slot_1: {
+            issue_id: realtimeSlot1 || null,
+            change: realtimeSlot1Change
+          },
+          slot_2: {
+            issue_id: realtimeSlot2 || null,
+            change: realtimeSlot2Change
+          },
+          slot_3: {
+            issue_id: realtimeSlot3 || null,
+            change: realtimeSlot3Change
+          },
+          slot_4: {
+            issue_id: realtimeSlot4 || null,
+            change: realtimeSlot4Change
+          },
+          slot_5: {
+            issue_id: realtimeSlot5 || null,
+            change: realtimeSlot5Change
+          }
+        })
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        showError(data)
+        return
+      }
+
+      showSuccess('실시간 인기 이슈가 저장되었습니다')
+    } catch (error) {
+      showError(error)
+    } finally {
+      setSavingRealtimeTrending(false)
     }
   }
 
@@ -721,6 +806,172 @@ export default function AdminIssuesPage() {
           <div className="mt-4 flex justify-end">
             <Button onClick={handleSaveMainDisplay} disabled={savingMainDisplay}>
               {savingMainDisplay ? '저장 중...' : '저장'}
+            </Button>
+          </div>
+        </Card>
+
+        {/* 실시간 인기 이슈 관리 */}
+        <Card className="p-6 mb-6">
+          <h2 className="text-xl font-bold mb-4">⚡ 실시간 인기 이슈 관리</h2>
+          <p className="text-sm text-gray-600 mb-4">
+            홈페이지 실시간 인기 이슈 영역에 표시될 이슈를 선택하세요. 승인된 이슈만 선택 가능합니다.
+          </p>
+
+          <div className="space-y-4">
+            {/* 슬롯 1 */}
+            <div className="flex gap-4 items-start">
+              <div className="flex-1">
+                <label className="block text-sm font-medium mb-1">1위</label>
+                <Select value={realtimeSlot1} onValueChange={setRealtimeSlot1}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="선택 안함" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {issues
+                      .filter((issue) => issue.approval_status === 'approved')
+                      .map((issue) => (
+                        <SelectItem key={issue.id} value={issue.id}>
+                          [{issue.display_id}] {issue.title}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="w-32">
+                <label className="block text-sm font-medium mb-1">변동</label>
+                <Input
+                  value={realtimeSlot1Change}
+                  onChange={(e) => setRealtimeSlot1Change(e.target.value)}
+                  placeholder="예: +5, -2"
+                  maxLength={10}
+                />
+              </div>
+            </div>
+
+            {/* 슬롯 2 */}
+            <div className="flex gap-4 items-start">
+              <div className="flex-1">
+                <label className="block text-sm font-medium mb-1">2위</label>
+                <Select value={realtimeSlot2} onValueChange={setRealtimeSlot2}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="선택 안함" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {issues
+                      .filter((issue) => issue.approval_status === 'approved')
+                      .map((issue) => (
+                        <SelectItem key={issue.id} value={issue.id}>
+                          [{issue.display_id}] {issue.title}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="w-32">
+                <label className="block text-sm font-medium mb-1">변동</label>
+                <Input
+                  value={realtimeSlot2Change}
+                  onChange={(e) => setRealtimeSlot2Change(e.target.value)}
+                  placeholder="예: +5, -2"
+                  maxLength={10}
+                />
+              </div>
+            </div>
+
+            {/* 슬롯 3 */}
+            <div className="flex gap-4 items-start">
+              <div className="flex-1">
+                <label className="block text-sm font-medium mb-1">3위</label>
+                <Select value={realtimeSlot3} onValueChange={setRealtimeSlot3}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="선택 안함" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {issues
+                      .filter((issue) => issue.approval_status === 'approved')
+                      .map((issue) => (
+                        <SelectItem key={issue.id} value={issue.id}>
+                          [{issue.display_id}] {issue.title}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="w-32">
+                <label className="block text-sm font-medium mb-1">변동</label>
+                <Input
+                  value={realtimeSlot3Change}
+                  onChange={(e) => setRealtimeSlot3Change(e.target.value)}
+                  placeholder="예: +5, -2"
+                  maxLength={10}
+                />
+              </div>
+            </div>
+
+            {/* 슬롯 4 */}
+            <div className="flex gap-4 items-start">
+              <div className="flex-1">
+                <label className="block text-sm font-medium mb-1">4위</label>
+                <Select value={realtimeSlot4} onValueChange={setRealtimeSlot4}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="선택 안함" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {issues
+                      .filter((issue) => issue.approval_status === 'approved')
+                      .map((issue) => (
+                        <SelectItem key={issue.id} value={issue.id}>
+                          [{issue.display_id}] {issue.title}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="w-32">
+                <label className="block text-sm font-medium mb-1">변동</label>
+                <Input
+                  value={realtimeSlot4Change}
+                  onChange={(e) => setRealtimeSlot4Change(e.target.value)}
+                  placeholder="예: +5, -2"
+                  maxLength={10}
+                />
+              </div>
+            </div>
+
+            {/* 슬롯 5 */}
+            <div className="flex gap-4 items-start">
+              <div className="flex-1">
+                <label className="block text-sm font-medium mb-1">5위</label>
+                <Select value={realtimeSlot5} onValueChange={setRealtimeSlot5}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="선택 안함" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {issues
+                      .filter((issue) => issue.approval_status === 'approved')
+                      .map((issue) => (
+                        <SelectItem key={issue.id} value={issue.id}>
+                          [{issue.display_id}] {issue.title}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="w-32">
+                <label className="block text-sm font-medium mb-1">변동</label>
+                <Input
+                  value={realtimeSlot5Change}
+                  onChange={(e) => setRealtimeSlot5Change(e.target.value)}
+                  placeholder="예: +5, -2"
+                  maxLength={10}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 flex justify-end">
+            <Button onClick={handleSaveRealtimeTrending} disabled={savingRealtimeTrending}>
+              {savingRealtimeTrending ? '저장 중...' : '저장'}
             </Button>
           </div>
         </Card>

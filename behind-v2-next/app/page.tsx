@@ -18,6 +18,13 @@ import { showSuccess, showError } from "@/lib/toast-utils";
 
 const CURIOUS_COUNT_KEY = "bh_curious_count";
 
+// 변동 수치 파싱 함수 ("+5" → 5, "-2" → -2, "0" → 0, "-" → 0)
+function parseChangeValue(changeStr: string): number {
+  if (!changeStr || changeStr === '0' || changeStr === '-') return 0;
+  const num = parseInt(changeStr, 10);
+  return isNaN(num) ? 0 : num;
+}
+
 const getCuriousCount = (): number => {
   if (typeof window === "undefined") return 0;
   try {
@@ -93,19 +100,59 @@ export default function LandingPage() {
           comments: issue.comment_count || 0
         }));
         setPastIssues(pastData);
-        // 실시간 인기 이슈 (조회수 상위 5개)
-        const trendingResponse = await fetchIssues({ includeAll: true, limit: 100 });
-        const trendingData = trendingResponse.data
-          .filter(issue => issue.status === 'active')
-          .sort((a, b) => (b.view_count || 0) - (a.view_count || 0))
-          .slice(0, 5)
-          .map(issue => ({
-            id: String(issue.display_id),
-            title: issue.title,
-            change: 0,
-            changeAmount: 0
-          }));
-        setTrendingIssues(trendingData);
+        // 실시간 인기 이슈 (어드민 설정 또는 Fallback)
+        try {
+          const realtimeResponse = await fetch('/api/realtime-trending');
+          const realtimeData = await realtimeResponse.json();
+
+          if (realtimeData.success && realtimeData.data && realtimeData.data.length > 0) {
+            // API에서 받은 데이터 사용 (어드민에서 설정한 순서)
+            const trendingData = realtimeData.data.map((issue: any) => {
+              const changeValue = parseChangeValue(issue.change || '0');
+              return {
+                id: String(issue.display_id),
+                title: issue.title,
+                change: changeValue,
+                changeAmount: Math.abs(changeValue)
+              };
+            });
+            setTrendingIssues(trendingData);
+          } else {
+            // Fallback: API 데이터 없으면 조회수 기반 정렬
+            const trendingResponse = await fetchIssues({ includeAll: true, limit: 100 });
+            const trendingData = trendingResponse.data
+              .filter((issue: any) => issue.status === 'active')
+              .sort((a: any, b: any) => (b.view_count || 0) - (a.view_count || 0))
+              .slice(0, 5)
+              .map((issue: any) => ({
+                id: String(issue.display_id),
+                title: issue.title,
+                change: 0,
+                changeAmount: 0
+              }));
+            setTrendingIssues(trendingData);
+          }
+        } catch (err) {
+          console.error('Failed to load realtime trending:', err);
+
+          // 에러 시 Fallback: 조회수 기반 정렬
+          try {
+            const trendingResponse = await fetchIssues({ includeAll: true, limit: 100 });
+            const trendingData = trendingResponse.data
+              .filter((issue: any) => issue.status === 'active')
+              .sort((a: any, b: any) => (b.view_count || 0) - (a.view_count || 0))
+              .slice(0, 5)
+              .map((issue: any) => ({
+                id: String(issue.display_id),
+                title: issue.title,
+                change: 0,
+                changeAmount: 0
+              }));
+            setTrendingIssues(trendingData);
+          } catch (fallbackErr) {
+            console.error('Failed to load fallback trending:', fallbackErr);
+          }
+        }
 
         // 제보된 이슈 로드
         const deviceHash = getDeviceHash();
