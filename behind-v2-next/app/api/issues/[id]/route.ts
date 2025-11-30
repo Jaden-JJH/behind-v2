@@ -84,7 +84,6 @@ export async function GET(
     }
 
     // 조회수 증가 (에러 무시)
-    console.log('[DEBUG] 조회수 증가 시작:', { issueId: issue.id, currentCount: issue.view_count })
     try {
       const { error: updateError } = await supabaseAdmin
         .from('issues')
@@ -93,8 +92,6 @@ export async function GET(
 
       if (updateError) {
         console.error('[ERROR] view_count 업데이트 실패:', updateError)
-      } else {
-        console.log('[SUCCESS] view_count 업데이트 성공')
       }
     } catch (error) {
       // 조회수 증가 실패해도 이슈는 반환

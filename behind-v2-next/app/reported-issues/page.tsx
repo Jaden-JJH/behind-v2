@@ -86,9 +86,7 @@ export default function ReportedIssuesPage() {
         params.my_curious = true
       }
 
-      console.log('API 요청 파라미터:', params)
       const response = await fetchReports(params)
-      console.log('API 응답:', response)
       setReports(response.data)
     } catch (err) {
       console.error('Failed to load reports:', err)
