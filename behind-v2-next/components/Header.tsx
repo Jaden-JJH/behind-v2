@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
 import { Menu } from "lucide-react";
 
@@ -12,7 +13,7 @@ import { MobileMenu } from "@/components/MobileMenu";
 import { showError } from "@/lib/toast-utils";
 
 export function Header() {
-  const { user, loading, signInWithGoogle, signOut, refreshUser } = useAuth();
+  const { user, loading, signInWithGoogle, signInWithKakao, signOut, refreshUser } = useAuth();
   const [showNicknameModal, setShowNicknameModal] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const router = useRouter();
@@ -52,6 +53,14 @@ export function Header() {
       console.error("Failed to sign in with Google", error);
     }
   }, [signInWithGoogle]);
+
+  const handleKakaoSignIn = useCallback(async () => {
+    try {
+      await signInWithKakao();
+    } catch (error) {
+      console.error("Failed to sign in with Kakao", error);
+    }
+  }, [signInWithKakao]);
 
   const handleSignOut = useCallback(async () => {
     try {
@@ -121,9 +130,9 @@ export function Header() {
                   {nickname ?? "닉네임 미설정"}
                 </span>
                 {/* 데스크탑에서만 로그아웃 버튼 표시 */}
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={handleSignOut}
                   className="hidden md:inline-flex"
                 >
@@ -131,9 +140,18 @@ export function Header() {
                 </Button>
               </>
             ) : (
-              <Button onClick={handleSignIn} disabled={loading}>
-                구글 로그인
-              </Button>
+              <div className="flex gap-2">
+                <Button onClick={handleSignIn} disabled={loading} size="sm" className="flex items-center gap-2">
+                  <Image src="/google-logo.png" alt="Google" width={16} height={16} className="w-4 h-4" />
+                  <span className="md:hidden">로그인</span>
+                  <span className="hidden md:inline">구글 로그인</span>
+                </Button>
+                <Button onClick={handleKakaoSignIn} disabled={loading} size="sm" className="bg-[#FEE500] hover:bg-[#FDD835] text-black flex items-center gap-2">
+                  <Image src="/kakao-logo.png" alt="Kakao" width={16} height={16} className="w-4 h-4" />
+                  <span className="md:hidden">로그인</span>
+                  <span className="hidden md:inline">카카오 로그인</span>
+                </Button>
+              </div>
             )}
           </div>
         </div>

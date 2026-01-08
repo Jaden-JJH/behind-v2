@@ -57,7 +57,7 @@ const resetCuriousCount = (): void => {
 };
 
 export default function LandingPage() {
-  const { user, signInWithGoogle } = useAuth();
+  const { user } = useAuth();
   const [showAllReported, setShowAllReported] = useState(false);
   const [issues, setIssues] = useState<any[]>([]);
   const [polls, setPolls] = useState<any[]>([]);
@@ -285,7 +285,6 @@ export default function LandingPage() {
         type="curious"
         open={showLoginPrompt}
         onClose={() => setShowLoginPrompt(false)}
-        onLogin={() => signInWithGoogle(typeof window === "undefined" ? "/" : window.location.pathname)}
         voteCount={getCuriousCount()}
       />
       <div className="min-h-screen bg-slate-50">

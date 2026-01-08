@@ -189,7 +189,6 @@ export function QuickVote({ pollId, question, options, ctaLabel = "이슈 자세
       <LoginPrompt
         open={showLoginPrompt}
         onClose={() => setShowLoginPrompt(false)}
-        onLogin={signInWithGoogle}
         voteCount={getVoteCount()}
       />
 
