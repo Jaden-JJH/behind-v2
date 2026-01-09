@@ -18,11 +18,16 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { nickname } = body
+    const { nickname, termsAgreed, privacyAgreed } = body
 
     // 2. 닉네임 형식 검증
     if (!nickname || typeof nickname !== 'string') {
       return createErrorResponse(ErrorCode.MISSING_FIELDS, 400)
+    }
+
+    // 약관 동의 확인
+    if (!termsAgreed || !privacyAgreed) {
+      return createErrorResponse(ErrorCode.TERMS_NOT_AGREED, 400)
     }
 
     if (nickname.length < 2) {
@@ -73,8 +78,25 @@ export async function POST(request: NextRequest) {
       // DB는 이미 업데이트됨, 에러만 로그
     }
 
-    // 6. 성공 응답
-    return createSuccessResponse({ 
+    // 6. 약관 동의 저장
+    const { error: agreementError } = await supabase
+      .from('user_agreements')
+      .insert({
+        user_id: user.id,
+        terms_agreed: termsAgreed,
+        privacy_agreed: privacyAgreed,
+        terms_version: '1.0',
+        privacy_version: '1.0',
+        agreed_at: new Date().toISOString(),
+      })
+
+    if (agreementError) {
+      console.error('Save user agreement error:', agreementError)
+      // 닉네임은 이미 저장되었으므로 에러 로그만 출력
+    }
+
+    // 7. 성공 응답
+    return createSuccessResponse({
       nickname,
       message: '닉네임이 설정되었습니다'
     })

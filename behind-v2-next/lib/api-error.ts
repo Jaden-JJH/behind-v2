@@ -32,6 +32,7 @@ export enum ErrorCode {
   LOGIN_REQUIRED = 'LOGIN_REQUIRED',
   ACCOUNT_ALREADY_DELETED = 'ACCOUNT_ALREADY_DELETED',
   ACCOUNT_DELETE_FAILED = 'ACCOUNT_DELETE_FAILED',
+  TERMS_NOT_AGREED = 'TERMS_NOT_AGREED',
 
   // 댓글 관련
   COMMENT_TOO_SHORT = 'COMMENT_TOO_SHORT',
@@ -75,6 +76,7 @@ const ERROR_MESSAGES: Record<ErrorCode, string> = {
   [ErrorCode.LOGIN_REQUIRED]: '로그인이 필요합니다',
   [ErrorCode.ACCOUNT_ALREADY_DELETED]: '이미 탈퇴한 계정입니다',
   [ErrorCode.ACCOUNT_DELETE_FAILED]: '회원 탈퇴 처리에 실패했습니다',
+  [ErrorCode.TERMS_NOT_AGREED]: '이용약관 및 개인정보처리방침 동의가 필요합니다',
 
   [ErrorCode.COMMENT_TOO_SHORT]: '댓글은 2자 이상 작성해주세요',
   [ErrorCode.COMMENT_TOO_LONG]: '댓글은 500자 이하로 작성해주세요',

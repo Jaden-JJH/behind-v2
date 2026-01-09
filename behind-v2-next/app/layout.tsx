@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { CsrfProvider } from "@/components/csrf-provider";
 import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
 import { GoogleAnalytics } from "@/components/GoogleAnalytics";
 import "./globals.css";
 
@@ -29,13 +30,16 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen`}
       >
         <GoogleAnalytics />
         <Header />
         <CsrfProvider>
-          {children}
+          <main className="flex-1">
+            {children}
+          </main>
         </CsrfProvider>
+        <Footer />
         <Toaster richColors />
       </body>
     </html>

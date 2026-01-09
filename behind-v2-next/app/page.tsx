@@ -546,10 +546,6 @@ export default function LandingPage() {
           </Card>
         </aside>
       </main>
-
-      <footer className="py-6 text-center text-slate-500 border-t border-slate-200 bg-white mt-8">
-        Copyright © 2025 by Behind
-      </footer>
       </div>
     </>
   );
