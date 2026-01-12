@@ -28,6 +28,8 @@ export async function GET(request: Request) {
           seed_total,
           batch_min,
           batch_max,
+          is_blinded,
+          blinded_at,
           options:poll_options(
             id,
             label,

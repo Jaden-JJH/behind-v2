@@ -6,6 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from '@/hooks/useAuth';
 import { LoginPrompt } from '@/components/LoginPrompt';
+import { ReportModal } from '@/components/ReportModal';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { MoreVertical, Flag, AlertTriangle } from "lucide-react";
 
 /** =========================
  *  Utils
@@ -104,15 +107,18 @@ interface QuickVoteProps {
   options: Array<{id: string, label: string, count: number}>;
   ctaLabel?: string;
   onCta?: () => void;
+  isBlinded?: boolean;
+  blindedAt?: string;
 }
 
-export function QuickVote({ pollId, question, options, ctaLabel = "이슈 자세히 보기", onCta }: QuickVoteProps) {
+export function QuickVote({ pollId, question, options, ctaLabel = "이슈 자세히 보기", onCta, isBlinded, blindedAt }: QuickVoteProps) {
   const { user, signInWithGoogle } = useAuth();
   const safeOptions = useMemo(() => normalizeOptions(options), [options]);
   const [counts, setCounts] = useState(() => initCountsFromOptions(safeOptions));
   const [selected, setSelected] = useState<number | null>(null);
   const [voted, setVoted] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const [reportModalOpen, setReportModalOpen] = useState(false);
 
   useEffect(() => {
     const saved = getStoredVote(pollId || question || "");
@@ -194,13 +200,52 @@ export function QuickVote({ pollId, question, options, ctaLabel = "이슈 자세
 
       <Card className="bg-white border-slate-200 shadow-sm">
         <CardHeader>
-          <CardTitle className="text-base font-semibold text-slate-800">{question}</CardTitle>
-          <p className="text-slate-500 text-sm flex items-center gap-1.5 mt-1">
-            {toSafeNumber(total).toLocaleString()}명 참여
-          </p>
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex-1">
+              <CardTitle className="text-base font-semibold text-slate-800">{question}</CardTitle>
+              <p className="text-slate-500 text-sm flex items-center gap-1.5 mt-1">
+                {toSafeNumber(total).toLocaleString()}명 참여
+              </p>
+            </div>
+            {!isBlinded && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                    <MoreVertical className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem
+                    onClick={() => setReportModalOpen(true)}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    <Flag className="w-4 h-4 mr-2" />
+                    신고하기
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
-          {!voted ? (
+          {isBlinded ? (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <div className="flex items-center gap-3 text-yellow-700">
+                <AlertTriangle className="w-6 h-6" />
+                <div>
+                  <p className="font-medium mb-1">블라인드 처리된 투표입니다</p>
+                  <p className="text-sm text-yellow-600">
+                    이 투표는 신고 누적으로 인해 관리자에 의해 블라인드 처리되었습니다.
+                  </p>
+                  {blindedAt && (
+                    <p className="text-xs text-yellow-600 mt-1">
+                      처리 시간: {new Date(blindedAt).toLocaleString('ko-KR')}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : !voted ? (
             <div className="space-y-3">
               {safeOptions.map((option, idx) => {
                 const count = toSafeNumber(counts?.[idx])
@@ -267,6 +312,13 @@ export function QuickVote({ pollId, question, options, ctaLabel = "이슈 자세
           )}
         </CardContent>
       </Card>
+
+      <ReportModal
+        open={reportModalOpen}
+        onOpenChange={setReportModalOpen}
+        contentType="poll"
+        contentId={pollId.replace(/^poll_/, '')}
+      />
     </>
   );
 }

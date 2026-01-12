@@ -33,6 +33,7 @@ import {
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { ArticleFormFields, type ArticleFormData } from '@/components/admin/article-form-fields'
+import { ShieldAlert, AlertCircle } from 'lucide-react'
 
 // 카테고리 매핑 (프론트엔드 표시값 → DB 저장값)
 const CATEGORY_OPTIONS = CATEGORY_KO_VALUES.map((value) => ({
@@ -54,12 +55,18 @@ interface Issue {
   comment_count: number
   show_in_main_hot: boolean
   show_in_main_poll: boolean
+  is_blinded?: boolean
+  blinded_at?: string
+  report_count?: number
   behind_story?: string
   capacity?: number
   thumbnail?: string
   poll?: {
     id: string
     question: string
+    is_blinded?: boolean
+    blinded_at?: string
+    report_count?: number
     options: Array<{
       id: string
       label: string
@@ -730,7 +737,10 @@ export default function AdminIssuesPage() {
                     </SelectTrigger>
                     <SelectContent>
                       {issues
-                        .filter((issue) => issue.approval_status === 'approved')
+                        .filter((issue) => {
+                          const poll = Array.isArray(issue.poll) ? issue.poll[0] : issue.poll
+                          return issue.approval_status === 'approved' && !issue.is_blinded && !poll?.is_blinded
+                        })
                         .map((issue) => (
                           <SelectItem key={issue.id} value={issue.id}>
                             [{issue.display_id}] {issue.title}
@@ -748,7 +758,10 @@ export default function AdminIssuesPage() {
                     </SelectTrigger>
                     <SelectContent>
                       {issues
-                        .filter((issue) => issue.approval_status === 'approved')
+                        .filter((issue) => {
+                          const poll = Array.isArray(issue.poll) ? issue.poll[0] : issue.poll
+                          return issue.approval_status === 'approved' && !issue.is_blinded && !poll?.is_blinded
+                        })
                         .map((issue) => (
                           <SelectItem key={issue.id} value={issue.id}>
                             [{issue.display_id}] {issue.title}
@@ -772,7 +785,10 @@ export default function AdminIssuesPage() {
                     </SelectTrigger>
                     <SelectContent>
                       {issues
-                        .filter((issue) => issue.approval_status === 'approved' && issue.poll)
+                        .filter((issue) => {
+                          const poll = Array.isArray(issue.poll) ? issue.poll[0] : issue.poll
+                          return issue.approval_status === 'approved' && poll && !poll.is_blinded
+                        })
                         .map((issue) => (
                           <SelectItem key={issue.id} value={issue.id}>
                             [{issue.display_id}] {issue.title}
@@ -790,7 +806,10 @@ export default function AdminIssuesPage() {
                     </SelectTrigger>
                     <SelectContent>
                       {issues
-                        .filter((issue) => issue.approval_status === 'approved' && issue.poll)
+                        .filter((issue) => {
+                          const poll = Array.isArray(issue.poll) ? issue.poll[0] : issue.poll
+                          return issue.approval_status === 'approved' && poll && !poll.is_blinded
+                        })
                         .map((issue) => (
                           <SelectItem key={issue.id} value={issue.id}>
                             [{issue.display_id}] {issue.title}
@@ -828,7 +847,10 @@ export default function AdminIssuesPage() {
                   </SelectTrigger>
                   <SelectContent>
                     {issues
-                      .filter((issue) => issue.approval_status === 'approved')
+                      .filter((issue) => {
+                        const poll = Array.isArray(issue.poll) ? issue.poll[0] : issue.poll
+                        return issue.approval_status === 'approved' && !issue.is_blinded && !poll?.is_blinded
+                      })
                       .map((issue) => (
                         <SelectItem key={issue.id} value={issue.id}>
                           [{issue.display_id}] {issue.title}
@@ -858,7 +880,10 @@ export default function AdminIssuesPage() {
                   </SelectTrigger>
                   <SelectContent>
                     {issues
-                      .filter((issue) => issue.approval_status === 'approved')
+                      .filter((issue) => {
+                        const poll = Array.isArray(issue.poll) ? issue.poll[0] : issue.poll
+                        return issue.approval_status === 'approved' && !issue.is_blinded && !poll?.is_blinded
+                      })
                       .map((issue) => (
                         <SelectItem key={issue.id} value={issue.id}>
                           [{issue.display_id}] {issue.title}
@@ -888,7 +913,10 @@ export default function AdminIssuesPage() {
                   </SelectTrigger>
                   <SelectContent>
                     {issues
-                      .filter((issue) => issue.approval_status === 'approved')
+                      .filter((issue) => {
+                        const poll = Array.isArray(issue.poll) ? issue.poll[0] : issue.poll
+                        return issue.approval_status === 'approved' && !issue.is_blinded && !poll?.is_blinded
+                      })
                       .map((issue) => (
                         <SelectItem key={issue.id} value={issue.id}>
                           [{issue.display_id}] {issue.title}
@@ -918,7 +946,10 @@ export default function AdminIssuesPage() {
                   </SelectTrigger>
                   <SelectContent>
                     {issues
-                      .filter((issue) => issue.approval_status === 'approved')
+                      .filter((issue) => {
+                        const poll = Array.isArray(issue.poll) ? issue.poll[0] : issue.poll
+                        return issue.approval_status === 'approved' && !issue.is_blinded && !poll?.is_blinded
+                      })
                       .map((issue) => (
                         <SelectItem key={issue.id} value={issue.id}>
                           [{issue.display_id}] {issue.title}
@@ -948,7 +979,10 @@ export default function AdminIssuesPage() {
                   </SelectTrigger>
                   <SelectContent>
                     {issues
-                      .filter((issue) => issue.approval_status === 'approved')
+                      .filter((issue) => {
+                        const poll = Array.isArray(issue.poll) ? issue.poll[0] : issue.poll
+                        return issue.approval_status === 'approved' && !issue.is_blinded && !poll?.is_blinded
+                      })
                       .map((issue) => (
                         <SelectItem key={issue.id} value={issue.id}>
                           [{issue.display_id}] {issue.title}
@@ -997,41 +1031,74 @@ export default function AdminIssuesPage() {
                   <TableHead>노출상태</TableHead>
                   <TableHead>조회수</TableHead>
                   <TableHead>댓글수</TableHead>
+                  <TableHead>신고</TableHead>
                   <TableHead>메인 핫</TableHead>
                   <TableHead>메인 투표</TableHead>
                   <TableHead className="text-right">관리</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {issues.map(issue => (
-                  <TableRow key={issue.id}>
-                    <TableCell className="font-medium">{issue.display_id}</TableCell>
-                    <TableCell>{issue.title}</TableCell>
-                    <TableCell>{issue.category}</TableCell>
-                    <TableCell>{renderApprovalBadge(issue.approval_status)}</TableCell>
-                    <TableCell>{renderVisibilityBadge(issue.visibility)}</TableCell>
-                    <TableCell>{issue.view_count}</TableCell>
-                    <TableCell>{issue.comment_count}</TableCell>
-                    <TableCell>{issue.show_in_main_hot ? '예' : '아니오'}</TableCell>
-                    <TableCell>{issue.show_in_main_poll ? '예' : '아니오'}</TableCell>
-                    <TableCell className="text-right space-x-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => openEditModal(issue)}
-                      >
-                        수정
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => openDeleteModal(issue)}
-                      >
-                        삭제
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {issues.map(issue => {
+                  const poll = Array.isArray(issue.poll) ? issue.poll[0] : issue.poll
+                  const isBlinded = issue.is_blinded || poll?.is_blinded
+                  const totalReports = (issue.report_count || 0) + (poll?.report_count || 0)
+
+                  return (
+                    <TableRow
+                      key={issue.id}
+                      className={isBlinded ? 'bg-red-50' : ''}
+                    >
+                      <TableCell className="font-medium">{issue.display_id}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <span>{issue.title}</span>
+                          {issue.is_blinded && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-red-100 text-red-700 border border-red-300 rounded-md text-xs font-medium">
+                              <AlertCircle className="w-3 h-3" />
+                              이슈 블라인드
+                            </span>
+                          )}
+                          {poll?.is_blinded && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-orange-100 text-orange-700 border border-orange-300 rounded-md text-xs font-medium">
+                              <ShieldAlert className="w-3 h-3" />
+                              투표 블라인드
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>{issue.category}</TableCell>
+                      <TableCell>{renderApprovalBadge(issue.approval_status)}</TableCell>
+                      <TableCell>{renderVisibilityBadge(issue.visibility)}</TableCell>
+                      <TableCell>{issue.view_count}</TableCell>
+                      <TableCell>{issue.comment_count}</TableCell>
+                      <TableCell>
+                        {totalReports > 0 ? (
+                          <span className="text-red-600 font-semibold">{totalReports}</span>
+                        ) : (
+                          <span className="text-gray-400">0</span>
+                        )}
+                      </TableCell>
+                      <TableCell>{issue.show_in_main_hot ? '예' : '아니오'}</TableCell>
+                      <TableCell>{issue.show_in_main_poll ? '예' : '아니오'}</TableCell>
+                      <TableCell className="text-right space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openEditModal(issue)}
+                        >
+                          수정
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openDeleteModal(issue)}
+                        >
+                          삭제
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
               </TableBody>
             </Table>
           )}

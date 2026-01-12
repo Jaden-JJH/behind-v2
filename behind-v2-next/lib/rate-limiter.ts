@@ -53,6 +53,7 @@ export const curiousLimiter = createRateLimiter(3, '1 m', 'ratelimit:curious')
 export const chatSendLimiter = createRateLimiter(5, '5 s', 'ratelimit:chat:send')
 export const chatJoinLimiter = createRateLimiter(3, '1 m', 'ratelimit:chat:join')
 export const chatPresenceLimiter = createRateLimiter(6, '10 s', 'ratelimit:chat:presence')
+export const reportLimiter = createRateLimiter(5, '5 m', 'ratelimit:report') // 신고 남용 방지: 5분에 5회
 
 // IP 주소 추출 헬퍼 함수
 export function getClientIp(request: Request): string {

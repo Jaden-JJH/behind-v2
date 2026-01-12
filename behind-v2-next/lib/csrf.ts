@@ -37,14 +37,19 @@ export async function verifyCsrfToken(headerToken: string | null): Promise<boole
   if (!headerToken) {
     return false;
   }
-  
+
   const cookieStore = await cookies();
   const cookieToken = cookieStore.get('csrf-token')?.value;
-  
+
   if (!cookieToken) {
     return false;
   }
-  
+
+  // 길이가 다르면 false 반환 (timingSafeEqual은 동일 길이 필요)
+  if (cookieToken.length !== headerToken.length) {
+    return false;
+  }
+
   // 타이밍 공격 방지를 위한 상수 시간 비교
   return crypto.timingSafeEqual(
     Buffer.from(cookieToken),

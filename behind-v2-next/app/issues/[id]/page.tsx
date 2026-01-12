@@ -8,7 +8,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Eye, Users, ThumbsUp, ThumbsDown, Flag, ExternalLink } from "lucide-react";
+import { ArrowLeft, Eye, Users, ThumbsUp, ThumbsDown, Flag, ExternalLink, MoreVertical } from "lucide-react";
 import { ImageWithFallback } from "@/components/figma/ImageWithFallback";
 import { QuickVote } from "@/components/quick-vote";
 import { IssueFollowButton } from "@/components/issue-follow-button";
@@ -21,6 +21,13 @@ import type { ChatRoomState } from "@/lib/chat-types";
 import { ArticleTimeline } from "@/components/article-timeline";
 import type { IssueArticle } from "@/types/issue-articles";
 import { UserProfileDrawer } from "@/components/user-profile-drawer";
+import { ReportModal } from "@/components/ReportModal";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 // deviceHash 생성/가져오기 함수
 function getDeviceHash(): string {
@@ -90,6 +97,8 @@ interface IssueDetail {
   summary?: string;
   behind_story?: string;
   poll?: Poll;
+  is_blinded?: boolean;
+  blinded_at?: string;
 }
 
 interface ApiResponse {
@@ -129,6 +138,19 @@ export default function IssueDetailPage() {
 
   // UserProfileDrawer state
   const [selectedNickname, setSelectedNickname] = useState<string | null>(null);
+
+  // Report modal state
+  const [reportModalOpen, setReportModalOpen] = useState(false);
+  const [reportTarget, setReportTarget] = useState<{
+    type: 'issue' | 'poll' | 'comment';
+    id: string;
+  } | null>(null);
+
+  // 신고하기 핸들러
+  const handleOpenReport = (type: 'issue' | 'poll' | 'comment', id: string) => {
+    setReportTarget({ type, id });
+    setReportModalOpen(true);
+  };
 
   // 로컬 스토리지에 투표 상태 저장/불러오기
   const saveVoteState = (commentId: string, voteType: 'up' | 'down' | null) => {
@@ -423,7 +445,25 @@ export default function IssueDetailPage() {
           </Button>
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
             <div className="flex-1">
-              <h1 className="mb-2">{issue.title}</h1>
+              <div className="flex items-start justify-between gap-2">
+                <h1 className="mb-2 flex-1">{issue.title}</h1>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm">
+                      <MoreVertical className="w-4 h-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem
+                      onClick={() => handleOpenReport('issue', issue.id)}
+                      className="text-destructive focus:text-destructive"
+                    >
+                      <Flag className="w-4 h-4 mr-2" />
+                      신고하기
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
               <div className="flex items-center gap-3 text-muted-foreground flex-wrap">
                 <span className="flex items-center gap-1 text-sm">
                   <Users className="w-3.5 h-3.5" />
@@ -478,17 +518,38 @@ export default function IssueDetailPage() {
           />
         </div>
 
-        {/* 사건 요약 */}
-        <Card>
-          <CardHeader>
-            <CardTitle>사건 요약</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground leading-relaxed">
-              {issue.summary || issue.preview}
-            </p>
-          </CardContent>
-        </Card>
+        {/* 블라인드 처리 알림 또는 사건 요약 */}
+        {issue.is_blinded ? (
+          <Card className="bg-yellow-50 border-yellow-200">
+            <CardContent className="p-6">
+              <div className="flex items-start gap-4">
+                <AlertTriangle className="w-12 h-12 text-yellow-600 flex-shrink-0 mt-1" />
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-yellow-900 mb-2">
+                    블라인드 처리된 콘텐츠
+                  </h3>
+                  <p className="text-yellow-800 leading-relaxed mb-2">
+                    이 이슈는 신고 누적으로 인해 관리자에 의해 블라인드 처리되었습니다.
+                  </p>
+                  <p className="text-sm text-yellow-700">
+                    처리 시간: {issue.blinded_at ? new Date(issue.blinded_at).toLocaleString('ko-KR') : '정보 없음'}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardHeader>
+              <CardTitle>사건 요약</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground leading-relaxed">
+                {issue.summary || issue.preview}
+              </p>
+            </CardContent>
+          </Card>
+        )}
 
         {/* 관련 미디어 */}
         {issue.media_embed && (
@@ -682,11 +743,26 @@ export default function IssueDetailPage() {
                           </p>
                         </div>
                       </div>
-                      <Button variant="ghost" size="sm">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleOpenReport('comment', c.id)}
+                      >
                         <Flag className="w-4 h-4" />
                       </Button>
                     </div>
-                    <p className="text-sm md:text-base text-muted-foreground leading-relaxed mb-2 md:mb-3">{c.body}</p>
+                    {c.is_blinded ? (
+                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-2 md:mb-3">
+                        <div className="flex items-center gap-2 text-yellow-700">
+                          <AlertTriangle className="w-4 h-4" />
+                          <span className="text-sm font-medium">
+                            블라인드 처리된 댓글입니다
+                          </span>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-sm md:text-base text-muted-foreground leading-relaxed mb-2 md:mb-3">{c.body}</p>
+                    )}
                     <div className="flex items-center gap-1.5 md:gap-2">
                       <Button
                         variant={voteStates[c.id] === 'up' ? 'default' : 'outline'}
@@ -723,6 +799,15 @@ export default function IssueDetailPage() {
         open={selectedNickname !== null}
         onOpenChange={(open) => !open && setSelectedNickname(null)}
       />
+
+      {reportTarget && (
+        <ReportModal
+          open={reportModalOpen}
+          onOpenChange={setReportModalOpen}
+          contentType={reportTarget.type}
+          contentId={reportTarget.id}
+        />
+      )}
 
       <footer className="py-6 text-center text-slate-500 border-t border-slate-200 bg-white mt-8">
         © 2025 비하인드. 모두의 뒷얘기 살롱.

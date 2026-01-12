@@ -82,11 +82,13 @@ export default function LandingPage() {
         const activeIssues = response.data.filter(issue => issue.status === "active").slice(0, 2);
         setIssues(activeIssues);
 
-        // 투표 데이터 로드
+        // 투표 데이터 로드 (블라인드되지 않은 투표만)
         const pollIssues = response.data.filter(issue => {
+          const poll = Array.isArray(issue.poll) ? issue.poll[0] : issue.poll;
           return issue.status === "active" &&
                  issue.show_in_main_poll === true &&
-                 issue.poll;
+                 poll &&
+                 !poll.is_blinded; // 블라인드되지 않은 투표만
         }).slice(0, 2);
         setPolls(pollIssues);
 
@@ -354,6 +356,8 @@ export default function LandingPage() {
                         count: opt.vote_count
                       }))}
                       onCta={() => window.location.href = `/issues/${issue.display_id}`}
+                      isBlinded={poll.is_blinded}
+                      blindedAt={poll.blinded_at}
                     />
                   );
                 })}
