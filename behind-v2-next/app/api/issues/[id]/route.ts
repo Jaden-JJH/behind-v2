@@ -44,6 +44,7 @@ export async function GET(
         capacity,
         category,
         status,
+        visibility,
         comment_count,
         created_at,
         summary,
@@ -72,6 +73,14 @@ export async function GET(
         )
       }
       throw issueError
+    }
+
+    // 노출 중지된 이슈는 접근 차단
+    if (issue.visibility === 'paused') {
+      return NextResponse.json(
+        { error: 'Issue not found' },
+        { status: 404 }
+      )
     }
 
     const normalizedCategory = normalizeCategory(issue.category)

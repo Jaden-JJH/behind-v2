@@ -80,11 +80,11 @@ export function Header() {
   return (
     <>
       <header className="bg-white shadow-sm sticky top-0 z-50">
-        <div className={isMyPage ? "px-4 sm:px-6 flex h-16 items-center justify-between" : "mx-auto flex h-16 items-center justify-between px-4 sm:px-6 max-w-6xl"}>
-          <div className="flex items-center gap-3">
+        <div className={isMyPage ? "px-3 sm:px-4 md:px-6 flex h-16 items-center justify-between" : "mx-auto flex h-16 items-center justify-between px-3 sm:px-4 md:px-6 max-w-6xl"}>
+          <div className="flex items-center gap-2 sm:gap-3">
             <button
               type="button"
-              className="md:hidden rounded-lg p-2 hover:bg-slate-100"
+              className="md:hidden rounded-lg p-2 hover:bg-slate-100 min-w-[44px] min-h-[44px] flex items-center justify-center"
               onClick={() => setIsMobileMenuOpen(true)}
             >
               <Menu className="h-6 w-6 text-slate-700" />
@@ -92,7 +92,7 @@ export function Header() {
 
             <Link
               href="/"
-              className="text-xl font-semibold text-gray-900 hover:text-gray-700"
+              className="text-base sm:text-lg md:text-xl font-semibold text-gray-900 hover:text-gray-700"
             >
               Behind
             </Link>
@@ -123,10 +123,10 @@ export function Header() {
           </nav>
 
           {/* 오른쪽: 로그인 또는 닉네임+로그아웃 */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             {user ? (
               <>
-                <span className="text-sm font-medium text-gray-700">
+                <span className="text-xs sm:text-sm font-medium text-gray-700">
                   {nickname ?? "닉네임 미설정"}
                 </span>
                 {/* 데스크탑에서만 로그아웃 버튼 표시 */}
@@ -134,22 +134,22 @@ export function Header() {
                   variant="outline"
                   size="sm"
                   onClick={handleSignOut}
-                  className="hidden md:inline-flex"
+                  className="hidden md:inline-flex min-h-[44px]"
                 >
                   로그아웃
                 </Button>
               </>
             ) : (
               <div className="flex gap-2">
-                <Button onClick={handleSignIn} disabled={loading} size="sm" className="flex items-center gap-2">
+                <Button onClick={handleSignIn} disabled={loading} size="sm" className="flex items-center gap-1.5 sm:gap-2 min-h-[44px]">
                   <Image src="/google-logo.png" alt="Google" width={16} height={16} className="w-4 h-4" />
-                  <span className="md:hidden">로그인</span>
-                  <span className="hidden md:inline">구글 로그인</span>
+                  <span className="md:hidden text-xs">로그인</span>
+                  <span className="hidden md:inline text-sm">구글 로그인</span>
                 </Button>
-                <Button onClick={handleKakaoSignIn} disabled={loading} size="sm" className="bg-[#FEE500] hover:bg-[#FDD835] text-black flex items-center gap-2">
+                <Button onClick={handleKakaoSignIn} disabled={loading} size="sm" className="bg-[#FEE500] hover:bg-[#FDD835] text-black flex items-center gap-1.5 sm:gap-2 min-h-[44px]">
                   <Image src="/kakao-logo.png" alt="Kakao" width={16} height={16} className="w-4 h-4" />
-                  <span className="md:hidden">로그인</span>
-                  <span className="hidden md:inline">카카오 로그인</span>
+                  <span className="md:hidden text-xs">로그인</span>
+                  <span className="hidden md:inline text-sm">카카오 로그인</span>
                 </Button>
               </div>
             )}

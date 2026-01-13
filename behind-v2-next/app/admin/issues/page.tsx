@@ -128,6 +128,12 @@ export default function AdminIssuesPage() {
   const [realtimeSlot5Change, setRealtimeSlot5Change] = useState<string>('0')
   const [savingRealtimeTrending, setSavingRealtimeTrending] = useState(false)
 
+  // 롤링 배너 상태
+  const [bannerSlot1, setBannerSlot1] = useState<string>('')
+  const [bannerSlot2, setBannerSlot2] = useState<string>('')
+  const [bannerSlot3, setBannerSlot3] = useState<string>('')
+  const [savingBannerDisplay, setSavingBannerDisplay] = useState(false)
+
   // 필터 상태
   const [filterCategory, setFilterCategory] = useState('')
   const [filterApprovalStatus, setFilterApprovalStatus] = useState('')
@@ -146,6 +152,7 @@ export default function AdminIssuesPage() {
     loadIssues()
     loadMainDisplayIssues()
     loadRealtimeTrending() // 새로 추가
+    loadBannerDisplay() // 배너 로드
   }, [])
 
   async function loadIssues() {
@@ -226,6 +233,23 @@ export default function AdminIssuesPage() {
     }
   }
 
+  // 배너 설정 로드
+  async function loadBannerDisplay() {
+    try {
+      const response = await fetch('/api/admin/issues/banner-display')
+      const data = await response.json()
+
+      if (!response.ok || !data.data) return
+
+      const bannerSlots = data.data
+      setBannerSlot1(bannerSlots.slot1?.id || '')
+      setBannerSlot2(bannerSlots.slot2?.id || '')
+      setBannerSlot3(bannerSlots.slot3?.id || '')
+    } catch (error) {
+      console.error('Failed to load banner display:', error)
+    }
+  }
+
   // 메인 노출 설정 저장
   async function handleSaveMainDisplay() {
     try {
@@ -302,6 +326,36 @@ export default function AdminIssuesPage() {
       showError(error)
     } finally {
       setSavingRealtimeTrending(false)
+    }
+  }
+
+  // 배너 설정 저장
+  async function handleSaveBannerDisplay() {
+    try {
+      setSavingBannerDisplay(true)
+
+      const response = await csrfFetch('/api/admin/issues/banner-display', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          slot1: bannerSlot1 || null,
+          slot2: bannerSlot2 || null,
+          slot3: bannerSlot3 || null
+        })
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        showError(data)
+        return
+      }
+
+      showSuccess('롤링 배너 설정이 저장되었습니다')
+    } catch (error) {
+      showError(error)
+    } finally {
+      setSavingBannerDisplay(false)
     }
   }
 
@@ -825,6 +879,90 @@ export default function AdminIssuesPage() {
           <div className="mt-4 flex justify-end">
             <Button onClick={handleSaveMainDisplay} disabled={savingMainDisplay}>
               {savingMainDisplay ? '저장 중...' : '저장'}
+            </Button>
+          </div>
+        </Card>
+
+        {/* 롤링 배너 관리 */}
+        <Card className="p-6 mb-6">
+          <h2 className="text-xl font-bold mb-4">🔥 롤링 배너 관리 (Breaking News)</h2>
+          <p className="text-sm text-gray-600 mb-4">
+            메인 페이지 상단에 표시될 속보 배너를 설정하세요. 최대 3개까지 등록 가능하며, 2개 이상일 경우 1.5초마다 자동으로 롤링됩니다.
+            <br />
+            <span className="text-rose-600 font-medium">승인된 이슈만 선택 가능</span>하며, 아무것도 등록하지 않으면 배너가 표시되지 않습니다.
+          </p>
+
+          <div className="space-y-3">
+            <div>
+              <label className="block text-sm font-medium mb-1">배너 슬롯 #1</label>
+              <Select value={bannerSlot1 || 'none'} onValueChange={(value) => setBannerSlot1(value === 'none' ? '' : value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="선택 안함" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">선택 안함</SelectItem>
+                  {issues
+                    .filter((issue) => {
+                      const poll = Array.isArray(issue.poll) ? issue.poll[0] : issue.poll
+                      return issue.approval_status === 'approved' && !issue.is_blinded && !poll?.is_blinded
+                    })
+                    .map((issue) => (
+                      <SelectItem key={issue.id} value={issue.id}>
+                        [{issue.display_id}] {issue.title}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">배너 슬롯 #2</label>
+              <Select value={bannerSlot2 || 'none'} onValueChange={(value) => setBannerSlot2(value === 'none' ? '' : value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="선택 안함" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">선택 안함</SelectItem>
+                  {issues
+                    .filter((issue) => {
+                      const poll = Array.isArray(issue.poll) ? issue.poll[0] : issue.poll
+                      return issue.approval_status === 'approved' && !issue.is_blinded && !poll?.is_blinded
+                    })
+                    .map((issue) => (
+                      <SelectItem key={issue.id} value={issue.id}>
+                        [{issue.display_id}] {issue.title}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">배너 슬롯 #3</label>
+              <Select value={bannerSlot3 || 'none'} onValueChange={(value) => setBannerSlot3(value === 'none' ? '' : value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="선택 안함" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">선택 안함</SelectItem>
+                  {issues
+                    .filter((issue) => {
+                      const poll = Array.isArray(issue.poll) ? issue.poll[0] : issue.poll
+                      return issue.approval_status === 'approved' && !issue.is_blinded && !poll?.is_blinded
+                    })
+                    .map((issue) => (
+                      <SelectItem key={issue.id} value={issue.id}>
+                        [{issue.display_id}] {issue.title}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="mt-4 flex justify-end">
+            <Button onClick={handleSaveBannerDisplay} disabled={savingBannerDisplay}>
+              {savingBannerDisplay ? '저장 중...' : '저장'}
             </Button>
           </div>
         </Card>

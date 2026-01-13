@@ -9,6 +9,7 @@ import { LoginPrompt } from '@/components/LoginPrompt';
 import { ReportModal } from '@/components/ReportModal';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { MoreVertical, Flag, AlertTriangle } from "lucide-react";
+import { generateUUID } from '@/lib/uuid';
 
 /** =========================
  *  Utils
@@ -60,7 +61,7 @@ const getDeviceHash = (): string => {
   if (typeof window === "undefined") return "";
   let hash = localStorage.getItem('bh_device_hash');
   if (!hash) {
-    hash = crypto.randomUUID();
+    hash = generateUUID();
     localStorage.setItem('bh_device_hash', hash);
   }
   return hash;

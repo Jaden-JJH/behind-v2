@@ -1,3 +1,5 @@
+import { generateUUID } from './uuid'
+
 /**
  * device_hash 생성 및 관리
  * localStorage 기반으로 디바이스 고유 해시를 생성하고 유지합니다.
@@ -12,7 +14,7 @@ export function getDeviceHash(): string {
 
   let hash = localStorage.getItem('device_hash');
   if (!hash) {
-    hash = crypto.randomUUID();
+    hash = generateUUID();
     localStorage.setItem('device_hash', hash);
   }
   return hash;

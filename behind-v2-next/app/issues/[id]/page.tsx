@@ -8,7 +8,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Eye, Users, ThumbsUp, ThumbsDown, Flag, ExternalLink, MoreVertical } from "lucide-react";
+import { ArrowLeft, Eye, Users, ThumbsUp, ThumbsDown, Flag, ExternalLink, MoreVertical, AlertTriangle } from "lucide-react";
 import { ImageWithFallback } from "@/components/figma/ImageWithFallback";
 import { QuickVote } from "@/components/quick-vote";
 import { IssueFollowButton } from "@/components/issue-follow-button";
@@ -28,6 +28,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { generateUUID } from "@/lib/uuid";
 
 // deviceHash 생성/가져오기 함수
 function getDeviceHash(): string {
@@ -35,7 +36,7 @@ function getDeviceHash(): string {
 
   let hash = localStorage.getItem('deviceHash')
   if (!hash) {
-    hash = crypto.randomUUID()
+    hash = generateUUID()
     localStorage.setItem('deviceHash', hash)
   }
   return hash
@@ -438,7 +439,7 @@ export default function IssueDetailPage() {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card sticky top-0 z-10">
-        <div className="max-w-6xl mx-auto px-3 md:px-4 py-3 md:py-4">
+        <div className="max-w-6xl mx-auto px-3 sm:px-4 md:px-6 py-3 sm:py-3.5 md:py-4">
           <Button variant="ghost" onClick={() => router.push('/')} className="mb-3 -ml-2">
             <ArrowLeft className="w-4 h-4 mr-2" />
             목록으로
@@ -446,7 +447,7 @@ export default function IssueDetailPage() {
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
             <div className="flex-1">
               <div className="flex items-start justify-between gap-2">
-                <h1 className="mb-2 flex-1">{issue.title}</h1>
+                <h1 className="mb-2 flex-1 text-base sm:text-lg md:text-xl font-bold">{issue.title}</h1>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="sm">
@@ -464,8 +465,8 @@ export default function IssueDetailPage() {
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
-              <div className="flex items-center gap-3 text-muted-foreground flex-wrap">
-                <span className="flex items-center gap-1 text-sm">
+              <div className="flex items-center gap-2 sm:gap-3 text-muted-foreground flex-wrap">
+                <span className="flex items-center gap-1 text-xs sm:text-sm">
                   <Users className="w-3.5 h-3.5" />
                   {chatStatusLabel}
                 </span>
@@ -477,7 +478,7 @@ export default function IssueDetailPage() {
                 {issue.view_count > 0 && (
                   <>
                     <Separator orientation="vertical" className="h-4" />
-                    <span className="flex items-center gap-1 text-sm">
+                    <span className="flex items-center gap-1 text-xs sm:text-sm">
                       <Eye className="w-3.5 h-3.5" />
                       조회수 {issue.view_count}
                     </span>
@@ -508,7 +509,7 @@ export default function IssueDetailPage() {
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-3 md:px-4 py-4 md:py-8 space-y-4 md:space-y-6">
+      <main className="max-w-6xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-5 md:py-8 space-y-4 sm:space-y-5 md:space-y-6">
         {/* 썸네일 이미지 */}
         <div className="relative w-full aspect-video bg-muted rounded-xl overflow-hidden">
           <ImageWithFallback
@@ -678,19 +679,19 @@ export default function IssueDetailPage() {
             </Card>
           ) : (
             <Card>
-              <CardContent className="p-3 md:p-4">
+              <CardContent className="p-4 sm:p-5 md:p-6">
                 <Textarea
                   value={commentBody}
                   onChange={(e) => setCommentBody(e.target.value)}
                   placeholder="댓글을 남겨보세요"
-                  className="min-h-[80px] md:min-h-[100px] mb-2 md:mb-3 resize-none"
+                  className="min-h-[100px] sm:min-h-[120px] md:min-h-[140px] mb-3 sm:mb-3.5 md:mb-4 resize-none text-sm sm:text-base"
                   disabled={submitting}
                 />
-                <div className="flex items-center justify-between">
-                  <p className="text-sm text-muted-foreground">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     {user.user_metadata?.nickname || '익명'} · 커뮤니티 가이드라인 준수
                   </p>
-                  <Button onClick={handleSubmitComment} disabled={submitting}>
+                  <Button onClick={handleSubmitComment} disabled={submitting} className="flex-shrink-0">
                     {submitting ? '등록 중...' : '등록'}
                   </Button>
                 </div>
@@ -700,28 +701,28 @@ export default function IssueDetailPage() {
 
           {/* 댓글 목록 */}
           {commentsLoading && (
-            <div className="text-center py-8 text-muted-foreground">
+            <div className="text-center py-8 text-sm sm:text-base text-muted-foreground">
               댓글을 불러오는 중...
             </div>
           )}
 
           {commentsError && (
-            <div className="text-center py-8 text-red-500">
+            <div className="text-center py-8 text-sm sm:text-base text-red-500">
               {commentsError}
             </div>
           )}
 
           {!commentsLoading && !commentsError && comments.length === 0 && (
-            <div className="text-center py-8 text-muted-foreground">
+            <div className="text-center py-8 text-sm sm:text-base text-muted-foreground">
               첫 댓글을 남겨보세요!
             </div>
           )}
 
           {!commentsLoading && !commentsError && comments.length > 0 && (
-            <div className="space-y-3">
+            <div className="space-y-3 sm:space-y-3.5 md:space-y-4">
               {comments.map((c) => (
                 <Card key={c.id}>
-                  <CardContent className="p-3 md:p-4">
+                  <CardContent className="p-4 sm:p-5 md:p-6">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-3">
                         <Avatar className="w-8 h-8">
@@ -761,16 +762,17 @@ export default function IssueDetailPage() {
                         </div>
                       </div>
                     ) : (
-                      <p className="text-sm md:text-base text-muted-foreground leading-relaxed mb-2 md:mb-3">{c.body}</p>
+                      <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mb-3 sm:mb-3.5 md:mb-4">{c.body}</p>
                     )}
-                    <div className="flex items-center gap-1.5 md:gap-2">
+                    <div className="flex items-center gap-2 sm:gap-2.5 md:gap-3">
                       <Button
                         variant={voteStates[c.id] === 'up' ? 'default' : 'outline'}
                         size="sm"
                         onClick={() => handleVote(c.id, 'up')}
                         disabled={votingCommentId === c.id}
+                        className="min-h-[44px]"
                       >
-                        <ThumbsUp className="w-3.5 h-3.5 mr-1.5" />
+                        <ThumbsUp className="w-4 h-4 sm:w-4.5 sm:h-4.5 mr-1.5" />
                         {c.up}
                       </Button>
                       <Button
@@ -778,11 +780,12 @@ export default function IssueDetailPage() {
                         size="sm"
                         onClick={() => handleVote(c.id, 'down')}
                         disabled={votingCommentId === c.id}
+                        className="min-h-[44px]"
                       >
-                        <ThumbsDown className="w-3.5 h-3.5 mr-1.5" />
+                        <ThumbsDown className="w-4 h-4 sm:w-4.5 sm:h-4.5 mr-1.5" />
                         {c.down}
                       </Button>
-                      <Button variant="ghost" size="sm">
+                      <Button variant="ghost" size="sm" className="min-h-[44px]">
                         답글
                       </Button>
                     </div>

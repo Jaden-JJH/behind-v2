@@ -18,7 +18,7 @@ export function IssueFollowButton({
   variant = 'outline',
   size = 'sm'
 }: IssueFollowButtonProps) {
-  const { user } = useAuth()
+  const { user, signInWithGoogle } = useAuth()
   const [following, setFollowing] = useState(initialFollowing)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -47,7 +47,7 @@ export function IssueFollowButton({
 
   const handleToggle = useCallback(async () => {
     if (!user) {
-      setError('로그인이 필요합니다')
+      await signInWithGoogle(window.location.pathname)
       return
     }
 
@@ -86,14 +86,14 @@ export function IssueFollowButton({
     } finally {
       setIsLoading(false)
     }
-  }, [issueId, user, following])
+  }, [issueId, user, following, signInWithGoogle])
 
   return (
     <Button
       variant={variant}
       size={size}
       onClick={handleToggle}
-      disabled={isLoading || !user}
+      disabled={isLoading}
       className={`gap-2 ${following ? 'text-red-600 bg-red-50 hover:bg-red-100' : ''}`}
     >
       <Heart
