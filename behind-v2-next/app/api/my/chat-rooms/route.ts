@@ -1,11 +1,5 @@
 import { createClient as createServerClient } from '@/lib/supabase/server'
-import { createClient } from '@supabase/supabase-js'
 import { createErrorResponse, createSuccessResponse, ErrorCode } from '@/lib/api-error'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
 
 export async function GET(request: Request) {
   try {
@@ -50,7 +44,7 @@ export async function GET(request: Request) {
 
     // 4. room_id로 rooms 정보 가져오기
     const roomIds = myRoomMembers.map(m => m.room_id)
-    const { data: rooms, error: roomsError } = await supabase
+    const { data: rooms, error: roomsError } = await supabaseServer
       .from('rooms')
       .select('id, issue_id, capacity')
       .in('id', roomIds)
@@ -62,7 +56,7 @@ export async function GET(request: Request) {
 
     // 5. issue_id로 issues 정보 가져오기
     const issueIds = rooms.map(r => r.issue_id)
-    const { data: issues, error: issuesError } = await supabase
+    const { data: issues, error: issuesError } = await supabaseServer
       .from('issues')
       .select('id, display_id, title, preview, thumbnail, status')
       .in('id', issueIds)
@@ -73,7 +67,7 @@ export async function GET(request: Request) {
     }
 
     // 6. 활성 멤버 수 조회
-    const { data: activeCounts, error: countsError } = await supabase
+    const { data: activeCounts, error: countsError } = await supabaseServer
       .from('room_members')
       .select('room_id')
       .in('room_id', roomIds)

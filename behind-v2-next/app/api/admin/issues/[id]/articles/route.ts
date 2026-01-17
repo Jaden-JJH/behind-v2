@@ -1,20 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import type { CreateArticleInput } from '@/types/issue-articles'
 import { sanitizeHtml, sanitizeEmbedHTML } from '@/lib/sanitize'
-
-// Admin Auth Check
-async function checkAdminAuth() {
-  const cookieStore = await cookies()
-  const authCookie = cookieStore.get('admin-auth')
-
-  if (authCookie?.value !== 'true') {
-    throw new Error('Unauthorized')
-  }
-
-  return true
-}
+import { requireAdminAuth } from '@/lib/admin-auth'
 
 function isValidURL(url: string): boolean {
   try {
@@ -31,7 +19,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await checkAdminAuth()
+    await requireAdminAuth()
     const { id } = await params
 
     const body: CreateArticleInput = await request.json()

@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 import { adminAuthLimiter, getClientIp } from '@/lib/rate-limiter'
 import { withCsrfProtection } from '@/lib/api-helpers'
 import { verifyPassword } from '@/lib/password'
+import { setAdminTokenCookie } from '@/lib/admin-auth'
 
 export async function POST(request: Request) {
   return withCsrfProtection(request, async (req) => {
@@ -36,11 +36,8 @@ export async function POST(request: Request) {
     const verifyResult = await verifyPassword(password, hashedPassword)
 
     if (verifyResult) {
-      (await cookies()).set('admin-auth', 'true', {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 60 * 60 * 24 // 24시간
-      })
+      // JWT 기반 토큰 생성 및 쿠키 설정
+      await setAdminTokenCookie()
 
       return NextResponse.json({ success: true })
     }

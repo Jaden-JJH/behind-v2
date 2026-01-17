@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { sanitizeFields, sanitizeHtml } from '@/lib/sanitize'
 import { normalizeCategory } from '@/lib/categories'
 import { withCsrfProtection } from '@/lib/api-helpers'
+import { requireAdminAuth } from '@/lib/admin-auth'
 
 export async function GET(
   request: Request,
@@ -11,11 +11,7 @@ export async function GET(
 ) {
   try {
     // 1. 인증 확인
-    const cookieStore = await cookies()
-    const authCookie = cookieStore.get('admin-auth')
-    if (authCookie?.value !== 'true') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    await requireAdminAuth()
 
     const { id } = await params
 
@@ -90,11 +86,7 @@ export async function PUT(
   return withCsrfProtection(request, async (req) => {
     try {
       // 1. 인증 확인
-      const cookieStore = await cookies()
-      const authCookie = cookieStore.get('admin-auth')
-      if (authCookie?.value !== 'true') {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-      }
+      await requireAdminAuth()
 
       const { id } = await params
       const {
@@ -432,11 +424,7 @@ export async function DELETE(
   return withCsrfProtection(request, async (req) => {
     try {
       // 1. 인증 확인
-      const cookieStore = await cookies()
-      const authCookie = cookieStore.get('admin-auth')
-      if (authCookie?.value !== 'true') {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-      }
+      await requireAdminAuth()
 
       const { id } = await params
 

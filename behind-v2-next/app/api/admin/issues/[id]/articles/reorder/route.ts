@@ -1,20 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 import { supabaseAdmin } from '@/lib/supabase-admin'
-
-async function checkAdminAuth() {
-  const cookieStore = await cookies()
-  const authCookie = cookieStore.get('admin-auth')
-  if (authCookie?.value !== 'true') throw new Error('Unauthorized')
-  return true
-}
+import { requireAdminAuth } from '@/lib/admin-auth'
 
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await checkAdminAuth()
+    await requireAdminAuth()
     const { id: issueId } = await params
 
     const { articleIds }: { articleIds: string[] } = await request.json()

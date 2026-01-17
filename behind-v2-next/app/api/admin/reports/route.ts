@@ -1,19 +1,8 @@
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
-import { createClient } from '@supabase/supabase-js'
 import { createErrorResponse, createSuccessResponse, ErrorCode } from '@/lib/api-error'
 import { withCsrfProtection } from '@/lib/api-helpers'
-
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
-
-// 관리자 인증 확인
-async function isAdmin() {
-  const cookieStore = await cookies()
-  return cookieStore.get('admin-auth')?.value === 'true'
-}
+import { supabaseAdmin } from '@/lib/supabase-admin'
+import { requireAdminAuth } from '@/lib/admin-auth'
 
 /**
  * GET /api/admin/reports?status=pending&limit=50&offset=0
@@ -22,11 +11,7 @@ async function isAdmin() {
 export async function GET(request: Request) {
   try {
     // 관리자 인증 확인
-    if (!await isAdmin()) {
-      return createErrorResponse(ErrorCode.UNAUTHORIZED, 401, {
-        message: '관리자 권한이 필요합니다'
-      })
-    }
+    await requireAdminAuth()
 
     const { searchParams } = new URL(request.url)
     const status = searchParams.get('status') || 'pending' // pending, approved, rejected, all
@@ -125,11 +110,7 @@ export async function PATCH(request: Request) {
   return withCsrfProtection(request, async (req) => {
     try {
       // 관리자 인증 확인
-      if (!await isAdmin()) {
-        return createErrorResponse(ErrorCode.UNAUTHORIZED, 401, {
-          message: '관리자 권한이 필요합니다'
-        })
-      }
+      await requireAdminAuth()
 
       const body = await req.json()
       const { reportId, action, reviewNote } = body

@@ -1,15 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import type { UpdateArticleInput } from '@/types/issue-articles'
 import { sanitizeHtml, sanitizeEmbedHTML } from '@/lib/sanitize'
-
-async function checkAdminAuth() {
-  const cookieStore = await cookies()
-  const authCookie = cookieStore.get('admin-auth')
-  if (authCookie?.value !== 'true') throw new Error('Unauthorized')
-  return true
-}
+import { requireAdminAuth } from '@/lib/admin-auth'
 
 // PUT - Update Article
 export async function PUT(
@@ -17,7 +10,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string; articleId: string }> }
 ) {
   try {
-    await checkAdminAuth()
+    await requireAdminAuth()
     const { id, articleId } = await params
 
     const body: UpdateArticleInput = await request.json()
@@ -80,7 +73,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string; articleId: string }> }
 ) {
   try {
-    await checkAdminAuth()
+    await requireAdminAuth()
     const { id, articleId } = await params
 
     const { error } = await supabaseAdmin

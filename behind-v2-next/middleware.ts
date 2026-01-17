@@ -1,19 +1,20 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { verifyAdminTokenFromRequest } from '@/lib/admin-auth'
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   const origin = request.headers.get('origin')
-  
+
   // 환경별 허용 오리진
-  const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [
+  const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',').map(o => o.trim()) || [
     'http://localhost:3000',
     'http://localhost:3001'
   ]
-  
+
   // CORS 헤더 설정
   const response = NextResponse.next()
-  
+
   if (origin && allowedOrigins.includes(origin)) {
     response.headers.set('Access-Control-Allow-Origin', origin)
     response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
@@ -21,7 +22,7 @@ export function middleware(request: NextRequest) {
     response.headers.set('Access-Control-Allow-Credentials', 'true')
     response.headers.set('Access-Control-Max-Age', '86400') // 24시간
   }
-  
+
   // OPTIONS 프리플라이트 처리
   if (request.method === 'OPTIONS') {
     return new Response(null, {
@@ -34,21 +35,21 @@ export function middleware(request: NextRequest) {
       }
     })
   }
-  
+
   // /admin/login은 접근 허용
   if (pathname === '/admin/login') {
     return response
   }
-  
-  // /admin/* 경로 보호
+
+  // /admin/* 경로 보호 (JWT 토큰 검증)
   if (pathname.startsWith('/admin')) {
-    const authCookie = request.cookies.get('admin-auth')
-    
-    if (authCookie?.value !== 'true') {
+    const isAuthenticated = verifyAdminTokenFromRequest(request)
+
+    if (!isAuthenticated) {
       return NextResponse.redirect(new URL('/admin/login', request.url))
     }
   }
-  
+
   return response
 }
 

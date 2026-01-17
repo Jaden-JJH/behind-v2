@@ -1,17 +1,13 @@
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { withCsrfProtection } from '@/lib/api-helpers'
+import { requireAdminAuth } from '@/lib/admin-auth'
 
 export async function PUT(request: Request) {
   return withCsrfProtection(request, async (req) => {
     try {
       // 1. 인증 확인
-      const cookieStore = await cookies()
-      const authCookie = cookieStore.get('admin-auth')
-      if (authCookie?.value !== 'true') {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-      }
+      await requireAdminAuth()
 
       // 2. 요청 바디 파싱
       const { hotSlot1, hotSlot2, pollSlot1, pollSlot2 } = await req.json()

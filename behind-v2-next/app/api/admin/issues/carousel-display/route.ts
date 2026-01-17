@@ -1,17 +1,13 @@
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { withCsrfProtection } from '@/lib/api-helpers'
+import { requireAdminAuth } from '@/lib/admin-auth'
 
 // GET: 현재 캐러셀 설정 조회
 export async function GET() {
   try {
     // 인증 확인
-    const cookieStore = await cookies()
-    const authCookie = cookieStore.get('admin-auth')
-    if (authCookie?.value !== 'true') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    await requireAdminAuth()
 
     // 캐러셀 슬롯이 활성화된 이슈 조회
     const { data: issues, error } = await supabaseAdmin
@@ -51,11 +47,7 @@ export async function PUT(request: Request) {
   return withCsrfProtection(request, async (req) => {
     try {
       // 인증 확인
-      const cookieStore = await cookies()
-      const authCookie = cookieStore.get('admin-auth')
-      if (authCookie?.value !== 'true') {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-      }
+      await requireAdminAuth()
 
       // 요청 바디 파싱
       const { slot1, slot2, slot3, slot4, slot5 } = await req.json()

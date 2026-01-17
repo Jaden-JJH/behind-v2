@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { sanitizeFields, sanitizeHtml } from '@/lib/sanitize'
 import { CATEGORY_EN_TO_KO, normalizeCategory, getEnglishCategory } from '@/lib/categories'
 import { withCsrfProtection } from '@/lib/api-helpers'
+import { requireAdminAuth } from '@/lib/admin-auth'
 
 let categoriesNormalized = false
 
@@ -27,11 +27,7 @@ export async function GET(request: Request) {
     await ensureIssueCategoriesNormalized()
 
     // 1. 인증 확인
-    const cookieStore = await cookies()
-    const authCookie = cookieStore.get('admin-auth')
-    if (authCookie?.value !== 'true') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    await requireAdminAuth()
 
     // 2. 쿼리 파라미터 추출 및 기본값 설정
     const { searchParams } = new URL(request.url)
@@ -197,11 +193,8 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   return withCsrfProtection(request, async (req) => {
     // 인증 확인
-    const cookieStore = await cookies()
-    const authCookie = cookieStore.get('admin-auth')
-    if (authCookie?.value !== 'true') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    await requireAdminAuth()
+
     const {
       title,
       preview,
