@@ -336,3 +336,50 @@ html {
 .animate-slot-roll {
   animation: slot-roll 2s ease-in-out;
 }
+
+/* 캐러셀 페이드인 애니메이션 */
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.6s ease-out forwards;
+}
+
+/* 캐러셀 슬라이드 애니메이션 */
+@keyframes slide-from-right {
+  0% {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slide-from-left {
+  0% {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-from-right {
+  animation: slide-from-right 0.4s ease-out forwards;
+}
+
+.animate-slide-from-left {
+  animation: slide-from-left 0.4s ease-out forwards;
+}

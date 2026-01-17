@@ -156,7 +156,7 @@ export function IssuesCarousel({ issues }: IssuesCarouselProps) {
         onMouseLeave={() => setIsHovered(false)}
       >
         <div
-          className="grid grid-cols-3 gap-8 px-6 py-6 transition-all duration-700 ease-in-out"
+          className="grid grid-cols-3 gap-8 px-6 py-6 transition-all duration-700 ease-in-out h-[405px]"
           key={currentIndex === 0 ? issues.length - 1 : currentIndex === issues.length + 1 ? 0 : currentIndex - 1}
         >
           {getVisibleIssuesForDesktop().map((issue, idx) => (
@@ -237,7 +237,7 @@ export function IssuesCarousel({ issues }: IssuesCarouselProps) {
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        <div className="py-8 relative">
+        <div className="py-8 relative h-[405px]">
           <div
             className={`flex ${isTransitioning ? 'transition-transform duration-500 ease-out' : ''}`}
             style={{
@@ -304,55 +304,6 @@ export function IssuesCarousel({ issues }: IssuesCarouselProps) {
         )}
       </div>
 
-      {/* 인디케이터 dots (모바일에만 표시) */}
-      {issues.length > 1 && (
-        <div className="md:hidden flex justify-center gap-2 pt-4 pb-6">
-          {issues.map((_, index) => {
-            const actualIndex = currentIndex === 0 ? issues.length - 1 :
-                               currentIndex === issues.length + 1 ? 0 :
-                               currentIndex - 1
-            return (
-              <button
-                key={index}
-                onClick={() => handleDotClick(index)}
-                className="min-w-[44px] min-h-[44px] flex items-center justify-center p-2"
-                aria-label={`Go to slide ${index + 1}`}
-              >
-                <span className={`block rounded-full transition-all duration-300 ${
-                  index === actualIndex
-                    ? 'bg-gray-400 w-5 h-2'
-                    : 'bg-gray-300 w-2 h-2'
-                }`} />
-              </button>
-            )
-          })}
-        </div>
-      )}
-
-      {/* PC용 인디케이터 */}
-      {issues.length > 1 && (
-        <div className="hidden md:flex justify-center gap-2 pt-6 pb-6">
-          {issues.map((_, index) => {
-            const actualIndex = currentIndex === 0 ? issues.length - 1 :
-                               currentIndex === issues.length + 1 ? 0 :
-                               currentIndex - 1
-            return (
-              <button
-                key={index}
-                onClick={() => handleDotClick(index)}
-                className="min-w-[44px] min-h-[44px] flex items-center justify-center p-2"
-                aria-label={`Go to slide ${index + 1}`}
-              >
-                <span className={`block rounded-full transition-all duration-300 ${
-                  index === actualIndex
-                    ? 'bg-gray-400 w-5 h-2'
-                    : 'bg-gray-300 w-2 h-2'
-                }`} />
-              </button>
-            )
-          })}
-        </div>
-      )}
     </div>
   )
 }

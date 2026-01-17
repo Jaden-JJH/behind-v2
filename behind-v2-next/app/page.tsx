@@ -5,6 +5,7 @@ import { PastIssuesSection } from "@/components/landing/PastIssuesSection"
 import { TrendingSection } from "@/components/landing/TrendingSection"
 import { ReportedIssuesSection } from "@/components/landing/ReportedIssuesSection"
 import { RollingBanner } from "@/components/RollingBanner"
+import { IssuesCarousel } from "@/components/IssuesCarousel"
 
 /**
  * 메인 랜딩 페이지 (Server Component)
@@ -22,6 +23,7 @@ export default async function LandingPage() {
     trendingIssues,
     reportedIssues,
     bannerIssues,
+    carouselIssues,
     chatStates
   } = await fetchLandingPageData()
 
@@ -29,6 +31,10 @@ export default async function LandingPage() {
     <div className="min-h-screen bg-slate-50">
       {/* 롤링 배너 */}
       <RollingBanner issues={bannerIssues} />
+
+      {/* 캐러셀 */}
+      <IssuesCarousel issues={carouselIssues} />
+
       <main className="max-w-6xl mx-auto px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-6 grid md:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
         {/* 메인 컨텐츠 */}
         <section className="md:col-span-2 space-y-3 sm:space-y-4 md:space-y-6">
