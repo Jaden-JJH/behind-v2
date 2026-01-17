@@ -7,13 +7,15 @@
  */
 export function getCsrfTokenFromCookie(): string | null {
   if (typeof document === 'undefined') return null;
-  
+
   const cookies = document.cookie.split(';');
   const csrfCookie = cookies.find(cookie => cookie.trim().startsWith('csrf-token='));
-  
+
   if (!csrfCookie) return null;
-  
-  return csrfCookie.split('=')[1];
+
+  // "csrf-token=" 이후의 값 추출 (split 대신 substring 사용)
+  const token = csrfCookie.substring(csrfCookie.indexOf('=') + 1).trim();
+  return token || null;
 }
 
 /**

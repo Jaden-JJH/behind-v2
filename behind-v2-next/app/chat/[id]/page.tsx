@@ -21,11 +21,12 @@ import { getLS, setLS, delLS, sessionKey, formatTime } from "@/lib/utils"
 import { useAuth } from "@/hooks/useAuth"
 import { getDeviceHash } from "@/lib/device-hash"
 import { UserProfileDrawer } from "@/components/user-profile-drawer"
+import { generateUUID } from "@/lib/uuid"
 
 function getOrCreateSession(roomId: string): string {
   const existing = getLS<string>(sessionKey(roomId), null)
   if (existing) return existing
-  const next = crypto.randomUUID()
+  const next = generateUUID()
   setLS(sessionKey(roomId), next)
   return next
 }

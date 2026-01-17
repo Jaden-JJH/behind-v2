@@ -2,6 +2,7 @@
 
 import { type ChangeEvent, type FormEvent, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -11,6 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { apiClient } from "@/lib/api-client";
 import { supabase } from "@/lib/supabase";
 
@@ -44,6 +46,7 @@ export function NicknameModal({ open, onSuccess }: NicknameModalProps) {
     useState<AvailabilityStatus>("idle");
   const [validationError, setValidationError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [termsAgreed, setTermsAgreed] = useState(false);
 
   const handleClose = async () => {
     try {
@@ -59,8 +62,9 @@ export function NicknameModal({ open, onSuccess }: NicknameModalProps) {
     if (!nickname) return true;
     if (validationError) return true;
     if (availability !== "available") return true;
+    if (!termsAgreed) return true;
     return isSaving;
-  }, [availability, isSaving, nickname, validationError]);
+  }, [availability, isSaving, nickname, validationError, termsAgreed]);
 
   useEffect(() => {
     if (!nickname) {
@@ -130,7 +134,11 @@ export function NicknameModal({ open, onSuccess }: NicknameModalProps) {
         "/api/auth/set-nickname",
         {
           method: "POST",
-          body: JSON.stringify({ nickname }),
+          body: JSON.stringify({
+            nickname,
+            termsAgreed: true,
+            privacyAgreed: true,
+          }),
         },
       );
 
@@ -139,6 +147,7 @@ export function NicknameModal({ open, onSuccess }: NicknameModalProps) {
       setNickname("");
       setAvailability("idle");
       setValidationError(null);
+      setTermsAgreed(false);
 
       onSuccess();
     } catch (error: any) {
@@ -195,6 +204,43 @@ export function NicknameModal({ open, onSuccess }: NicknameModalProps) {
                 중복 확인 중 오류가 발생했습니다. 다시 시도해주세요.
               </p>
             ) : null}
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-start gap-2">
+              <Checkbox
+                id="terms"
+                checked={termsAgreed}
+                onCheckedChange={(checked) => setTermsAgreed(checked === true)}
+                className="mt-0.5"
+              />
+              <label
+                htmlFor="terms"
+                className="text-sm leading-tight cursor-pointer select-none"
+              >
+                (필수) 이용약관 및 개인정보처리방침에 모두 동의합니다
+              </label>
+            </div>
+
+            <div className="flex gap-2 text-sm pl-6">
+              <Link
+                href="/terms"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-foreground underline"
+              >
+                이용약관
+              </Link>
+              <span className="text-muted-foreground">|</span>
+              <Link
+                href="/privacy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-foreground underline"
+              >
+                개인정보처리방침
+              </Link>
+            </div>
           </div>
 
           <Button type="submit" className="w-full" disabled={isSubmitDisabled}>

@@ -8,7 +8,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Eye, Users, ThumbsUp, ThumbsDown, Flag, ExternalLink } from "lucide-react";
+import { ArrowLeft, Eye, Users, ThumbsUp, ThumbsDown, Flag, ExternalLink, MoreVertical, AlertTriangle } from "lucide-react";
 import { ImageWithFallback } from "@/components/figma/ImageWithFallback";
 import { QuickVote } from "@/components/quick-vote";
 import { IssueFollowButton } from "@/components/issue-follow-button";
@@ -21,6 +21,14 @@ import type { ChatRoomState } from "@/lib/chat-types";
 import { ArticleTimeline } from "@/components/article-timeline";
 import type { IssueArticle } from "@/types/issue-articles";
 import { UserProfileDrawer } from "@/components/user-profile-drawer";
+import { ReportModal } from "@/components/ReportModal";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { generateUUID } from "@/lib/uuid";
 
 // deviceHash 생성/가져오기 함수
 function getDeviceHash(): string {
@@ -28,7 +36,7 @@ function getDeviceHash(): string {
 
   let hash = localStorage.getItem('deviceHash')
   if (!hash) {
-    hash = crypto.randomUUID()
+    hash = generateUUID()
     localStorage.setItem('deviceHash', hash)
   }
   return hash
@@ -90,6 +98,8 @@ interface IssueDetail {
   summary?: string;
   behind_story?: string;
   poll?: Poll;
+  is_blinded?: boolean;
+  blinded_at?: string;
 }
 
 interface ApiResponse {
@@ -129,6 +139,19 @@ export default function IssueDetailPage() {
 
   // UserProfileDrawer state
   const [selectedNickname, setSelectedNickname] = useState<string | null>(null);
+
+  // Report modal state
+  const [reportModalOpen, setReportModalOpen] = useState(false);
+  const [reportTarget, setReportTarget] = useState<{
+    type: 'issue' | 'poll' | 'comment';
+    id: string;
+  } | null>(null);
+
+  // 신고하기 핸들러
+  const handleOpenReport = (type: 'issue' | 'poll' | 'comment', id: string) => {
+    setReportTarget({ type, id });
+    setReportModalOpen(true);
+  };
 
   // 로컬 스토리지에 투표 상태 저장/불러오기
   const saveVoteState = (commentId: string, voteType: 'up' | 'down' | null) => {
@@ -416,16 +439,34 @@ export default function IssueDetailPage() {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card sticky top-0 z-10">
-        <div className="max-w-6xl mx-auto px-3 md:px-4 py-3 md:py-4">
+        <div className="max-w-6xl mx-auto px-3 sm:px-4 md:px-6 py-3 sm:py-3.5 md:py-4">
           <Button variant="ghost" onClick={() => router.push('/')} className="mb-3 -ml-2">
             <ArrowLeft className="w-4 h-4 mr-2" />
             목록으로
           </Button>
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
             <div className="flex-1">
-              <h1 className="mb-2">{issue.title}</h1>
-              <div className="flex items-center gap-3 text-muted-foreground flex-wrap">
-                <span className="flex items-center gap-1 text-sm">
+              <div className="flex items-start justify-between gap-2">
+                <h1 className="mb-2 flex-1 text-base sm:text-lg md:text-xl font-bold">{issue.title}</h1>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm">
+                      <MoreVertical className="w-4 h-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem
+                      onClick={() => handleOpenReport('issue', issue.id)}
+                      className="text-destructive focus:text-destructive"
+                    >
+                      <Flag className="w-4 h-4 mr-2" />
+                      신고하기
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+              <div className="flex items-center gap-2 sm:gap-3 text-muted-foreground flex-wrap">
+                <span className="flex items-center gap-1 text-xs sm:text-sm">
                   <Users className="w-3.5 h-3.5" />
                   {chatStatusLabel}
                 </span>
@@ -437,7 +478,7 @@ export default function IssueDetailPage() {
                 {issue.view_count > 0 && (
                   <>
                     <Separator orientation="vertical" className="h-4" />
-                    <span className="flex items-center gap-1 text-sm">
+                    <span className="flex items-center gap-1 text-xs sm:text-sm">
                       <Eye className="w-3.5 h-3.5" />
                       조회수 {issue.view_count}
                     </span>
@@ -468,7 +509,7 @@ export default function IssueDetailPage() {
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-3 md:px-4 py-4 md:py-8 space-y-4 md:space-y-6">
+      <main className="max-w-6xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-5 md:py-8 space-y-4 sm:space-y-5 md:space-y-6">
         {/* 썸네일 이미지 */}
         <div className="relative w-full aspect-video bg-muted rounded-xl overflow-hidden">
           <ImageWithFallback
@@ -478,17 +519,38 @@ export default function IssueDetailPage() {
           />
         </div>
 
-        {/* 사건 요약 */}
-        <Card>
-          <CardHeader>
-            <CardTitle>사건 요약</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground leading-relaxed">
-              {issue.summary || issue.preview}
-            </p>
-          </CardContent>
-        </Card>
+        {/* 블라인드 처리 알림 또는 사건 요약 */}
+        {issue.is_blinded ? (
+          <Card className="bg-yellow-50 border-yellow-200">
+            <CardContent className="p-6">
+              <div className="flex items-start gap-4">
+                <AlertTriangle className="w-12 h-12 text-yellow-600 flex-shrink-0 mt-1" />
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-yellow-900 mb-2">
+                    블라인드 처리된 콘텐츠
+                  </h3>
+                  <p className="text-yellow-800 leading-relaxed mb-2">
+                    이 이슈는 신고 누적으로 인해 관리자에 의해 블라인드 처리되었습니다.
+                  </p>
+                  <p className="text-sm text-yellow-700">
+                    처리 시간: {issue.blinded_at ? new Date(issue.blinded_at).toLocaleString('ko-KR') : '정보 없음'}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardHeader>
+              <CardTitle>사건 요약</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground leading-relaxed">
+                {issue.summary || issue.preview}
+              </p>
+            </CardContent>
+          </Card>
+        )}
 
         {/* 관련 미디어 */}
         {issue.media_embed && (
@@ -617,19 +679,19 @@ export default function IssueDetailPage() {
             </Card>
           ) : (
             <Card>
-              <CardContent className="p-3 md:p-4">
+              <CardContent className="p-4 sm:p-5 md:p-6">
                 <Textarea
                   value={commentBody}
                   onChange={(e) => setCommentBody(e.target.value)}
                   placeholder="댓글을 남겨보세요"
-                  className="min-h-[80px] md:min-h-[100px] mb-2 md:mb-3 resize-none"
+                  className="min-h-[100px] sm:min-h-[120px] md:min-h-[140px] mb-3 sm:mb-3.5 md:mb-4 resize-none text-sm sm:text-base"
                   disabled={submitting}
                 />
-                <div className="flex items-center justify-between">
-                  <p className="text-sm text-muted-foreground">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     {user.user_metadata?.nickname || '익명'} · 커뮤니티 가이드라인 준수
                   </p>
-                  <Button onClick={handleSubmitComment} disabled={submitting}>
+                  <Button onClick={handleSubmitComment} disabled={submitting} className="flex-shrink-0">
                     {submitting ? '등록 중...' : '등록'}
                   </Button>
                 </div>
@@ -639,28 +701,28 @@ export default function IssueDetailPage() {
 
           {/* 댓글 목록 */}
           {commentsLoading && (
-            <div className="text-center py-8 text-muted-foreground">
+            <div className="text-center py-8 text-sm sm:text-base text-muted-foreground">
               댓글을 불러오는 중...
             </div>
           )}
 
           {commentsError && (
-            <div className="text-center py-8 text-red-500">
+            <div className="text-center py-8 text-sm sm:text-base text-red-500">
               {commentsError}
             </div>
           )}
 
           {!commentsLoading && !commentsError && comments.length === 0 && (
-            <div className="text-center py-8 text-muted-foreground">
+            <div className="text-center py-8 text-sm sm:text-base text-muted-foreground">
               첫 댓글을 남겨보세요!
             </div>
           )}
 
           {!commentsLoading && !commentsError && comments.length > 0 && (
-            <div className="space-y-3">
+            <div className="space-y-3 sm:space-y-3.5 md:space-y-4">
               {comments.map((c) => (
                 <Card key={c.id}>
-                  <CardContent className="p-3 md:p-4">
+                  <CardContent className="p-4 sm:p-5 md:p-6">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-3">
                         <Avatar className="w-8 h-8">
@@ -682,19 +744,35 @@ export default function IssueDetailPage() {
                           </p>
                         </div>
                       </div>
-                      <Button variant="ghost" size="sm">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleOpenReport('comment', c.id)}
+                      >
                         <Flag className="w-4 h-4" />
                       </Button>
                     </div>
-                    <p className="text-sm md:text-base text-muted-foreground leading-relaxed mb-2 md:mb-3">{c.body}</p>
-                    <div className="flex items-center gap-1.5 md:gap-2">
+                    {c.is_blinded ? (
+                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-2 md:mb-3">
+                        <div className="flex items-center gap-2 text-yellow-700">
+                          <AlertTriangle className="w-4 h-4" />
+                          <span className="text-sm font-medium">
+                            블라인드 처리된 댓글입니다
+                          </span>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mb-3 sm:mb-3.5 md:mb-4">{c.body}</p>
+                    )}
+                    <div className="flex items-center gap-2 sm:gap-2.5 md:gap-3">
                       <Button
                         variant={voteStates[c.id] === 'up' ? 'default' : 'outline'}
                         size="sm"
                         onClick={() => handleVote(c.id, 'up')}
                         disabled={votingCommentId === c.id}
+                        className="min-h-[44px]"
                       >
-                        <ThumbsUp className="w-3.5 h-3.5 mr-1.5" />
+                        <ThumbsUp className="w-4 h-4 sm:w-4.5 sm:h-4.5 mr-1.5" />
                         {c.up}
                       </Button>
                       <Button
@@ -702,11 +780,12 @@ export default function IssueDetailPage() {
                         size="sm"
                         onClick={() => handleVote(c.id, 'down')}
                         disabled={votingCommentId === c.id}
+                        className="min-h-[44px]"
                       >
-                        <ThumbsDown className="w-3.5 h-3.5 mr-1.5" />
+                        <ThumbsDown className="w-4 h-4 sm:w-4.5 sm:h-4.5 mr-1.5" />
                         {c.down}
                       </Button>
-                      <Button variant="ghost" size="sm">
+                      <Button variant="ghost" size="sm" className="min-h-[44px]">
                         답글
                       </Button>
                     </div>
@@ -723,6 +802,15 @@ export default function IssueDetailPage() {
         open={selectedNickname !== null}
         onOpenChange={(open) => !open && setSelectedNickname(null)}
       />
+
+      {reportTarget && (
+        <ReportModal
+          open={reportModalOpen}
+          onOpenChange={setReportModalOpen}
+          contentType={reportTarget.type}
+          contentId={reportTarget.id}
+        />
+      )}
 
       <footer className="py-6 text-center text-slate-500 border-t border-slate-200 bg-white mt-8">
         © 2025 비하인드. 모두의 뒷얘기 살롱.

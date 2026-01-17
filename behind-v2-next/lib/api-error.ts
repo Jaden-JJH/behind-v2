@@ -32,6 +32,7 @@ export enum ErrorCode {
   LOGIN_REQUIRED = 'LOGIN_REQUIRED',
   ACCOUNT_ALREADY_DELETED = 'ACCOUNT_ALREADY_DELETED',
   ACCOUNT_DELETE_FAILED = 'ACCOUNT_DELETE_FAILED',
+  TERMS_NOT_AGREED = 'TERMS_NOT_AGREED',
 
   // 댓글 관련
   COMMENT_TOO_SHORT = 'COMMENT_TOO_SHORT',
@@ -60,7 +61,17 @@ export enum ErrorCode {
 
   // 댓글 투표
   COMMENT_VOTE_ALREADY = 'ALREADY_VOTED',
-  COMMENT_VOTE_FAILED = 'COMMENT_VOTE_FAILED'
+  COMMENT_VOTE_FAILED = 'COMMENT_VOTE_FAILED',
+
+  // 신고 관련
+  REPORT_INVALID_TYPE = 'REPORT_INVALID_TYPE',
+  REPORT_INVALID_REASON = 'REPORT_INVALID_REASON',
+  REPORT_DUPLICATE = 'REPORT_DUPLICATE',
+  REPORT_CREATE_FAILED = 'REPORT_CREATE_FAILED',
+  REPORT_NOT_FOUND = 'REPORT_NOT_FOUND',
+  REPORT_ALREADY_PROCESSED = 'REPORT_ALREADY_PROCESSED',
+  REPORT_DETAIL_REQUIRED = 'REPORT_DETAIL_REQUIRED',
+  REPORT_DETAIL_TOO_LONG = 'REPORT_DETAIL_TOO_LONG'
 }
 
 // 에러 메시지 매핑
@@ -75,6 +86,7 @@ const ERROR_MESSAGES: Record<ErrorCode, string> = {
   [ErrorCode.LOGIN_REQUIRED]: '로그인이 필요합니다',
   [ErrorCode.ACCOUNT_ALREADY_DELETED]: '이미 탈퇴한 계정입니다',
   [ErrorCode.ACCOUNT_DELETE_FAILED]: '회원 탈퇴 처리에 실패했습니다',
+  [ErrorCode.TERMS_NOT_AGREED]: '이용약관 및 개인정보처리방침 동의가 필요합니다',
 
   [ErrorCode.COMMENT_TOO_SHORT]: '댓글은 2자 이상 작성해주세요',
   [ErrorCode.COMMENT_TOO_LONG]: '댓글은 500자 이하로 작성해주세요',
@@ -98,7 +110,16 @@ const ERROR_MESSAGES: Record<ErrorCode, string> = {
   [ErrorCode.CHAT_MEMBER_NOT_FOUND]: '채팅 참여 정보를 찾을 수 없습니다',
   [ErrorCode.CHAT_MESSAGE_TOO_LONG]: '메시지가 너무 깁니다',
   [ErrorCode.CHAT_MESSAGE_FAILED]: '메시지를 전송하지 못했습니다',
-  [ErrorCode.CHAT_RATE_LIMITED]: '요청이 너무 많습니다. 잠시 후 다시 시도해주세요'
+  [ErrorCode.CHAT_RATE_LIMITED]: '요청이 너무 많습니다. 잠시 후 다시 시도해주세요',
+
+  [ErrorCode.REPORT_INVALID_TYPE]: '유효하지 않은 콘텐츠 타입입니다',
+  [ErrorCode.REPORT_INVALID_REASON]: '유효하지 않은 신고 사유입니다',
+  [ErrorCode.REPORT_DUPLICATE]: '이미 신고하신 콘텐츠입니다',
+  [ErrorCode.REPORT_CREATE_FAILED]: '신고 접수 중 오류가 발생했습니다',
+  [ErrorCode.REPORT_NOT_FOUND]: '신고 내역을 찾을 수 없습니다',
+  [ErrorCode.REPORT_ALREADY_PROCESSED]: '이미 처리된 신고입니다',
+  [ErrorCode.REPORT_DETAIL_REQUIRED]: '기타를 선택하신 경우 상세 사유를 입력해주세요',
+  [ErrorCode.REPORT_DETAIL_TOO_LONG]: '상세 사유는 최대 200자까지 입력 가능합니다'
 }
 
 // 에러 응답 생성 함수

@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -8,19 +9,34 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { useAuth } from '@/hooks/useAuth'
 
 interface LoginPromptProps {
   open: boolean
   onClose: () => void
-  onLogin: () => void
   voteCount?: number
   type?: 'vote' | 'curious'
 }
 
-export function LoginPrompt({ open, onClose, onLogin, voteCount = 2, type = 'vote' }: LoginPromptProps) {
-  const handleLogin = () => {
-    onLogin()
-    onClose()
+export function LoginPrompt({ open, onClose, voteCount = 2, type = 'vote' }: LoginPromptProps) {
+  const { signInWithGoogle, signInWithKakao } = useAuth()
+
+  const handleGoogleLogin = async () => {
+    try {
+      await signInWithGoogle()
+      onClose()
+    } catch (error) {
+      console.error('Failed to sign in with Google', error)
+    }
+  }
+
+  const handleKakaoLogin = async () => {
+    try {
+      await signInWithKakao()
+      onClose()
+    } catch (error) {
+      console.error('Failed to sign in with Kakao', error)
+    }
   }
 
   return (
@@ -41,13 +57,25 @@ export function LoginPrompt({ open, onClose, onLogin, voteCount = 2, type = 'vot
         <div className="py-4 text-center">
           <div className="space-y-2">
             <Button
-              onClick={handleLogin}
-              className="w-full bg-indigo-600 hover:bg-indigo-700"
+              onClick={handleGoogleLogin}
+              className="w-full bg-indigo-600 hover:bg-indigo-700 flex items-center justify-center gap-2"
               size="lg"
             >
-              구글로 계속하기
+              <Image src="/google-logo.png" alt="Google" width={20} height={20} className="w-5 h-5" />
+              <span className="sm:hidden">로그인</span>
+              <span className="hidden sm:inline">구글 로그인</span>
             </Button>
-            
+
+            <Button
+              onClick={handleKakaoLogin}
+              className="w-full bg-[#FEE500] hover:bg-[#FDD835] text-black flex items-center justify-center gap-2"
+              size="lg"
+            >
+              <Image src="/kakao-logo.png" alt="Kakao" width={20} height={20} className="w-5 h-5" />
+              <span className="sm:hidden">로그인</span>
+              <span className="hidden sm:inline">카카오 로그인</span>
+            </Button>
+
             <Button
               onClick={onClose}
               variant="outline"

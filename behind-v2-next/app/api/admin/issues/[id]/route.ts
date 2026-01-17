@@ -151,7 +151,7 @@ export async function PUT(
       // 3. 기존 이슈 조회
       const { data: existingIssue, error: fetchError } = await supabaseAdmin
         .from('issues')
-        .select('id, show_in_main_hot, show_in_main_poll, visibility')
+        .select('id, show_in_main_hot, show_in_main_poll, visibility, is_blinded')
         .eq('id', id)
         .single()
 
@@ -167,9 +167,20 @@ export async function PUT(
         return NextResponse.json({ error: 'Issue not found' }, { status: 404 })
       }
 
+      // 3-1. 투표 블라인드 여부 확인
+      const { data: existingPollForBlindCheck } = await supabaseAdmin
+        .from('polls')
+        .select('is_blinded')
+        .eq('issue_id', id)
+        .single()
+
+      const isPollBlinded = existingPollForBlindCheck?.is_blinded || false
+
       // 4. visibility 변경 검증: 중지(paused)로 변경 시 메인 노출 확인
+      // 단, 블라인드 처리된 경우는 예외 (이미 화면에서 필터링되므로)
       if (visibility === 'paused' && existingIssue.visibility === 'active') {
-        if (existingIssue.show_in_main_hot || existingIssue.show_in_main_poll) {
+        const isBlinded = existingIssue.is_blinded || isPollBlinded
+        if (!isBlinded && (existingIssue.show_in_main_hot || existingIssue.show_in_main_poll)) {
           return NextResponse.json(
             { error: '메인 화면에 노출 중입니다. 먼저 노출 설정을 해제한 후 중지 가능합니다' },
             { status: 400 }

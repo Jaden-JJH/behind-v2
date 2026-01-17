@@ -15,17 +15,22 @@ export async function POST(
 ) {
   return withCsrfProtection(request, async (req) => {
     try {
+      console.log('[Curious API] Starting request processing')
+
       // 1. params await (Next.js 15)
       const { id: reportId } = await params
-      
+      console.log('[Curious API] Report ID:', reportId)
+
       // 1-1. 로그인 체크 추가
       const { createClient: createServerClient } = await import('@/lib/supabase/server')
       const supabaseServer = await createServerClient()
       const { data: { user } } = await supabaseServer.auth.getUser()
+      console.log('[Curious API] User:', user?.id || 'anonymous')
 
       // 2. Rate Limiting
       const ip = getClientIp(req)
       const { success, limit, remaining, reset } = await curiousLimiter.limit(ip)
+      console.log('[Curious API] Rate limit check:', { success, remaining })
 
       if (!success) {
         return NextResponse.json(
@@ -48,40 +53,47 @@ export async function POST(
       // 3. 요청 바디 파싱
       const body = await req.json()
       const { deviceHash } = body
+      console.log('[Curious API] Device hash:', deviceHash)
 
       // 3. 입력 검증
       const missing = validateRequired({ reportId, deviceHash })
       if (missing.length > 0) {
+        console.log('[Curious API] Missing fields:', missing)
         return createErrorResponse(ErrorCode.MISSING_FIELDS, 400, { missing })
       }
 
       // 4. Supabase RPC 함수 호출
+      console.log('[Curious API] Calling RPC function with:', { reportId, deviceHash, userId: user?.id || null })
       const { data, error } = await supabase.rpc('curious_report', {
         p_report_id: reportId,
         p_device_hash: deviceHash,
         p_user_id: user?.id || null
       })
+      console.log('[Curious API] RPC result:', { data, error })
 
       if (error) {
         // 중복 체크
         if (error.message.includes('ALREADY_CURIOUS')) {
+          console.log('[Curious API] Already curious')
           return NextResponse.json(
             { error: '이미 궁금해요를 누르셨습니다' },
             { status: 409 }
           )
         }
 
-        console.error('Curious error:', error)
+        console.error('[Curious API] RPC error:', error)
         return createErrorResponse(ErrorCode.INTERNAL_ERROR, 500, error.message)
       }
 
       // 5. 성공 응답
       if (!data || data.length === 0) {
+        console.error('[Curious API] Invalid RPC response:', data)
         return createErrorResponse(ErrorCode.INTERNAL_ERROR, 500,
           'Invalid RPC response')
       }
 
       const result = data[0]
+      console.log('[Curious API] Success:', result)
 
       return createSuccessResponse({
         curious_count: result.result_curious_count,
@@ -89,7 +101,7 @@ export async function POST(
         is_complete: result.result_curious_count >= result.result_threshold
       }, 200)
     } catch (error) {
-      console.error('API error:', error)
+      console.error('[Curious API] Unexpected error:', error)
       return createErrorResponse(ErrorCode.INTERNAL_ERROR, 500)
     }
   })

@@ -49,7 +49,7 @@ const resetCuriousCount = (): void => {
 }
 
 export default function ReportedIssuesPage() {
-  const { user, signInWithGoogle } = useAuth()
+  const { user } = useAuth()
   const [reports, setReports] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [sortBy, setSortBy] = useState<SortOption>('latest')
@@ -183,7 +183,6 @@ export default function ReportedIssuesPage() {
         type="curious"
         open={showLoginPrompt}
         onClose={() => setShowLoginPrompt(false)}
-        onLogin={() => signInWithGoogle(typeof window === "undefined" ? "/" : window.location.pathname)}
         voteCount={getCuriousCount()}
       />
       <div className="min-h-screen bg-slate-50">
@@ -346,10 +345,6 @@ export default function ReportedIssuesPage() {
           </div>
         )}
       </main>
-
-      <footer className="py-6 text-center text-slate-500 border-t border-slate-200 bg-white mt-8">
-        Copyright © 2025 by Behind
-      </footer>
       </div>
     </>
   )

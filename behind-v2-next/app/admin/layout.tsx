@@ -13,6 +13,7 @@ export default function AdminLayout({
   const router = useRouter()
   const pathname = usePathname()
   const [pendingCount, setPendingCount] = useState(0)
+  const [contentReportsPendingCount, setContentReportsPendingCount] = useState(0)
   const [isIssuesOpen, setIsIssuesOpen] = useState(true)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
@@ -29,10 +30,27 @@ export default function AdminLayout({
     }
   }
 
+  // Fetch content reports pending count
+  const fetchContentReportsPendingCount = async () => {
+    try {
+      const response = await fetch('/api/admin/content-reports/pending-count')
+      if (response.ok) {
+        const data = await response.json()
+        setContentReportsPendingCount(data.count || 0)
+      }
+    } catch (error) {
+      console.error('Failed to fetch content reports pending count:', error)
+    }
+  }
+
   // Initial fetch and auto-refresh every 5 minutes
   useEffect(() => {
     fetchPendingCount()
-    const interval = setInterval(fetchPendingCount, 5 * 60 * 1000) // 5분
+    fetchContentReportsPendingCount()
+    const interval = setInterval(() => {
+      fetchPendingCount()
+      fetchContentReportsPendingCount()
+    }, 5 * 60 * 1000) // 5분
     return () => clearInterval(interval)
   }, [])
 
@@ -141,6 +159,28 @@ export default function AdminLayout({
             )}
           </Link>
 
+          {/* 콘텐츠 신고 관리 */}
+          <Link
+            href="/admin/content-reports"
+            className={`flex items-center justify-between px-4 py-3 rounded-lg transition-colors ${
+              isActive('/admin/content-reports')
+                ? 'bg-indigo-600 text-white'
+                : contentReportsPendingCount > 0
+                  ? 'bg-red-600 text-white'
+                  : 'text-gray-300 hover:bg-gray-700'
+            }`}
+          >
+            <div className="flex items-center">
+              <span className="mr-3">🚨</span>
+              <span>콘텐츠 신고</span>
+            </div>
+            {contentReportsPendingCount > 0 && (
+              <span className="bg-white text-red-600 text-xs font-bold px-2 py-1 rounded-full">
+                {contentReportsPendingCount}
+              </span>
+            )}
+          </Link>
+
           {/* 로그아웃 */}
           <button
             onClick={handleLogout}
@@ -243,6 +283,29 @@ export default function AdminLayout({
               {pendingCount > 0 && (
                 <span className="bg-white text-red-600 text-xs font-bold px-2 py-1 rounded-full">
                   {pendingCount}
+                </span>
+              )}
+            </Link>
+
+            {/* 콘텐츠 신고 관리 */}
+            <Link
+              href="/admin/content-reports"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className={`flex items-center justify-between px-4 py-3 rounded-lg transition-colors ${
+                isActive('/admin/content-reports')
+                  ? 'bg-indigo-600 text-white'
+                  : contentReportsPendingCount > 0
+                    ? 'bg-red-600 text-white'
+                    : 'text-gray-300 hover:bg-gray-700'
+              }`}
+            >
+              <div className="flex items-center">
+                <span className="mr-3">🚨</span>
+                <span>콘텐츠 신고</span>
+              </div>
+              {contentReportsPendingCount > 0 && (
+                <span className="bg-white text-red-600 text-xs font-bold px-2 py-1 rounded-full">
+                  {contentReportsPendingCount}
                 </span>
               )}
             </Link>
