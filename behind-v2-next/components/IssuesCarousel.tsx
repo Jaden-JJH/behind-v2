@@ -18,11 +18,6 @@ interface IssuesCarouselProps {
 }
 
 export function IssuesCarousel({ issues }: IssuesCarouselProps) {
-  // 이슈가 없으면 렌더링하지 않음
-  if (!issues || issues.length === 0) {
-    return null
-  }
-
   const router = useRouter()
   const [currentIndex, setCurrentIndex] = useState(1) // 무한 캐러셀: 1부터 시작 (첫 복제본 건너뛰기)
   const [isHovered, setIsHovered] = useState(false)
@@ -31,9 +26,11 @@ export function IssuesCarousel({ issues }: IssuesCarouselProps) {
   const [touchEndX, setTouchEndX] = useState(0)
   const [isTransitioning, setIsTransitioning] = useState(false)
 
+  const hasIssues = issues && issues.length > 0
+
   // 무한 루프 처리: transition 후 경계 체크
   useEffect(() => {
-    if (!isTransitioning) return
+    if (!isTransitioning || !hasIssues) return
 
     const timer = setTimeout(() => {
       setIsTransitioning(false)
@@ -49,11 +46,11 @@ export function IssuesCarousel({ issues }: IssuesCarouselProps) {
     }, 500) // transition duration과 동일
 
     return () => clearTimeout(timer)
-  }, [currentIndex, isTransitioning, issues.length])
+  }, [currentIndex, isTransitioning, hasIssues, issues])
 
   // 5초마다 자동 재생 (호버 시 일시정지)
   useEffect(() => {
-    if (isHovered || issues.length <= 1) return
+    if (isHovered || !hasIssues || issues.length <= 1) return
 
     const interval = setInterval(() => {
       setIsTransitioning(true)
@@ -61,7 +58,7 @@ export function IssuesCarousel({ issues }: IssuesCarouselProps) {
     }, 5000)
 
     return () => clearInterval(interval)
-  }, [isHovered, issues.length])
+  }, [isHovered, hasIssues, issues])
 
   // 모바일 터치 시 화살표 표시 (3초 후 숨김)
   useEffect(() => {
@@ -130,10 +127,11 @@ export function IssuesCarousel({ issues }: IssuesCarouselProps) {
   }
 
   // 무한 캐러셀을 위한 복제 배열: [마지막, ...원본, 첫번째]
-  const extendedIssues = [issues[issues.length - 1], ...issues, issues[0]]
+  const extendedIssues = hasIssues ? [issues[issues.length - 1], ...issues, issues[0]] : []
 
   // PC: 3개씩 보이는 인덱스 계산
   const getVisibleIssuesForDesktop = () => {
+    if (!hasIssues) return []
     const actualIndex = currentIndex === 0 ? issues.length - 1 :
                        currentIndex === issues.length + 1 ? 0 :
                        currentIndex - 1
@@ -143,6 +141,10 @@ export function IssuesCarousel({ issues }: IssuesCarouselProps) {
       result.push(issues[index])
     }
     return result
+  }
+
+  if (!hasIssues) {
+    return null
   }
 
   return (

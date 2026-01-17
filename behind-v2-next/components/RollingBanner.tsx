@@ -15,16 +15,11 @@ interface RollingBannerProps {
 }
 
 export function RollingBanner({ issues }: RollingBannerProps) {
-  // 이슈가 없으면 렌더링하지 않음
-  if (!issues || issues.length === 0) {
-    return null
-  }
-
   const router = useRouter()
   const [currentIndex, setCurrentIndex] = useState(0)
 
-  // 1개만 있으면 롤링 없이 정적으로 표시
-  const shouldRoll = issues.length > 1
+  const hasIssues = issues && issues.length > 0
+  const shouldRoll = hasIssues && issues.length > 1
 
   useEffect(() => {
     if (!shouldRoll) return
@@ -35,7 +30,11 @@ export function RollingBanner({ issues }: RollingBannerProps) {
     }, 2000)
 
     return () => clearInterval(interval)
-  }, [shouldRoll, issues.length])
+  }, [shouldRoll, issues])
+
+  if (!hasIssues) {
+    return null
+  }
 
   const currentIssue = issues[currentIndex]
 
