@@ -1,7 +1,13 @@
 import { NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase-server'
+import { createClient } from '@supabase/supabase-js'
 
 export const revalidate = 30 // 30초마다 재검증
+
+// 서버에서만 사용하는 Supabase 클라이언트
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
 
 export async function GET() {
   try {
