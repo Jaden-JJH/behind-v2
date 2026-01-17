@@ -6,6 +6,7 @@ import { TrendingSection } from "@/components/landing/TrendingSection"
 import { ReportedIssuesSection } from "@/components/landing/ReportedIssuesSection"
 import { RollingBanner } from "@/components/RollingBanner"
 import { IssuesCarousel } from "@/components/IssuesCarousel"
+import { ReportBanner } from "@/components/ReportBanner"
 
 /**
  * 메인 랜딩 페이지 (Server Component)
@@ -34,6 +35,9 @@ export default async function LandingPage() {
 
       {/* 캐러셀 */}
       <IssuesCarousel issues={carouselIssues} />
+
+      {/* 제보하기 배너 */}
+      <ReportBanner />
 
       <main className="max-w-6xl mx-auto px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-6 grid md:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
         {/* 메인 컨텐츠 */}

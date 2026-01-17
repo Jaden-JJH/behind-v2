@@ -99,17 +99,18 @@ export function Header() {
           </div>
 
           <nav className="hidden items-center gap-1 md:flex">
-            <Button asChild variant="ghost">
+            <Button asChild variant="ghost" className="text-base font-semibold px-5 h-11">
               <Link href="/issues">전체 이슈</Link>
             </Button>
-            <Button asChild variant="ghost">
+            <Button asChild variant="ghost" className="text-base font-semibold px-5 h-11">
               <Link href="/my">마이페이지</Link>
             </Button>
-            <Button asChild variant="ghost">
+            <Button asChild variant="ghost" className="text-base font-semibold px-5 h-11">
               <Link href="/my/chat-rooms">채팅방</Link>
             </Button>
             <Button
               variant="ghost"
+              className="text-base font-semibold px-5 h-11"
               onClick={() =>
                 window.open(
                   "https://forms.gle/xot7tw9vZ48uhChG7",
