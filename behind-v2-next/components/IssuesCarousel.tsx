@@ -18,6 +18,11 @@ interface IssuesCarouselProps {
 }
 
 export function IssuesCarousel({ issues }: IssuesCarouselProps) {
+  // 이슈가 없으면 렌더링하지 않음
+  if (!issues || issues.length === 0) {
+    return null
+  }
+
   const router = useRouter()
   const [currentIndex, setCurrentIndex] = useState(1) // 무한 캐러셀: 1부터 시작 (첫 복제본 건너뛰기)
   const [isHovered, setIsHovered] = useState(false)
@@ -25,14 +30,6 @@ export function IssuesCarousel({ issues }: IssuesCarouselProps) {
   const [touchStartX, setTouchStartX] = useState(0)
   const [touchEndX, setTouchEndX] = useState(0)
   const [isTransitioning, setIsTransitioning] = useState(false)
-
-  // 이슈가 없으면 렌더링하지 않음
-  if (!issues || issues.length === 0) {
-    return null
-  }
-
-  // 무한 캐러셀을 위한 복제 배열: [마지막, ...원본, 첫번째]
-  const extendedIssues = [issues[issues.length - 1], ...issues, issues[0]]
 
   // 무한 루프 처리: transition 후 경계 체크
   useEffect(() => {
@@ -131,6 +128,9 @@ export function IssuesCarousel({ issues }: IssuesCarouselProps) {
       setCurrentIndex((prev) => prev - 1)
     }
   }
+
+  // 무한 캐러셀을 위한 복제 배열: [마지막, ...원본, 첫번째]
+  const extendedIssues = [issues[issues.length - 1], ...issues, issues[0]]
 
   // PC: 3개씩 보이는 인덱스 계산
   const getVisibleIssuesForDesktop = () => {

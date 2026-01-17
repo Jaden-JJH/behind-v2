@@ -15,13 +15,13 @@ interface RollingBannerProps {
 }
 
 export function RollingBanner({ issues }: RollingBannerProps) {
-  const router = useRouter()
-  const [currentIndex, setCurrentIndex] = useState(0)
-
   // 이슈가 없으면 렌더링하지 않음
   if (!issues || issues.length === 0) {
     return null
   }
+
+  const router = useRouter()
+  const [currentIndex, setCurrentIndex] = useState(0)
 
   // 1개만 있으면 롤링 없이 정적으로 표시
   const shouldRoll = issues.length > 1
