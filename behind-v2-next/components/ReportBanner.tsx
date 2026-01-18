@@ -23,7 +23,7 @@ export function ReportBanner() {
         <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-4 md:gap-6">
           {/* 왼쪽: 텍스트 */}
           <div className="text-center md:text-left flex-1">
-            <div className="flex items-center justify-center md:justify-start gap-2 mb-2">
+            <div className="hidden md:flex items-center justify-start gap-2 mb-2">
               <Sparkles className="w-5 h-5 text-yellow-400" />
               <span className="text-sm font-semibold text-slate-300 tracking-wide">
                 당신의 이야기를 들려주세요
@@ -38,9 +38,9 @@ export function ReportBanner() {
           <div className="flex items-center">
             <button
               onClick={handleReportClick}
-              className="group bg-yellow-400 text-slate-900 hover:bg-yellow-300 font-bold text-base px-7 sm:px-8 py-3 sm:py-3.5 rounded-xl shadow-xl hover:shadow-yellow-400/30 transition-all duration-300 hover:scale-105 active:scale-95 flex items-center gap-2 whitespace-nowrap"
+              className="group bg-yellow-400 text-slate-900 hover:bg-yellow-300 font-bold text-sm sm:text-base px-5 sm:px-8 py-2.5 sm:py-3.5 rounded-xl shadow-xl hover:shadow-yellow-400/30 transition-all duration-300 hover:scale-105 active:scale-95 flex items-center gap-1.5 sm:gap-2 whitespace-nowrap"
             >
-              <Send className="w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+              <Send className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
               지금 제보하기
             </button>
           </div>

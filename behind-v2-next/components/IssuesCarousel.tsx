@@ -239,7 +239,7 @@ export function IssuesCarousel({ issues }: IssuesCarouselProps) {
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        <div className="py-8 relative h-[405px]">
+        <div className="pt-4 pb-2 relative h-[340px]">
           <div
             className={`flex ${isTransitioning ? 'transition-transform duration-500 ease-out' : ''}`}
             style={{
@@ -303,6 +303,29 @@ export function IssuesCarousel({ issues }: IssuesCarouselProps) {
               <ChevronRight className="w-7 h-7 text-white drop-shadow-lg" />
             </button>
           </>
+        )}
+
+        {/* 모바일 인디케이터 */}
+        {issues.length > 1 && (
+          <div className="flex justify-center gap-2 pb-2">
+            {issues.map((_, index) => {
+              const actualIndex = currentIndex === 0 ? issues.length - 1 :
+                                 currentIndex === issues.length + 1 ? 0 :
+                                 currentIndex - 1
+              return (
+                <button
+                  key={index}
+                  onClick={() => handleDotClick(index)}
+                  className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                    index === actualIndex
+                      ? 'bg-indigo-600 w-4'
+                      : 'bg-gray-300'
+                  }`}
+                  aria-label={`Go to slide ${index + 1}`}
+                />
+              )
+            })}
+          </div>
         )}
       </div>
 

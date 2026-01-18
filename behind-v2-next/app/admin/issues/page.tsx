@@ -134,6 +134,14 @@ export default function AdminIssuesPage() {
   const [bannerSlot3, setBannerSlot3] = useState<string>('')
   const [savingBannerDisplay, setSavingBannerDisplay] = useState(false)
 
+  // 캐러셀 상태
+  const [carouselSlot1, setCarouselSlot1] = useState<string>('')
+  const [carouselSlot2, setCarouselSlot2] = useState<string>('')
+  const [carouselSlot3, setCarouselSlot3] = useState<string>('')
+  const [carouselSlot4, setCarouselSlot4] = useState<string>('')
+  const [carouselSlot5, setCarouselSlot5] = useState<string>('')
+  const [savingCarouselDisplay, setSavingCarouselDisplay] = useState(false)
+
   // 필터 상태
   const [filterCategory, setFilterCategory] = useState('')
   const [filterApprovalStatus, setFilterApprovalStatus] = useState('')
@@ -153,6 +161,7 @@ export default function AdminIssuesPage() {
     loadMainDisplayIssues()
     loadRealtimeTrending() // 새로 추가
     loadBannerDisplay() // 배너 로드
+    loadCarouselDisplay() // 캐러셀 로드
   }, [])
 
   async function loadIssues() {
@@ -247,6 +256,25 @@ export default function AdminIssuesPage() {
       setBannerSlot3(bannerSlots.slot3?.id || '')
     } catch (error) {
       console.error('Failed to load banner display:', error)
+    }
+  }
+
+  // 캐러셀 설정 로드
+  async function loadCarouselDisplay() {
+    try {
+      const response = await fetch('/api/admin/issues/carousel-display')
+      const data = await response.json()
+
+      if (!response.ok || !data.data) return
+
+      const carouselSlots = data.data
+      setCarouselSlot1(carouselSlots.slot1?.id || '')
+      setCarouselSlot2(carouselSlots.slot2?.id || '')
+      setCarouselSlot3(carouselSlots.slot3?.id || '')
+      setCarouselSlot4(carouselSlots.slot4?.id || '')
+      setCarouselSlot5(carouselSlots.slot5?.id || '')
+    } catch (error) {
+      console.error('Failed to load carousel display:', error)
     }
   }
 
@@ -356,6 +384,38 @@ export default function AdminIssuesPage() {
       showError(error)
     } finally {
       setSavingBannerDisplay(false)
+    }
+  }
+
+  // 캐러셀 설정 저장
+  async function handleSaveCarouselDisplay() {
+    try {
+      setSavingCarouselDisplay(true)
+
+      const response = await csrfFetch('/api/admin/issues/carousel-display', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          slot1: carouselSlot1 || null,
+          slot2: carouselSlot2 || null,
+          slot3: carouselSlot3 || null,
+          slot4: carouselSlot4 || null,
+          slot5: carouselSlot5 || null
+        })
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        showError(data)
+        return
+      }
+
+      showSuccess('캐러셀 설정이 저장되었습니다')
+    } catch (error) {
+      showError(error)
+    } finally {
+      setSavingCarouselDisplay(false)
     }
   }
 
@@ -963,6 +1023,134 @@ export default function AdminIssuesPage() {
           <div className="mt-4 flex justify-end">
             <Button onClick={handleSaveBannerDisplay} disabled={savingBannerDisplay}>
               {savingBannerDisplay ? '저장 중...' : '저장'}
+            </Button>
+          </div>
+        </Card>
+
+        {/* 캐러셀 관리 */}
+        <Card className="p-6 mb-6">
+          <h2 className="text-xl font-bold mb-4">🎠 캐러셀 관리</h2>
+          <p className="text-sm text-gray-600 mb-4">
+            메인 페이지 상단 캐러셀에 표시될 이슈를 설정하세요. 최대 5개까지 등록 가능합니다.
+            <br />
+            <span className="text-rose-600 font-medium">승인된 이슈만 선택 가능</span>하며, 아무것도 등록하지 않으면 캐러셀이 표시되지 않습니다.
+          </p>
+
+          <div className="space-y-3">
+            <div>
+              <label className="block text-sm font-medium mb-1">캐러셀 슬롯 #1</label>
+              <Select value={carouselSlot1 || 'none'} onValueChange={(value) => setCarouselSlot1(value === 'none' ? '' : value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="선택 안함" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">선택 안함</SelectItem>
+                  {issues
+                    .filter((issue) => {
+                      const poll = Array.isArray(issue.poll) ? issue.poll[0] : issue.poll
+                      return issue.approval_status === 'approved' && !issue.is_blinded && !poll?.is_blinded
+                    })
+                    .map((issue) => (
+                      <SelectItem key={issue.id} value={issue.id}>
+                        [{issue.display_id}] {issue.title}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">캐러셀 슬롯 #2</label>
+              <Select value={carouselSlot2 || 'none'} onValueChange={(value) => setCarouselSlot2(value === 'none' ? '' : value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="선택 안함" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">선택 안함</SelectItem>
+                  {issues
+                    .filter((issue) => {
+                      const poll = Array.isArray(issue.poll) ? issue.poll[0] : issue.poll
+                      return issue.approval_status === 'approved' && !issue.is_blinded && !poll?.is_blinded
+                    })
+                    .map((issue) => (
+                      <SelectItem key={issue.id} value={issue.id}>
+                        [{issue.display_id}] {issue.title}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">캐러셀 슬롯 #3</label>
+              <Select value={carouselSlot3 || 'none'} onValueChange={(value) => setCarouselSlot3(value === 'none' ? '' : value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="선택 안함" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">선택 안함</SelectItem>
+                  {issues
+                    .filter((issue) => {
+                      const poll = Array.isArray(issue.poll) ? issue.poll[0] : issue.poll
+                      return issue.approval_status === 'approved' && !issue.is_blinded && !poll?.is_blinded
+                    })
+                    .map((issue) => (
+                      <SelectItem key={issue.id} value={issue.id}>
+                        [{issue.display_id}] {issue.title}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">캐러셀 슬롯 #4</label>
+              <Select value={carouselSlot4 || 'none'} onValueChange={(value) => setCarouselSlot4(value === 'none' ? '' : value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="선택 안함" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">선택 안함</SelectItem>
+                  {issues
+                    .filter((issue) => {
+                      const poll = Array.isArray(issue.poll) ? issue.poll[0] : issue.poll
+                      return issue.approval_status === 'approved' && !issue.is_blinded && !poll?.is_blinded
+                    })
+                    .map((issue) => (
+                      <SelectItem key={issue.id} value={issue.id}>
+                        [{issue.display_id}] {issue.title}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">캐러셀 슬롯 #5</label>
+              <Select value={carouselSlot5 || 'none'} onValueChange={(value) => setCarouselSlot5(value === 'none' ? '' : value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="선택 안함" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">선택 안함</SelectItem>
+                  {issues
+                    .filter((issue) => {
+                      const poll = Array.isArray(issue.poll) ? issue.poll[0] : issue.poll
+                      return issue.approval_status === 'approved' && !issue.is_blinded && !poll?.is_blinded
+                    })
+                    .map((issue) => (
+                      <SelectItem key={issue.id} value={issue.id}>
+                        [{issue.display_id}] {issue.title}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="mt-4 flex justify-end">
+            <Button onClick={handleSaveCarouselDisplay} disabled={savingCarouselDisplay}>
+              {savingCarouselDisplay ? '저장 중...' : '저장'}
             </Button>
           </div>
         </Card>

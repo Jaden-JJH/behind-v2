@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { verifyAdminTokenFromRequest } from '@/lib/admin-auth'
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   const origin = request.headers.get('origin')
 
@@ -43,7 +43,7 @@ export function middleware(request: NextRequest) {
 
   // /admin/* 경로 보호 (JWT 토큰 검증)
   if (pathname.startsWith('/admin')) {
-    const isAuthenticated = verifyAdminTokenFromRequest(request)
+    const isAuthenticated = await verifyAdminTokenFromRequest(request)
 
     if (!isAuthenticated) {
       return NextResponse.redirect(new URL('/admin/login', request.url))

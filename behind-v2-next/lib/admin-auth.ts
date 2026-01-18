@@ -1,4 +1,3 @@
-import crypto from 'crypto'
 import { cookies } from 'next/headers'
 import type { NextRequest } from 'next/server'
 
@@ -22,28 +21,79 @@ interface TokenPayload {
   iat: number  // 발급 시간 (Unix timestamp)
 }
 
+// Base64URL 인코딩/디코딩 (Edge 호환)
+function base64UrlEncode(str: string): string {
+  return btoa(str)
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '')
+}
+
+function base64UrlDecode(str: string): string {
+  // 패딩 복원
+  let base64 = str.replace(/-/g, '+').replace(/_/g, '/')
+  while (base64.length % 4) {
+    base64 += '='
+  }
+  return atob(base64)
+}
+
+function arrayBufferToBase64Url(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer)
+  let binary = ''
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i])
+  }
+  return base64UrlEncode(binary)
+}
+
 /**
- * HMAC-SHA256 서명 생성
+ * HMAC-SHA256 서명 생성 (Web Crypto API - Edge 호환)
  */
-function createSignature(payload: string, secret: string): string {
-  return crypto
-    .createHmac('sha256', secret)
-    .update(payload)
-    .digest('base64url')
+async function createSignature(payload: string, secret: string): Promise<string> {
+  const encoder = new TextEncoder()
+  const keyData = encoder.encode(secret)
+  const data = encoder.encode(payload)
+
+  const cryptoKey = await crypto.subtle.importKey(
+    'raw',
+    keyData,
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  )
+
+  const signature = await crypto.subtle.sign('HMAC', cryptoKey, data)
+  return arrayBufferToBase64Url(signature)
+}
+
+/**
+ * Timing-safe 문자열 비교 (Edge 호환)
+ */
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) {
+    return false
+  }
+
+  let result = 0
+  for (let i = 0; i < a.length; i++) {
+    result |= a.charCodeAt(i) ^ b.charCodeAt(i)
+  }
+  return result === 0
 }
 
 /**
  * Admin 토큰 생성
  */
-export function generateAdminToken(): string {
+export async function generateAdminToken(): Promise<string> {
   const now = Math.floor(Date.now() / 1000)
   const payload: TokenPayload = {
     exp: now + TOKEN_EXPIRY,
     iat: now
   }
 
-  const payloadStr = Buffer.from(JSON.stringify(payload)).toString('base64url')
-  const signature = createSignature(payloadStr, getSecret())
+  const payloadStr = base64UrlEncode(JSON.stringify(payload))
+  const signature = await createSignature(payloadStr, getSecret())
 
   return `${payloadStr}.${signature}`
 }
@@ -52,7 +102,7 @@ export function generateAdminToken(): string {
  * Admin 토큰 검증
  * @returns true if valid, false otherwise
  */
-export function verifyAdminToken(token: string): boolean {
+export async function verifyAdminToken(token: string): Promise<boolean> {
   if (!token || typeof token !== 'string') {
     return false
   }
@@ -64,25 +114,16 @@ export function verifyAdminToken(token: string): boolean {
 
   const [payloadStr, signature] = parts
 
-  // 서명 검증 (timing-safe comparison)
-  const expectedSignature = createSignature(payloadStr, getSecret())
-
-  if (signature.length !== expectedSignature.length) {
-    return false
-  }
-
-  const signatureBuffer = Buffer.from(signature)
-  const expectedBuffer = Buffer.from(expectedSignature)
-
-  if (!crypto.timingSafeEqual(signatureBuffer, expectedBuffer)) {
-    return false
-  }
-
-  // 페이로드 파싱 및 만료 시간 검증
   try {
-    const payload: TokenPayload = JSON.parse(
-      Buffer.from(payloadStr, 'base64url').toString('utf-8')
-    )
+    // 서명 검증 (timing-safe comparison)
+    const expectedSignature = await createSignature(payloadStr, getSecret())
+
+    if (!timingSafeEqual(signature, expectedSignature)) {
+      return false
+    }
+
+    // 페이로드 파싱 및 만료 시간 검증
+    const payload: TokenPayload = JSON.parse(base64UrlDecode(payloadStr))
 
     const now = Math.floor(Date.now() / 1000)
     if (payload.exp < now) {
@@ -99,7 +140,7 @@ export function verifyAdminToken(token: string): boolean {
  * Admin 토큰 쿠키 설정
  */
 export async function setAdminTokenCookie(): Promise<void> {
-  const token = generateAdminToken()
+  const token = await generateAdminToken()
   const cookieStore = await cookies()
 
   cookieStore.set(ADMIN_TOKEN_COOKIE, token, {
@@ -127,7 +168,12 @@ export async function requireAdminAuth(): Promise<void> {
   const cookieStore = await cookies()
   const tokenCookie = cookieStore.get(ADMIN_TOKEN_COOKIE)
 
-  if (!tokenCookie?.value || !verifyAdminToken(tokenCookie.value)) {
+  if (!tokenCookie?.value) {
+    throw new Error('Unauthorized')
+  }
+
+  const isValid = await verifyAdminToken(tokenCookie.value)
+  if (!isValid) {
     throw new Error('Unauthorized')
   }
 }
@@ -144,7 +190,7 @@ export async function isAdminAuthenticated(): Promise<boolean> {
       return false
     }
 
-    return verifyAdminToken(tokenCookie.value)
+    return await verifyAdminToken(tokenCookie.value)
   } catch {
     return false
   }
@@ -154,12 +200,12 @@ export async function isAdminAuthenticated(): Promise<boolean> {
  * Middleware에서 사용하는 Admin 인증 확인
  * (NextRequest의 cookies 사용)
  */
-export function verifyAdminTokenFromRequest(request: NextRequest): boolean {
+export async function verifyAdminTokenFromRequest(request: NextRequest): Promise<boolean> {
   const tokenCookie = request.cookies.get(ADMIN_TOKEN_COOKIE)
 
   if (!tokenCookie?.value) {
     return false
   }
 
-  return verifyAdminToken(tokenCookie.value)
+  return await verifyAdminToken(tokenCookie.value)
 }
