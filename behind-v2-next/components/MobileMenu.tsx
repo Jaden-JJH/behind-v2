@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState, type MouseEvent } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import type { User } from "@supabase/supabase-js";
 import { ChevronDown } from "lucide-react";
 
@@ -14,6 +15,8 @@ interface MobileMenuProps {
   onClose: () => void;
   user: User | null;
   onSignOut: () => Promise<void>;
+  onGoogleSignIn?: () => Promise<void>;
+  onKakaoSignIn?: () => Promise<void>;
 }
 
 export function MobileMenu({
@@ -21,6 +24,8 @@ export function MobileMenu({
   onClose,
   user,
   onSignOut,
+  onGoogleSignIn,
+  onKakaoSignIn,
 }: MobileMenuProps) {
   const pathname = usePathname();
   const [isVisible, setIsVisible] = useState(false);
@@ -84,6 +89,26 @@ export function MobileMenu({
     }
   }, [onClose, onSignOut]);
 
+  const handleGoogleSignIn = useCallback(async () => {
+    try {
+      await onGoogleSignIn?.();
+      onClose();
+    } catch (error) {
+      console.error("Failed to sign in with Google", error);
+      showError(error);
+    }
+  }, [onClose, onGoogleSignIn]);
+
+  const handleKakaoSignIn = useCallback(async () => {
+    try {
+      await onKakaoSignIn?.();
+      onClose();
+    } catch (error) {
+      console.error("Failed to sign in with Kakao", error);
+      showError(error);
+    }
+  }, [onClose, onKakaoSignIn]);
+
   const handleMyPageLinkClick = () => {
     setIsMyPageExpanded(false);
     onClose();
@@ -146,7 +171,7 @@ export function MobileMenu({
                       : "text-slate-700 hover:bg-slate-100"
                   }`}
                 >
-                  🏠 대시보드
+                  대시보드
                 </Link>
                 <Link
                   href="/my/votes"
@@ -157,7 +182,7 @@ export function MobileMenu({
                       : "text-slate-700 hover:bg-slate-100"
                   }`}
                 >
-                  🗳️ 참여한 투표
+                  참여한 투표
                 </Link>
                 <Link
                   href="/my/comments"
@@ -168,7 +193,7 @@ export function MobileMenu({
                       : "text-slate-700 hover:bg-slate-100"
                   }`}
                 >
-                  💬 내가 쓴 댓글
+                  내가 쓴 댓글
                 </Link>
                 <Link
                   href="/my/follows"
@@ -179,7 +204,7 @@ export function MobileMenu({
                       : "text-slate-700 hover:bg-slate-100"
                   }`}
                 >
-                  ⭐ 팔로우한 이슈
+                  팔로우한 이슈
                 </Link>
                 <Link
                   href="/my/curious"
@@ -190,7 +215,7 @@ export function MobileMenu({
                       : "text-slate-700 hover:bg-slate-100"
                   }`}
                 >
-                  ❓ 궁금해요 누른 제보
+                  궁금해요 누른 제보
                 </Link>
               </div>
             )}
@@ -214,8 +239,9 @@ export function MobileMenu({
             제보하기
           </a>
 
-          {user ? (
-            <div className="mt-auto px-4">
+          {/* 하단: 로그인/로그아웃 */}
+          <div className="mt-auto px-4 space-y-2">
+            {user ? (
               <Button
                 variant="outline"
                 className="w-full"
@@ -223,8 +249,38 @@ export function MobileMenu({
               >
                 로그아웃
               </Button>
-            </div>
-          ) : null}
+            ) : (
+              <>
+                <Button
+                  onClick={handleGoogleSignIn}
+                  className="w-full flex items-center justify-center gap-2"
+                  variant="outline"
+                >
+                  <Image
+                    src="/google-logo.png"
+                    alt="Google"
+                    width={18}
+                    height={18}
+                    className="w-[18px] h-[18px]"
+                  />
+                  <span>Google로 로그인</span>
+                </Button>
+                <Button
+                  onClick={handleKakaoSignIn}
+                  className="w-full flex items-center justify-center gap-2 bg-[#FEE500] hover:bg-[#FDD835] text-black border-none"
+                >
+                  <Image
+                    src="/kakao-logo.png"
+                    alt="Kakao"
+                    width={18}
+                    height={18}
+                    className="w-[18px] h-[18px]"
+                  />
+                  <span>카카오로 로그인</span>
+                </Button>
+              </>
+            )}
+          </div>
         </nav>
       </div>
     </div>

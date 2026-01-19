@@ -16,6 +16,7 @@ export async function GET(request: Request) {
     const offset = parseInt(searchParams.get('offset') || '0')
     const includeAll = searchParams.get('includeAll') === 'true'
     const statusParam = searchParams.get('status')
+    const searchQuery = searchParams.get('search')?.trim()
 
     // Supabase 쿼리 빌더
     let query = supabase
@@ -38,8 +39,16 @@ export async function GET(request: Request) {
         )
       `)
 
+    // 검색어가 있으면 검색 모드로 동작
+    if (searchQuery && searchQuery.length > 0) {
+      query = query
+        .eq('approval_status', 'approved')
+        .eq('status', 'active')
+        .or(`title.ilike.%${searchQuery}%,preview.ilike.%${searchQuery}%`)
+        .order('created_at', { ascending: false })
+    }
     // includeAll 여부에 따라 필터 및 정렬 적용
-    if (includeAll) {
+    else if (includeAll) {
       query = query
         .eq('approval_status', 'approved')
         .order('created_at', { ascending: false })

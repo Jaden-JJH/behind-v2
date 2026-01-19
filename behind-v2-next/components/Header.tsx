@@ -2,20 +2,23 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
-import { Menu } from "lucide-react";
+import { Menu, Search } from "lucide-react";
 
 import { useAuth } from "@/hooks/useAuth";
 import { NicknameModal } from "@/components/NicknameModal";
 import { Button } from "@/components/ui/button";
 import { MobileMenu } from "@/components/MobileMenu";
+import { SearchBar } from "@/components/SearchBar";
+import { MobileSearchOverlay } from "@/components/MobileSearchOverlay";
+import { LoginDropdown } from "@/components/LoginDropdown";
 import { showError } from "@/lib/toast-utils";
 
 export function Header() {
   const { user, loading, signInWithGoogle, signInWithKakao, signOut, refreshUser } = useAuth();
   const [showNicknameModal, setShowNicknameModal] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
   const isMyPage = pathname?.startsWith('/my') ?? false;
@@ -51,6 +54,7 @@ export function Header() {
       await signInWithGoogle();
     } catch (error) {
       console.error("Failed to sign in with Google", error);
+      showError(error);
     }
   }, [signInWithGoogle]);
 
@@ -59,6 +63,7 @@ export function Header() {
       await signInWithKakao();
     } catch (error) {
       console.error("Failed to sign in with Kakao", error);
+      showError(error);
     }
   }, [signInWithKakao]);
 
@@ -80,8 +85,9 @@ export function Header() {
   return (
     <>
       <header className="bg-white shadow-sm sticky top-0 z-50">
-        <div className={isMyPage ? "px-3 sm:px-4 md:px-6 flex h-16 items-center justify-between" : "mx-auto flex h-16 items-center justify-between px-3 sm:px-4 md:px-6 max-w-6xl"}>
-          <div className="flex items-center gap-2 sm:gap-3">
+        <div className={isMyPage ? "px-3 sm:px-4 md:px-6 flex h-16 items-center justify-between gap-4" : "mx-auto flex h-16 items-center justify-between px-3 sm:px-4 md:px-6 max-w-6xl gap-4"}>
+          {/* 좌측: 햄버거 메뉴 + 로고 */}
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             <button
               type="button"
               className="md:hidden rounded-lg p-2 hover:bg-slate-100 min-w-[44px] min-h-[44px] flex items-center justify-center"
@@ -98,19 +104,20 @@ export function Header() {
             </Link>
           </div>
 
-          <nav className="hidden items-center gap-1 md:flex">
-            <Button asChild variant="ghost" className="text-base font-semibold px-5 h-11">
+          {/* 중앙: 네비게이션 (PC) */}
+          <nav className="hidden items-center gap-1 md:flex shrink-0">
+            <Button asChild variant="ghost" className="text-base font-semibold px-4 h-10">
               <Link href="/issues">전체 이슈</Link>
             </Button>
-            <Button asChild variant="ghost" className="text-base font-semibold px-5 h-11">
+            <Button asChild variant="ghost" className="text-base font-semibold px-4 h-10">
               <Link href="/my">마이페이지</Link>
             </Button>
-            <Button asChild variant="ghost" className="text-base font-semibold px-5 h-11">
+            <Button asChild variant="ghost" className="text-base font-semibold px-4 h-10">
               <Link href="/my/chat-rooms">채팅방</Link>
             </Button>
             <Button
               variant="ghost"
-              className="text-base font-semibold px-5 h-11"
+              className="text-base font-semibold px-4 h-10"
               onClick={() =>
                 window.open(
                   "https://forms.gle/xot7tw9vZ48uhChG7",
@@ -123,46 +130,65 @@ export function Header() {
             </Button>
           </nav>
 
-          {/* 오른쪽: 로그인 또는 닉네임+로그아웃 */}
+          {/* 우측: 검색 + 로그인 */}
           <div className="flex items-center gap-2 sm:gap-3">
+            {/* PC 검색바 */}
+            <SearchBar className="hidden md:block w-56 lg:w-72" />
+
+            {/* 모바일 검색 버튼 */}
+            <button
+              type="button"
+              className="md:hidden rounded-full p-2.5 bg-slate-800 hover:bg-slate-700 min-w-[44px] min-h-[44px] flex items-center justify-center transition-colors shadow-sm"
+              onClick={() => setIsMobileSearchOpen(true)}
+            >
+              <Search className="h-5 w-5 text-yellow-400" />
+            </button>
+
+            {/* 로그인/사용자 정보 */}
             {user ? (
-              <>
-                <span className="text-xs sm:text-sm font-medium text-gray-700">
+              <div className="flex items-center gap-2">
+                <span className="hidden sm:inline text-sm font-medium text-gray-700">
                   {nickname ?? "닉네임 미설정"}
                 </span>
-                {/* 데스크탑에서만 로그아웃 버튼 표시 */}
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={handleSignOut}
-                  className="hidden md:inline-flex min-h-[44px]"
+                  className="hidden md:inline-flex min-h-[40px]"
                 >
                   로그아웃
                 </Button>
-              </>
-            ) : (
-              <div className="flex gap-2">
-                <Button onClick={handleSignIn} disabled={loading} size="sm" className="flex items-center gap-1.5 sm:gap-2 min-h-[44px]">
-                  <Image src="/google-logo.png" alt="Google" width={16} height={16} className="w-4 h-4" />
-                  <span className="md:hidden text-xs">로그인</span>
-                  <span className="hidden md:inline text-sm">구글 로그인</span>
-                </Button>
-                <Button onClick={handleKakaoSignIn} disabled={loading} size="sm" className="bg-[#FEE500] hover:bg-[#FDD835] text-black flex items-center gap-1.5 sm:gap-2 min-h-[44px]">
-                  <Image src="/kakao-logo.png" alt="Kakao" width={16} height={16} className="w-4 h-4" />
-                  <span className="md:hidden text-xs">로그인</span>
-                  <span className="hidden md:inline text-sm">카카오 로그인</span>
-                </Button>
               </div>
+            ) : (
+              <>
+                {/* PC 로그인 드롭다운 */}
+                <div className="hidden md:block">
+                  <LoginDropdown
+                    onGoogleSignIn={handleSignIn}
+                    onKakaoSignIn={handleKakaoSignIn}
+                    loading={loading}
+                  />
+                </div>
+              </>
             )}
           </div>
         </div>
       </header>
 
+      {/* 모바일 메뉴 */}
       <MobileMenu
         isOpen={isMobileMenuOpen}
         onClose={() => setIsMobileMenuOpen(false)}
         user={user}
         onSignOut={handleSignOut}
+        onGoogleSignIn={handleSignIn}
+        onKakaoSignIn={handleKakaoSignIn}
+      />
+
+      {/* 모바일 검색 오버레이 */}
+      <MobileSearchOverlay
+        isOpen={isMobileSearchOpen}
+        onClose={() => setIsMobileSearchOpen(false)}
       />
 
       <NicknameModal open={showNicknameModal} onSuccess={handleNicknameSuccess} />
