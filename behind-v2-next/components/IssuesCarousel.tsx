@@ -318,7 +318,7 @@ export function IssuesCarousel({ issues }: IssuesCarouselProps) {
                   onClick={() => handleDotClick(index)}
                   className={`w-2 h-2 rounded-full transition-all duration-300 ${
                     index === actualIndex
-                      ? 'bg-indigo-600 w-4'
+                      ? 'bg-slate-800 w-4'
                       : 'bg-gray-300'
                   }`}
                   aria-label={`Go to slide ${index + 1}`}

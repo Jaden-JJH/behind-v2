@@ -135,7 +135,7 @@ export function ReportedIssuesSection({ initialIssues }: ReportedIssuesSectionPr
         voteCount={getCuriousCount()}
       />
 
-      <Card className="border-indigo-200 bg-indigo-50/30 shadow-sm">
+      <Card className="border-slate-200 bg-slate-50/50 shadow-sm">
         <CardHeader className="pb-1 sm:pb-2">
           <CardTitle className="text-base md:text-lg font-semibold text-slate-800 mb-1">제보된 이슈</CardTitle>
           <p className="text-xs sm:text-sm text-slate-600">궁금해요 수가 목표치에 도달하면 공개됩니다</p>
@@ -148,7 +148,7 @@ export function ReportedIssuesSection({ initialIssues }: ReportedIssuesSectionPr
               return (
                 <div
                   key={r.id}
-                  className="p-3.5 sm:p-4 rounded-lg bg-white border border-indigo-200 hover:border-indigo-300 hover:bg-indigo-50 transition-all group"
+                  className="p-3.5 sm:p-4 rounded-lg bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all group"
                 >
                   <div className="space-y-2">
                     <div className="flex items-start justify-between gap-2">
@@ -164,7 +164,7 @@ export function ReportedIssuesSection({ initialIssues }: ReportedIssuesSectionPr
                             {r.approval_status === 'rejected' && '등록 불가'}
                           </span>
                         )}
-                        <p className="text-sm sm:text-base font-medium text-slate-900 group-hover:text-indigo-700 transition-colors leading-snug flex-1">
+                        <p className="text-sm sm:text-base font-medium text-slate-900 group-hover:text-slate-700 transition-colors leading-snug flex-1">
                           {r.title}
                         </p>
                       </div>
@@ -173,7 +173,7 @@ export function ReportedIssuesSection({ initialIssues }: ReportedIssuesSectionPr
 
                     <div className="space-y-1.5">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="text-xs sm:text-sm text-indigo-700 font-bold">{r.curious_count}/{r.threshold}</span>
+                        <span className="text-xs sm:text-sm text-yellow-700 font-bold">{r.curious_count}/{r.threshold}</span>
                         <Button
                           variant="outline"
                           size="sm"
@@ -184,7 +184,7 @@ export function ReportedIssuesSection({ initialIssues }: ReportedIssuesSectionPr
                               ? 'opacity-50 cursor-not-allowed bg-gray-100 border-gray-300 text-gray-500'
                               : r.is_curious
                               ? 'bg-blue-500 text-white border-blue-500 hover:bg-blue-600'
-                              : 'border-indigo-400 text-indigo-700 hover:bg-indigo-100 hover:border-indigo-500'
+                              : 'border-yellow-400 text-yellow-700 hover:bg-yellow-50 hover:border-yellow-500'
                           }`}
                         >
                           {curiousLoading[r.id] ? '...' :
@@ -192,9 +192,9 @@ export function ReportedIssuesSection({ initialIssues }: ReportedIssuesSectionPr
                            r.is_curious ? '궁금해요 ✓' : '궁금해요'}
                         </Button>
                       </div>
-                      <div className="h-2 bg-indigo-100 rounded-full overflow-hidden">
+                      <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-indigo-500 rounded-full transition-all duration-300"
+                          className="h-full bg-yellow-500 rounded-full transition-all duration-300"
                           style={{ width: `${progress}%` }}
                         />
                       </div>
@@ -210,7 +210,7 @@ export function ReportedIssuesSection({ initialIssues }: ReportedIssuesSectionPr
               <Button
                 variant="ghost"
                 size="sm"
-                className="flex-1 text-indigo-700 hover:text-indigo-800 hover:bg-indigo-100 min-h-[44px] text-xs sm:text-sm"
+                className="flex-1 text-slate-700 hover:text-slate-800 hover:bg-slate-100 min-h-[44px] text-xs sm:text-sm"
                 onClick={() => setShowAllReported(!showAllReported)}
               >
                 {showAllReported ? "접기" : `${reportedIssues.length - 3}개 더보기`}
@@ -221,7 +221,7 @@ export function ReportedIssuesSection({ initialIssues }: ReportedIssuesSectionPr
               variant="outline"
               size="sm"
               onClick={() => window.location.href = '/reported-issues'}
-              className={`${reportedIssues.length > 3 ? 'flex-1' : 'w-full'} border-indigo-400 text-indigo-700 hover:bg-indigo-100 hover:border-indigo-500 min-h-[44px] text-xs sm:text-sm`}
+              className={`${reportedIssues.length > 3 ? 'flex-1' : 'w-full'} border-slate-300 text-slate-700 hover:bg-slate-100 hover:border-slate-400 min-h-[44px] text-xs sm:text-sm`}
             >
               전체보기
             </Button>

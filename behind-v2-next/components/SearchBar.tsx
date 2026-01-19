@@ -125,7 +125,7 @@ export function SearchBar({ className = "" }: SearchBarProps) {
           onKeyDown={handleKeyDown}
           onFocus={() => query.trim() && results.length > 0 && setIsOpen(true)}
           placeholder="이슈&뉴스 검색"
-          className="w-full h-10 pl-10 pr-20 rounded-full border border-slate-300 bg-white text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all shadow-sm hover:border-slate-400"
+          className="w-full h-10 pl-10 pr-20 rounded-full border border-slate-300 bg-white text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400 transition-all shadow-sm hover:border-slate-400"
         />
         <div className="absolute right-1.5 flex items-center gap-1">
           {isLoading && (
@@ -160,7 +160,7 @@ export function SearchBar({ className = "" }: SearchBarProps) {
                       className="block px-4 py-3 hover:bg-slate-50 transition-colors"
                     >
                       <div className="flex items-start gap-2">
-                        <span className="text-xs px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700 shrink-0">
+                        <span className="text-xs px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 shrink-0">
                           {result.category}
                         </span>
                         <div className="min-w-0">
@@ -179,7 +179,7 @@ export function SearchBar({ className = "" }: SearchBarProps) {
               <Link
                 href={`/search?q=${encodeURIComponent(query)}`}
                 onClick={handleResultClick}
-                className="block px-4 py-2.5 text-center text-sm text-indigo-600 hover:bg-indigo-50 border-t border-slate-100 font-medium"
+                className="block px-4 py-2.5 text-center text-sm text-slate-700 hover:bg-slate-100 border-t border-slate-100 font-medium"
               >
                 &quot;{query}&quot; 전체 검색 결과 보기
               </Link>

@@ -845,11 +845,12 @@ export default function AdminIssuesPage() {
               <div className="space-y-3">
                 <div>
                   <label className="block text-sm font-medium mb-1">HOT 이슈 #1</label>
-                  <Select value={mainHotSlot1} onValueChange={setMainHotSlot1}>
+                  <Select value={mainHotSlot1 || 'none'} onValueChange={(value) => setMainHotSlot1(value === 'none' ? '' : value)}>
                     <SelectTrigger>
                       <SelectValue placeholder="선택 안함" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="none">선택 안함</SelectItem>
                       {issues
                         .filter((issue) => {
                           const poll = Array.isArray(issue.poll) ? issue.poll[0] : issue.poll
@@ -866,11 +867,12 @@ export default function AdminIssuesPage() {
 
                 <div>
                   <label className="block text-sm font-medium mb-1">HOT 이슈 #2</label>
-                  <Select value={mainHotSlot2} onValueChange={setMainHotSlot2}>
+                  <Select value={mainHotSlot2 || 'none'} onValueChange={(value) => setMainHotSlot2(value === 'none' ? '' : value)}>
                     <SelectTrigger>
                       <SelectValue placeholder="선택 안함" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="none">선택 안함</SelectItem>
                       {issues
                         .filter((issue) => {
                           const poll = Array.isArray(issue.poll) ? issue.poll[0] : issue.poll
@@ -893,11 +895,12 @@ export default function AdminIssuesPage() {
               <div className="space-y-3">
                 <div>
                   <label className="block text-sm font-medium mb-1">투표 #1</label>
-                  <Select value={mainPollSlot1} onValueChange={setMainPollSlot1}>
+                  <Select value={mainPollSlot1 || 'none'} onValueChange={(value) => setMainPollSlot1(value === 'none' ? '' : value)}>
                     <SelectTrigger>
                       <SelectValue placeholder="선택 안함" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="none">선택 안함</SelectItem>
                       {issues
                         .filter((issue) => {
                           const poll = Array.isArray(issue.poll) ? issue.poll[0] : issue.poll
@@ -914,11 +917,12 @@ export default function AdminIssuesPage() {
 
                 <div>
                   <label className="block text-sm font-medium mb-1">투표 #2</label>
-                  <Select value={mainPollSlot2} onValueChange={setMainPollSlot2}>
+                  <Select value={mainPollSlot2 || 'none'} onValueChange={(value) => setMainPollSlot2(value === 'none' ? '' : value)}>
                     <SelectTrigger>
                       <SelectValue placeholder="선택 안함" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="none">선택 안함</SelectItem>
                       {issues
                         .filter((issue) => {
                           const poll = Array.isArray(issue.poll) ? issue.poll[0] : issue.poll
@@ -1167,11 +1171,22 @@ export default function AdminIssuesPage() {
             <div className="flex gap-4 items-start">
               <div className="flex-1">
                 <label className="block text-sm font-medium mb-1">1위</label>
-                <Select value={realtimeSlot1} onValueChange={setRealtimeSlot1}>
+                <Select
+                  value={realtimeSlot1 || 'none'}
+                  onValueChange={(value) => {
+                    if (value === 'none') {
+                      setRealtimeSlot1('')
+                      setRealtimeSlot1Change('')
+                    } else {
+                      setRealtimeSlot1(value)
+                    }
+                  }}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="선택 안함" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="none">선택 안함</SelectItem>
                     {issues
                       .filter((issue) => {
                         const poll = Array.isArray(issue.poll) ? issue.poll[0] : issue.poll
@@ -1192,6 +1207,7 @@ export default function AdminIssuesPage() {
                   onChange={(e) => setRealtimeSlot1Change(e.target.value)}
                   placeholder="예: +5, -2"
                   maxLength={10}
+                  disabled={!realtimeSlot1}
                 />
               </div>
             </div>
@@ -1200,11 +1216,22 @@ export default function AdminIssuesPage() {
             <div className="flex gap-4 items-start">
               <div className="flex-1">
                 <label className="block text-sm font-medium mb-1">2위</label>
-                <Select value={realtimeSlot2} onValueChange={setRealtimeSlot2}>
+                <Select
+                  value={realtimeSlot2 || 'none'}
+                  onValueChange={(value) => {
+                    if (value === 'none') {
+                      setRealtimeSlot2('')
+                      setRealtimeSlot2Change('')
+                    } else {
+                      setRealtimeSlot2(value)
+                    }
+                  }}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="선택 안함" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="none">선택 안함</SelectItem>
                     {issues
                       .filter((issue) => {
                         const poll = Array.isArray(issue.poll) ? issue.poll[0] : issue.poll
@@ -1225,6 +1252,7 @@ export default function AdminIssuesPage() {
                   onChange={(e) => setRealtimeSlot2Change(e.target.value)}
                   placeholder="예: +5, -2"
                   maxLength={10}
+                  disabled={!realtimeSlot2}
                 />
               </div>
             </div>
@@ -1233,11 +1261,22 @@ export default function AdminIssuesPage() {
             <div className="flex gap-4 items-start">
               <div className="flex-1">
                 <label className="block text-sm font-medium mb-1">3위</label>
-                <Select value={realtimeSlot3} onValueChange={setRealtimeSlot3}>
+                <Select
+                  value={realtimeSlot3 || 'none'}
+                  onValueChange={(value) => {
+                    if (value === 'none') {
+                      setRealtimeSlot3('')
+                      setRealtimeSlot3Change('')
+                    } else {
+                      setRealtimeSlot3(value)
+                    }
+                  }}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="선택 안함" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="none">선택 안함</SelectItem>
                     {issues
                       .filter((issue) => {
                         const poll = Array.isArray(issue.poll) ? issue.poll[0] : issue.poll
@@ -1258,6 +1297,7 @@ export default function AdminIssuesPage() {
                   onChange={(e) => setRealtimeSlot3Change(e.target.value)}
                   placeholder="예: +5, -2"
                   maxLength={10}
+                  disabled={!realtimeSlot3}
                 />
               </div>
             </div>
@@ -1266,11 +1306,22 @@ export default function AdminIssuesPage() {
             <div className="flex gap-4 items-start">
               <div className="flex-1">
                 <label className="block text-sm font-medium mb-1">4위</label>
-                <Select value={realtimeSlot4} onValueChange={setRealtimeSlot4}>
+                <Select
+                  value={realtimeSlot4 || 'none'}
+                  onValueChange={(value) => {
+                    if (value === 'none') {
+                      setRealtimeSlot4('')
+                      setRealtimeSlot4Change('')
+                    } else {
+                      setRealtimeSlot4(value)
+                    }
+                  }}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="선택 안함" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="none">선택 안함</SelectItem>
                     {issues
                       .filter((issue) => {
                         const poll = Array.isArray(issue.poll) ? issue.poll[0] : issue.poll
@@ -1291,6 +1342,7 @@ export default function AdminIssuesPage() {
                   onChange={(e) => setRealtimeSlot4Change(e.target.value)}
                   placeholder="예: +5, -2"
                   maxLength={10}
+                  disabled={!realtimeSlot4}
                 />
               </div>
             </div>
@@ -1299,11 +1351,22 @@ export default function AdminIssuesPage() {
             <div className="flex gap-4 items-start">
               <div className="flex-1">
                 <label className="block text-sm font-medium mb-1">5위</label>
-                <Select value={realtimeSlot5} onValueChange={setRealtimeSlot5}>
+                <Select
+                  value={realtimeSlot5 || 'none'}
+                  onValueChange={(value) => {
+                    if (value === 'none') {
+                      setRealtimeSlot5('')
+                      setRealtimeSlot5Change('')
+                    } else {
+                      setRealtimeSlot5(value)
+                    }
+                  }}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="선택 안함" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="none">선택 안함</SelectItem>
                     {issues
                       .filter((issue) => {
                         const poll = Array.isArray(issue.poll) ? issue.poll[0] : issue.poll
@@ -1324,6 +1387,7 @@ export default function AdminIssuesPage() {
                   onChange={(e) => setRealtimeSlot5Change(e.target.value)}
                   placeholder="예: +5, -2"
                   maxLength={10}
+                  disabled={!realtimeSlot5}
                 />
               </div>
             </div>
@@ -1433,15 +1497,15 @@ export default function AdminIssuesPage() {
 
       {/* 수정 모달 */}
       <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
+        <DialogContent className="max-w-2xl h-[90vh] flex flex-col p-0">
+          <DialogHeader className="flex-shrink-0 px-6 pt-6 pb-4 border-b">
             <DialogTitle>이슈 수정</DialogTitle>
             <DialogDescription>
               이슈 정보를 수정합니다. 투표가 1개 이상 있으면 투표 옵션을 수정할 수 없습니다.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4">
+          <div className="flex-1 min-h-0 overflow-y-auto px-6 py-4 space-y-4">
             {/* 기본 정보 */}
             <div>
               <label className="block text-sm font-medium mb-2">제목 (5-100자)</label>
@@ -1665,7 +1729,7 @@ export default function AdminIssuesPage() {
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="flex-shrink-0 border-t px-6 py-4">
             <Button
               variant="outline"
               onClick={() => setShowEditModal(false)}

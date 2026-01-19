@@ -59,7 +59,7 @@ export default async function LandingPage() {
           <div className="flex justify-end mt-2">
             <Link
               href="/issues"
-              className="text-sm text-slate-600 hover:text-indigo-600 transition-colors font-medium"
+              className="text-sm text-slate-600 hover:text-slate-900 transition-colors font-medium"
             >
               전체 이슈 보기 →
             </Link>

@@ -390,7 +390,7 @@ export default function ChatRoom() {
                   return (
                     <div key={m.id} className={`flex gap-2 ${isOwn ? "flex-row-reverse" : ""}`}>
                       <Avatar className="w-8 h-8 flex-shrink-0">
-                        <AvatarFallback className={isOwn ? "bg-indigo-600 text-white" : "bg-muted"}>
+                        <AvatarFallback className={isOwn ? "bg-slate-700 text-white" : "bg-muted"}>
                           {m.authorNick?.slice(-2)}
                         </AvatarFallback>
                       </Avatar>
@@ -409,7 +409,7 @@ export default function ChatRoom() {
                             )}
                           </span>
                         )}
-                        <div className={`rounded-2xl px-4 py-2 ${isOwn ? "bg-indigo-600 text-white" : "bg-muted"}`}>
+                        <div className={`rounded-2xl px-4 py-2 ${isOwn ? "bg-slate-700 text-white" : "bg-muted"}`}>
                           <p className="break-words">{m.body}</p>
                         </div>
                         <span className="text-xs text-muted-foreground px-1">{formatTime(m.createdAt)}</span>

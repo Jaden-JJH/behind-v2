@@ -58,7 +58,7 @@ export function LoginPrompt({ open, onClose, voteCount = 2, type = 'vote' }: Log
           <div className="space-y-2">
             <Button
               onClick={handleGoogleLogin}
-              className="w-full bg-indigo-600 hover:bg-indigo-700 flex items-center justify-center gap-2"
+              className="w-full bg-slate-800 hover:bg-slate-900 flex items-center justify-center gap-2"
               size="lg"
             >
               <Image src="/google-logo.png" alt="Google" width={20} height={20} className="w-5 h-5" />

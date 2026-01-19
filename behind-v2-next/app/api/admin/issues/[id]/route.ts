@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { sanitizeFields, sanitizeHtml } from '@/lib/sanitize'
 import { normalizeCategory } from '@/lib/categories'
@@ -398,6 +399,10 @@ export async function PUT(
         )
       }
 
+      // 메인 페이지 캐시 무효화
+      revalidatePath('/')
+      revalidatePath('/issues')
+
       return NextResponse.json({
         success: true,
         data: updatedIssue,
@@ -559,6 +564,10 @@ export async function DELETE(
           { status: 500 }
         )
       }
+
+      // 메인 페이지 캐시 무효화
+      revalidatePath('/')
+      revalidatePath('/issues')
 
       return NextResponse.json({
         success: true,

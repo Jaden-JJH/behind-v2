@@ -28,7 +28,7 @@ export default function MyLayout({
             href="/my"
             className={`flex items-center px-4 py-3 rounded-lg transition-colors ${
               isActive('/my')
-                ? 'bg-indigo-50 text-indigo-700 font-medium'
+                ? 'bg-yellow-50 text-slate-900 font-medium'
                 : 'text-gray-700 hover:bg-gray-100'
             }`}
           >
@@ -41,7 +41,7 @@ export default function MyLayout({
             href="/my/votes"
             className={`flex items-center px-4 py-3 rounded-lg transition-colors ${
               isActive('/my/votes')
-                ? 'bg-indigo-50 text-indigo-700 font-medium'
+                ? 'bg-yellow-50 text-slate-900 font-medium'
                 : 'text-gray-700 hover:bg-gray-100'
             }`}
           >
@@ -54,7 +54,7 @@ export default function MyLayout({
             href="/my/comments"
             className={`flex items-center px-4 py-3 rounded-lg transition-colors ${
               isActive('/my/comments')
-                ? 'bg-indigo-50 text-indigo-700 font-medium'
+                ? 'bg-yellow-50 text-slate-900 font-medium'
                 : 'text-gray-700 hover:bg-gray-100'
             }`}
           >
@@ -67,7 +67,7 @@ export default function MyLayout({
             href="/my/follows"
             className={`flex items-center px-4 py-3 rounded-lg transition-colors ${
               isActive('/my/follows')
-                ? 'bg-indigo-50 text-indigo-700 font-medium'
+                ? 'bg-yellow-50 text-slate-900 font-medium'
                 : 'text-gray-700 hover:bg-gray-100'
             }`}
           >
@@ -80,7 +80,7 @@ export default function MyLayout({
             href="/my/chat-rooms"
             className={`flex items-center px-4 py-3 rounded-lg transition-colors ${
               isActive('/my/chat-rooms')
-                ? 'bg-indigo-50 text-indigo-700 font-medium'
+                ? 'bg-yellow-50 text-slate-900 font-medium'
                 : 'text-gray-700 hover:bg-gray-100'
             }`}
           >
@@ -93,7 +93,7 @@ export default function MyLayout({
             href="/my/curious"
             className={`flex items-center px-4 py-3 rounded-lg transition-colors ${
               isActive('/my/curious')
-                ? 'bg-indigo-50 text-indigo-700 font-medium'
+                ? 'bg-yellow-50 text-slate-900 font-medium'
                 : 'text-gray-700 hover:bg-gray-100'
             }`}
           >
@@ -124,7 +124,7 @@ export default function MyLayout({
               onClick={() => setIsMobileMenuOpen(false)}
               className={`flex items-center px-4 py-3 rounded-lg transition-colors ${
                 isActive('/my')
-                  ? 'bg-indigo-50 text-indigo-700 font-medium'
+                  ? 'bg-yellow-50 text-slate-900 font-medium'
                   : 'text-gray-700 hover:bg-gray-100'
               }`}
             >
@@ -138,7 +138,7 @@ export default function MyLayout({
               onClick={() => setIsMobileMenuOpen(false)}
               className={`flex items-center px-4 py-3 rounded-lg transition-colors ${
                 isActive('/my/votes')
-                  ? 'bg-indigo-50 text-indigo-700 font-medium'
+                  ? 'bg-yellow-50 text-slate-900 font-medium'
                   : 'text-gray-700 hover:bg-gray-100'
               }`}
             >
@@ -152,7 +152,7 @@ export default function MyLayout({
               onClick={() => setIsMobileMenuOpen(false)}
               className={`flex items-center px-4 py-3 rounded-lg transition-colors ${
                 isActive('/my/comments')
-                  ? 'bg-indigo-50 text-indigo-700 font-medium'
+                  ? 'bg-yellow-50 text-slate-900 font-medium'
                   : 'text-gray-700 hover:bg-gray-100'
               }`}
             >
@@ -166,7 +166,7 @@ export default function MyLayout({
               onClick={() => setIsMobileMenuOpen(false)}
               className={`flex items-center px-4 py-3 rounded-lg transition-colors ${
                 isActive('/my/follows')
-                  ? 'bg-indigo-50 text-indigo-700 font-medium'
+                  ? 'bg-yellow-50 text-slate-900 font-medium'
                   : 'text-gray-700 hover:bg-gray-100'
               }`}
             >
@@ -180,7 +180,7 @@ export default function MyLayout({
               onClick={() => setIsMobileMenuOpen(false)}
               className={`flex items-center px-4 py-3 rounded-lg transition-colors ${
                 isActive('/my/chat-rooms')
-                  ? 'bg-indigo-50 text-indigo-700 font-medium'
+                  ? 'bg-yellow-50 text-slate-900 font-medium'
                   : 'text-gray-700 hover:bg-gray-100'
               }`}
             >
@@ -194,7 +194,7 @@ export default function MyLayout({
               onClick={() => setIsMobileMenuOpen(false)}
               className={`flex items-center px-4 py-3 rounded-lg transition-colors ${
                 isActive('/my/curious')
-                  ? 'bg-indigo-50 text-indigo-700 font-medium'
+                  ? 'bg-yellow-50 text-slate-900 font-medium'
                   : 'text-gray-700 hover:bg-gray-100'
               }`}
             >

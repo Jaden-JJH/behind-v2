@@ -44,13 +44,13 @@ export function RollingBanner({ issues }: RollingBannerProps) {
 
   return (
     <div
-      className="bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 text-white cursor-pointer hover:from-indigo-700 hover:via-purple-700 hover:to-indigo-700 transition-colors"
+      className="bg-slate-800 text-white cursor-pointer hover:bg-slate-900 transition-colors"
       onClick={handleClick}
     >
       <div className="max-w-6xl mx-auto px-3 sm:px-4 md:px-6 py-2 sm:py-2.5">
         <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0 overflow-hidden">
           {/* 속보 배지 */}
-          <span className="flex-shrink-0 px-2 py-0.5 bg-white/90 text-indigo-600 text-xs font-bold rounded uppercase tracking-wide shadow-sm">
+          <span className="flex-shrink-0 px-2 py-0.5 bg-yellow-400 text-slate-900 text-xs font-bold rounded uppercase tracking-wide shadow-sm">
             Breaking
           </span>
 

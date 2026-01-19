@@ -99,7 +99,7 @@ function SearchContent() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="이슈&뉴스 검색"
-              className="w-full h-12 pl-12 pr-4 rounded-xl border border-slate-200 bg-slate-50 text-base placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              className="w-full h-12 pl-12 pr-4 rounded-xl border border-slate-200 bg-slate-50 text-base placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent"
               autoFocus
             />
           </form>
@@ -110,14 +110,14 @@ function SearchContent() {
       <div className="max-w-4xl mx-auto px-4 py-6">
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 text-indigo-500 animate-spin" />
+            <Loader2 className="h-8 w-8 text-slate-500 animate-spin" />
           </div>
         ) : hasSearched ? (
           <>
             <div className="mb-4">
               <p className="text-sm text-slate-600">
                 <span className="font-medium">&quot;{initialQuery}&quot;</span> 검색 결과{" "}
-                <span className="font-medium text-indigo-600">{results.length}</span>건
+                <span className="font-medium text-slate-800">{results.length}</span>건
               </p>
             </div>
 
@@ -130,7 +130,7 @@ function SearchContent() {
                       className="block bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow border border-slate-100"
                     >
                       <div className="flex items-start gap-3">
-                        <span className="text-xs px-2 py-1 rounded-full bg-indigo-100 text-indigo-700 shrink-0 font-medium">
+                        <span className="text-xs px-2 py-1 rounded-full bg-slate-100 text-slate-700 shrink-0 font-medium">
                           {result.category}
                         </span>
                         <div className="min-w-0 flex-1">
@@ -164,8 +164,8 @@ function SearchContent() {
           </>
         ) : (
           <div className="text-center py-12">
-            <div className="w-16 h-16 mx-auto mb-4 bg-indigo-50 rounded-full flex items-center justify-center">
-              <Search className="h-8 w-8 text-indigo-400" />
+            <div className="w-16 h-16 mx-auto mb-4 bg-slate-100 rounded-full flex items-center justify-center">
+              <Search className="h-8 w-8 text-slate-400" />
             </div>
             <p className="text-slate-600 mb-2">이슈와 뉴스를 검색해보세요</p>
             <p className="text-sm text-slate-400">
@@ -183,7 +183,7 @@ export default function SearchPage() {
     <Suspense
       fallback={
         <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-          <Loader2 className="h-8 w-8 text-indigo-500 animate-spin" />
+          <Loader2 className="h-8 w-8 text-slate-500 animate-spin" />
         </div>
       }
     >

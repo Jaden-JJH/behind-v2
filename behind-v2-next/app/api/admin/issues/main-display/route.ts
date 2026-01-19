@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { withCsrfProtection } from '@/lib/api-helpers'
 import { requireAdminAuth } from '@/lib/admin-auth'
@@ -63,7 +64,10 @@ export async function PUT(request: Request) {
         }
       }
 
-      // 6. 성공 응답
+      // 6. 메인 페이지 캐시 무효화
+      revalidatePath('/')
+
+      // 7. 성공 응답
       return NextResponse.json({
         success: true,
         message: 'Main display updated successfully'

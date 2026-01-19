@@ -146,7 +146,7 @@ export function MobileSearchOverlay({
               onChange={handleInputChange}
               onKeyDown={handleKeyDown}
               placeholder="이슈&뉴스 검색"
-              className="w-full h-11 pl-10 pr-10 rounded-full border border-slate-300 bg-white text-base placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all shadow-sm"
+              className="w-full h-11 pl-10 pr-10 rounded-full border border-slate-300 bg-white text-base placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400 transition-all shadow-sm"
             />
             {query && (
               <button
@@ -188,7 +188,7 @@ export function MobileSearchOverlay({
                         className="block px-4 py-3 active:bg-slate-50"
                       >
                         <div className="flex items-start gap-2">
-                          <span className="text-xs px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700 shrink-0">
+                          <span className="text-xs px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 shrink-0">
                             {result.category}
                           </span>
                           <div className="min-w-0">
@@ -207,7 +207,7 @@ export function MobileSearchOverlay({
                 <Link
                   href={`/search?q=${encodeURIComponent(query)}`}
                   onClick={handleResultClick}
-                  className="block px-4 py-3 text-center text-sm text-indigo-600 active:bg-indigo-50 border-t border-slate-100 font-medium"
+                  className="block px-4 py-3 text-center text-sm text-slate-700 active:bg-slate-100 border-t border-slate-100 font-medium"
                 >
                   &quot;{query}&quot; 전체 검색 결과 보기
                 </Link>

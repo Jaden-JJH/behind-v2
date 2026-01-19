@@ -149,7 +149,7 @@ export function MobileMenu({
               type="button"
               onClick={() => setIsMyPageExpanded(!isMyPageExpanded)}
               className={`w-full flex items-center justify-between px-4 py-3 text-slate-700 transition-colors hover:bg-slate-100 ${
-                isMyPagePath ? "text-indigo-700 font-medium" : ""
+                isMyPagePath ? "text-slate-900 font-medium" : ""
               }`}
             >
               <span>마이페이지</span>
@@ -167,7 +167,7 @@ export function MobileMenu({
                   onClick={handleMyPageLinkClick}
                   className={`block px-8 py-2 text-sm transition-colors ${
                     isActive("/my")
-                      ? "text-indigo-700 font-medium bg-indigo-50"
+                      ? "text-slate-900 font-medium bg-yellow-50"
                       : "text-slate-700 hover:bg-slate-100"
                   }`}
                 >
@@ -178,7 +178,7 @@ export function MobileMenu({
                   onClick={handleMyPageLinkClick}
                   className={`block px-8 py-2 text-sm transition-colors ${
                     isActive("/my/votes")
-                      ? "text-indigo-700 font-medium bg-indigo-50"
+                      ? "text-slate-900 font-medium bg-yellow-50"
                       : "text-slate-700 hover:bg-slate-100"
                   }`}
                 >
@@ -189,7 +189,7 @@ export function MobileMenu({
                   onClick={handleMyPageLinkClick}
                   className={`block px-8 py-2 text-sm transition-colors ${
                     isActive("/my/comments")
-                      ? "text-indigo-700 font-medium bg-indigo-50"
+                      ? "text-slate-900 font-medium bg-yellow-50"
                       : "text-slate-700 hover:bg-slate-100"
                   }`}
                 >
@@ -200,7 +200,7 @@ export function MobileMenu({
                   onClick={handleMyPageLinkClick}
                   className={`block px-8 py-2 text-sm transition-colors ${
                     isActive("/my/follows")
-                      ? "text-indigo-700 font-medium bg-indigo-50"
+                      ? "text-slate-900 font-medium bg-yellow-50"
                       : "text-slate-700 hover:bg-slate-100"
                   }`}
                 >
@@ -211,7 +211,7 @@ export function MobileMenu({
                   onClick={handleMyPageLinkClick}
                   className={`block px-8 py-2 text-sm transition-colors ${
                     isActive("/my/curious")
-                      ? "text-indigo-700 font-medium bg-indigo-50"
+                      ? "text-slate-900 font-medium bg-yellow-50"
                       : "text-slate-700 hover:bg-slate-100"
                   }`}
                 >

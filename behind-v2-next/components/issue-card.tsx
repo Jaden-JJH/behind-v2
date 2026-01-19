@@ -64,7 +64,7 @@ export function IssueCard({ issue, onOpenIssue, onOpenChat }: IssueCardProps) {
         {/* 콘텐츠 영역 - min-w-0 추가로 flex shrink 허용 */}
         <div className="flex-1 min-w-0 flex flex-col justify-between">
           <div className="space-y-1.5 sm:space-y-2">
-            <h3 className="text-base sm:text-lg md:text-xl font-bold text-slate-900 sm:hover:text-indigo-600 transition-colors leading-snug line-clamp-2">
+            <h3 className="text-base sm:text-lg md:text-xl font-bold text-slate-900 sm:hover:text-slate-700 transition-colors leading-snug line-clamp-2">
               {issue.title}
             </h3>
             <p className="text-slate-600 text-xs sm:text-sm md:text-base leading-relaxed line-clamp-2">{issue.preview}</p>

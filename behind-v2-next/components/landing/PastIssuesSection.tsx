@@ -30,15 +30,15 @@ export function PastIssuesSection({ issues }: PastIssuesSectionProps) {
           {issues.map((issue, idx) => (
             <div
               key={issue.id}
-              className="p-3 sm:p-3.5 md:p-4 rounded-lg border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/50 transition-all cursor-pointer group min-h-[60px]"
+              className="p-3 sm:p-3.5 md:p-4 rounded-lg border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all cursor-pointer group min-h-[60px]"
               onClick={() => window.location.href = `/issues/${issue.display_id}`}
             >
               <div className="flex items-center justify-between gap-3 sm:gap-4 mb-2">
                 <div className="flex items-center gap-2.5 sm:gap-3 flex-1 min-w-0">
-                  <span className="flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0 rounded-full font-bold text-sm sm:text-base bg-slate-100 text-slate-600 group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors">
+                  <span className="flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0 rounded-full font-bold text-sm sm:text-base bg-slate-100 text-slate-600 group-hover:bg-yellow-100 group-hover:text-yellow-700 transition-colors">
                     {idx + 1}
                   </span>
-                  <p className="text-sm sm:text-base text-slate-800 group-hover:text-indigo-600 transition-colors flex-1 font-semibold leading-snug">
+                  <p className="text-sm sm:text-base text-slate-800 group-hover:text-slate-900 transition-colors flex-1 font-semibold leading-snug">
                     {issue.title}
                   </p>
                 </div>

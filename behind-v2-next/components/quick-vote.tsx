@@ -254,7 +254,7 @@ export function QuickVote({ pollId, question, options, ctaLabel = "이슈 자세
                   <Button
                     key={option.id || idx}
                     variant="outline"
-                    className="w-full justify-center border-slate-300 hover:bg-indigo-50 hover:border-indigo-400"
+                    className="w-full justify-center border-slate-300 hover:bg-yellow-50 hover:border-yellow-400"
                     onClick={() => handleVote(idx)}
                   >
                     <span className="text-slate-800">{option.label}</span>
@@ -265,7 +265,7 @@ export function QuickVote({ pollId, question, options, ctaLabel = "이슈 자세
                 <Button
                   onClick={onCta}
                   variant="secondary"
-                  className="w-full border-indigo-500 text-indigo-700 hover:bg-indigo-50"
+                  className="w-full border-slate-300 text-slate-700 hover:bg-slate-100"
                 >
                   {ctaLabel}
                 </Button>
@@ -279,21 +279,21 @@ export function QuickVote({ pollId, question, options, ctaLabel = "이슈 자세
                 const pct = Math.round((c / t) * 100);
                 const chosen = selected === idx;
                 return (
-                  <div key={`res-${idx}`} className={`relative p-3 rounded-lg border-2 transition-all ${chosen ? "border-indigo-500 bg-indigo-50" : "border-slate-200 bg-slate-50"}`}>
+                  <div key={`res-${idx}`} className={`relative p-3 rounded-lg border-2 transition-all ${chosen ? "border-yellow-400 bg-yellow-50" : "border-slate-200 bg-slate-50"}`}>
                     <div className="flex justify-between items-center mb-2 relative z-10">
-                      <span className={chosen ? "text-indigo-900 font-medium" : "text-slate-700"}>{o.label}</span>
+                      <span className={chosen ? "text-slate-900 font-medium" : "text-slate-700"}>{o.label}</span>
                       <div className="flex items-center gap-2">
-                        <span className={`${chosen ? "text-indigo-700 font-semibold" : "text-slate-500"} tabular-nums text-sm`}>
+                        <span className={`${chosen ? "text-yellow-700 font-semibold" : "text-slate-500"} tabular-nums text-sm`}>
                           {c.toLocaleString()}표
                         </span>
-                        <span className={`${chosen ? "text-indigo-700 font-semibold" : "text-slate-500"} tabular-nums text-sm`}>
+                        <span className={`${chosen ? "text-yellow-700 font-semibold" : "text-slate-500"} tabular-nums text-sm`}>
                           {pct}%
                         </span>
                       </div>
                     </div>
                     <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
                       <div
-                        className={`h-2 rounded-full transition-all duration-500 ease-out ${chosen ? "bg-indigo-600" : "bg-slate-400"}`}
+                        className={`h-2 rounded-full transition-all duration-500 ease-out ${chosen ? "bg-yellow-500" : "bg-slate-400"}`}
                         style={{ width: `${pct}%` }}
                       />
                     </div>
@@ -304,7 +304,7 @@ export function QuickVote({ pollId, question, options, ctaLabel = "이슈 자세
                 <Button
                   onClick={onCta}
                   variant="outline"
-                  className="w-full mt-2 border-indigo-500 text-indigo-700 hover:bg-indigo-50"
+                  className="w-full mt-2 border-slate-300 text-slate-700 hover:bg-slate-100"
                 >
                   {ctaLabel}
                 </Button>

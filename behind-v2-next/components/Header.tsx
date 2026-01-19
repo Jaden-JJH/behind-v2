@@ -132,12 +132,12 @@ export function Header() {
             {user ? (
               <Link
                 href="/my"
-                className="group flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-indigo-50 transition-colors"
+                className="group flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-slate-100 transition-colors"
               >
-                <span className="hidden md:inline text-base font-medium text-slate-700 group-hover:text-indigo-700">
+                <span className="hidden md:inline text-base font-medium text-slate-700 group-hover:text-slate-900">
                   {nickname ?? "닉네임 미설정"}
                 </span>
-                <CircleUser className="h-6 w-6 text-indigo-600 group-hover:text-indigo-700" />
+                <CircleUser className="h-6 w-6 text-slate-600 group-hover:text-slate-900" />
               </Link>
             ) : (
               /* PC에서만 로그인 버튼 표시 - 모바일은 햄버거 메뉴에서 로그인 */

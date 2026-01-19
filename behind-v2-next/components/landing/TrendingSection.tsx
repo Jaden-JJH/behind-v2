@@ -39,9 +39,9 @@ export function TrendingSection({ issues }: TrendingSectionProps) {
               <li
                 key={item.id}
                 onClick={() => window.location.href = `/issues/${item.display_id}`}
-                className="flex items-center gap-2.5 sm:gap-3 text-slate-700 hover:text-indigo-600 cursor-pointer transition-all group py-1.5 min-h-[44px]"
+                className="flex items-center gap-2.5 sm:gap-3 text-slate-700 hover:text-slate-900 cursor-pointer transition-all group py-1.5 min-h-[44px]"
               >
-                <span className="flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0 rounded-full font-bold text-sm sm:text-base bg-slate-100 text-slate-600 group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors">
+                <span className="flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0 rounded-full font-bold text-sm sm:text-base bg-slate-100 text-slate-600 group-hover:bg-yellow-100 group-hover:text-yellow-700 transition-colors">
                   {idx + 1}
                 </span>
                 <span className="flex-1 text-sm sm:text-base font-medium leading-relaxed">{item.title}</span>

@@ -209,7 +209,7 @@ export default function ReportedIssuesPage() {
               <select
                 value={filterBy}
                 onChange={(e) => setFilterBy(e.target.value as FilterOption)}
-                className="px-4 py-2 pr-10 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 appearance-none cursor-pointer"
+                className="px-4 py-2 pr-10 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-400 appearance-none cursor-pointer"
               >
                 <option value="all">전체</option>
                 <option value="pending">검토 중</option>
@@ -225,7 +225,7 @@ export default function ReportedIssuesPage() {
                 type="checkbox"
                 checked={showMyCurious}
                 onChange={(e) => setShowMyCurious(e.target.checked)}
-                className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500"
+                className="w-4 h-4 text-yellow-500 border-slate-300 rounded focus:ring-slate-400"
               />
               내가 궁금해요 누른 이슈만
             </label>
@@ -236,7 +236,7 @@ export default function ReportedIssuesPage() {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as SortOption)}
-              className="px-4 py-2 pr-10 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 appearance-none cursor-pointer"
+              className="px-4 py-2 pr-10 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-400 appearance-none cursor-pointer"
             >
               <option value="latest">최신순</option>
               <option value="progress">달성률순</option>
@@ -277,7 +277,7 @@ export default function ReportedIssuesPage() {
                 <Card 
                   key={report.id}
                   className={`hover:shadow-lg transition-all ${
-                    report.is_curious ? 'border-indigo-400 border-2' : 'border-slate-200'
+                    report.is_curious ? 'border-yellow-400 border-2' : 'border-slate-200'
                   }`}
                 >
                   <CardContent className="p-4">
@@ -307,13 +307,13 @@ export default function ReportedIssuesPage() {
                     <div className="space-y-1.5 mb-3">
                       <div className="flex items-center justify-between text-xs">
                         <span className="text-slate-500">{formatTime(new Date(report.created_at).getTime())}</span>
-                        <span className="text-indigo-700 font-semibold">
+                        <span className="text-yellow-700 font-semibold">
                           {report.curious_count}/{report.threshold}
                         </span>
                       </div>
                       <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-indigo-500 rounded-full transition-all duration-300"
+                          className="h-full bg-yellow-500 rounded-full transition-all duration-300"
                           style={{ width: `${progress}%` }}
                         />
                       </div>
@@ -329,8 +329,8 @@ export default function ReportedIssuesPage() {
                         report.curious_count >= report.threshold
                             ? 'opacity-50 cursor-not-allowed bg-gray-100 border-gray-300 text-gray-500'
                             : report.is_curious 
-                            ? 'bg-indigo-600 hover:bg-indigo-700 text-white' 
-                            : 'border-indigo-400 text-indigo-700 hover:bg-indigo-50'
+                            ? 'bg-yellow-500 hover:bg-yellow-600 text-white'
+                            : 'border-yellow-400 text-yellow-700 hover:bg-yellow-50'
                         }`}
                     >
                         <Heart className={`w-4 h-4 mr-1 ${report.is_curious ? 'fill-current' : ''}`} />

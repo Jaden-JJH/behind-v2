@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { withCsrfProtection } from '@/lib/api-helpers'
 import { requireAdminAuth } from '@/lib/admin-auth'
@@ -97,6 +98,9 @@ export async function PUT(request: Request) {
           }
         }
       }
+
+      // 메인 페이지 캐시 무효화
+      revalidatePath('/')
 
       return NextResponse.json({
         success: true,

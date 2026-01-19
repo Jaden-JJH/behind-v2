@@ -281,7 +281,7 @@ export default function MyPage() {
         <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => router.push('/my/votes')}>
           <div className="flex items-center justify-between mb-2">
             <span className="text-2xl">🗳️</span>
-            <span className="text-3xl font-bold text-indigo-600">{stats.vote_count}</span>
+            <span className="text-3xl font-bold text-yellow-600">{stats.vote_count}</span>
           </div>
           <p className="text-gray-600 text-sm">참여한 투표</p>
         </Card>
@@ -289,7 +289,7 @@ export default function MyPage() {
         <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => router.push('/my/comments')}>
           <div className="flex items-center justify-between mb-2">
             <span className="text-2xl">💬</span>
-            <span className="text-3xl font-bold text-indigo-600">{stats.comment_count}</span>
+            <span className="text-3xl font-bold text-yellow-600">{stats.comment_count}</span>
           </div>
           <p className="text-gray-600 text-sm">작성한 댓글</p>
         </Card>
@@ -297,7 +297,7 @@ export default function MyPage() {
         <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => router.push('/my/curious')}>
           <div className="flex items-center justify-between mb-2">
             <span className="text-2xl">❓</span>
-            <span className="text-3xl font-bold text-indigo-600">{stats.curious_count}</span>
+            <span className="text-3xl font-bold text-yellow-600">{stats.curious_count}</span>
           </div>
           <p className="text-gray-600 text-sm">궁금해요 누른 제보</p>
         </Card>
