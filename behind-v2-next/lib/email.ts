@@ -148,7 +148,7 @@ export async function sendReportNotificationToAdmin(data: ReportEmailData) {
       신고 ${data.reportCount}회 누적 - 관리자 검토 필요
     </div>
 
-    <p>안녕하세요, Behind 관리자님.</p>
+    <p>안녕하세요, 이슈위키 관리자님.</p>
     <p><strong>${contentTypeKo}</strong> 콘텐츠가 <strong>${data.reportCount}회</strong> 신고되어 관리자 검토가 필요합니다.</p>
 
     <div class="info-section">
@@ -203,7 +203,7 @@ export async function sendReportNotificationToAdmin(data: ReportEmailData) {
     </div>
 
     <div class="footer">
-      <p>이 이메일은 Behind 신고 시스템에서 자동으로 발송되었습니다.</p>
+      <p>이 이메일은 이슈위키 신고 시스템에서 자동으로 발송되었습니다.</p>
       <p>정보통신망법 및 개인정보보호법에 따라 신고 내역이 기록되며, 24시간 내 검토가 권장됩니다.</p>
     </div>
   </div>
@@ -213,7 +213,7 @@ export async function sendReportNotificationToAdmin(data: ReportEmailData) {
 
   try {
     const { data: emailData, error } = await resend.emails.send({
-      from: 'Behind Reports <reports@behind.com>', // TODO: 실제 도메인으로 변경 필요
+      from: 'IssueWiki Reports <reports@issuewiki.com>', // TODO: 실제 도메인으로 변경 필요
       to: adminEmail,
       subject,
       html,
@@ -243,10 +243,10 @@ export async function sendTestEmail(toEmail: string) {
 
   try {
     const { data, error } = await resend.emails.send({
-      from: 'Behind <test@behind.com>',
+      from: 'IssueWiki <test@issuewiki.com>',
       to: toEmail,
-      subject: 'Test Email from Behind',
-      html: '<p>This is a test email from Behind reporting system.</p>',
+      subject: 'Test Email from IssueWiki',
+      html: '<p>This is a test email from IssueWiki reporting system.</p>',
     })
 
     if (error) {

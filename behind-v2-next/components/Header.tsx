@@ -94,7 +94,7 @@ export function Header() {
               href="/"
               className="text-base sm:text-lg md:text-xl font-semibold text-gray-900 hover:text-gray-700"
             >
-              Behind
+              이슈위키
             </Link>
           </div>
 

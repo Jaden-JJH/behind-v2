@@ -4,8 +4,8 @@ import { ChevronLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 export const metadata: Metadata = {
-  title: '이용약관 - Behind',
-  description: 'Behind 서비스 이용약관',
+  title: '이용약관 - 이슈위키',
+  description: '이슈위키 서비스 이용약관',
 }
 
 export default function TermsPage() {
@@ -22,13 +22,13 @@ export default function TermsPage() {
         </div>
 
         <article className="prose prose-slate dark:prose-invert max-w-none">
-          <h1 className="text-3xl font-bold mb-2">Behind 서비스 이용약관</h1>
+          <h1 className="text-3xl font-bold mb-2">이슈위키 서비스 이용약관</h1>
           <p className="text-muted-foreground mb-8">시행일: 2026년 1월 12일</p>
 
           <section className="mb-8">
             <h2 className="text-2xl font-semibold mt-8 mb-4">제1조 (목적)</h2>
             <p className="leading-relaxed text-foreground/90">
-              본 약관은 스톤즈랩(이하 &quot;회사&quot;)이 제공하는 Behind 서비스(이하 &quot;서비스&quot;)의 이용과 관련하여 회사와 이용자 간의 권리, 의무 및 책임사항, 기타 필요한 사항을 규정함을 목적으로 합니다.
+              본 약관은 스톤즈랩(이하 &quot;회사&quot;)이 제공하는 이슈위키 서비스(이하 &quot;서비스&quot;)의 이용과 관련하여 회사와 이용자 간의 권리, 의무 및 책임사항, 기타 필요한 사항을 규정함을 목적으로 합니다.
             </p>
           </section>
 
@@ -38,7 +38,7 @@ export default function TermsPage() {
               <li>&quot;서비스&quot;란 경제, 시사, 정치 등 뉴스 소식을 재해석하여 제공하는 정보 큐레이션 플랫폼을 의미합니다.</li>
               <li>&quot;이용자&quot;란 본 약관에 동의하고 회사가 제공하는 서비스를 이용하는 회원 및 비회원을 말합니다.</li>
               <li>&quot;회원&quot;이란 회사와 서비스 이용계약을 체결하고 이용자 아이디를 부여받은 자를 의미합니다.</li>
-              <li>&quot;비하인드(Behind) 콘텐츠&quot;란 원 기사를 재해석하여 정보·맥락·감정선을 추가하여 제공하는 본 서비스의 독창적 콘텐츠를 의미합니다.</li>
+              <li>&quot;이슈위키 콘텐츠&quot;란 원 기사를 재해석하여 정보·맥락·감정선을 추가하여 제공하는 본 서비스의 독창적 콘텐츠를 의미합니다.</li>
               <li>&quot;원본 기사&quot;란 각 언론사가 작성한 뉴스 기사 원문을 의미합니다.</li>
             </ol>
           </section>
@@ -105,12 +105,12 @@ export default function TermsPage() {
             <h2 className="text-2xl font-semibold mt-8 mb-4">제7조 (콘텐츠의 저작권 및 이용)</h2>
             <ol className="list-decimal pl-6 space-y-2 text-foreground/90">
               <li><strong>원본 기사의 저작권</strong>: 서비스 내 인용·참조되는 원본 기사의 저작권은 해당 언론사에 있으며, 회사는 저작권법 제28조(공표된 저작물의 인용)에 따라 정당한 범위 내에서 이를 인용합니다.</li>
-              <li><strong>Behind 콘텐츠의 저작권</strong>: 회사가 작성한 재해석 콘텐츠(&quot;비하인드&quot;)의 저작권은 회사에 귀속됩니다.</li>
+              <li><strong>이슈위키 콘텐츠의 저작권</strong>: 회사가 작성한 재해석 콘텐츠의 저작권은 회사에 귀속됩니다.</li>
               <li><strong>콘텐츠 성격 고지</strong>:
                 <ul className="list-disc pl-6 mt-2 space-y-1">
-                  <li>본 서비스의 &quot;비하인드&quot; 콘텐츠는 사실 보도와 무관한 해석·분석·창작 요소를 포함합니다.</li>
-                  <li>사실 정보는 각 언론사의 원본 기사를 기준으로 하며, 모든 비하인드 콘텐츠에는 원문 출처가 명시됩니다.</li>
-                  <li>비하인드 콘텐츠는 정보 재구성 및 맥락 제공을 목적으로 하며, 원본 기사의 단순 요약이 아닌 독창적 재해석입니다.</li>
+                  <li>본 서비스의 콘텐츠는 사실 보도와 무관한 해석·분석·창작 요소를 포함합니다.</li>
+                  <li>사실 정보는 각 언론사의 원본 기사를 기준으로 하며, 모든 콘텐츠에는 원문 출처가 명시됩니다.</li>
+                  <li>이슈위키 콘텐츠는 정보 재구성 및 맥락 제공을 목적으로 하며, 원본 기사의 단순 요약이 아닌 독창적 재해석입니다.</li>
                 </ul>
               </li>
               <li><strong>이용자의 무단 배포 금지</strong>: 이용자는 서비스를 통해 제공받은 콘텐츠를 회사의 사전 승낙 없이 복제, 전송, 출판, 배포, 방송 기타 방법으로 영리목적으로 이용하거나 제3자에게 이용하게 할 수 없습니다.</li>
@@ -127,7 +127,7 @@ export default function TermsPage() {
           <section className="mb-8">
             <h2 className="text-2xl font-semibold mt-8 mb-4">제8조 (원본 기사 출처 표시 및 링크)</h2>
             <ol className="list-decimal pl-6 space-y-2 text-foreground/90">
-              <li>모든 비하인드 콘텐츠에는 참조한 원본 기사의 출처(언론사명, 기자명, 게재일시)를 명확히 표시합니다.</li>
+              <li>모든 이슈위키 콘텐츠에는 참조한 원본 기사의 출처(언론사명, 기자명, 게재일시)를 명확히 표시합니다.</li>
               <li>원본 기사로 연결되는 링크를 제공하여 이용자가 원문을 직접 확인할 수 있도록 합니다.</li>
               <li>회사는 원본 기사의 수요를 대체하지 않으며, 오히려 원문 확인을 적극 권장합니다.</li>
             </ol>
@@ -204,7 +204,7 @@ export default function TermsPage() {
               <li>회사는 천재지변, 전쟁, 기간통신사업자의 서비스 중지 등 불가항력으로 인해 서비스를 제공할 수 없는 경우 책임이 면제됩니다.</li>
               <li>회사는 이용자의 귀책사유로 인한 서비스 이용 장애에 대하여 책임을 지지 않습니다.</li>
               <li>회사는 이용자가 게시 또는 전송한 정보, 자료, 사실의 신뢰도, 정확성 등에 대해서는 책임을 지지 않습니다.</li>
-              <li>회사는 원본 기사의 내용에 대해 책임을 지지 않으며, 비하인드 콘텐츠는 해석·분석의 성격을 가진 2차 창작물임을 명시합니다.</li>
+              <li>회사는 원본 기사의 내용에 대해 책임을 지지 않으며, 이슈위키 콘텐츠는 해석·분석의 성격을 가진 2차 창작물임을 명시합니다.</li>
               <li>회사는 이용자 상호간 또는 이용자와 제3자 상호간에 서비스를 매개로 발생한 분쟁에 대해 개입할 의무가 없으며 이로 인한 손해를 배상할 책임도 없습니다.</li>
             </ol>
           </section>

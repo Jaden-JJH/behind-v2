@@ -611,11 +611,11 @@ export default function IssueDetailPage() {
           </Card>
         )}
 
-        {/* 비하인드 */}
+        {/* 에디터 노트 */}
         {issue.behind_story && (
           <Card>
             <CardHeader>
-              <CardTitle>비하인드</CardTitle>
+              <CardTitle>에디터 노트</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground leading-relaxed">
@@ -813,7 +813,7 @@ export default function IssueDetailPage() {
       )}
 
       <footer className="py-6 text-center text-slate-500 border-t border-slate-200 bg-white mt-8">
-        © 2025 비하인드. 모두의 뒷얘기 살롱.
+        © 2026 스톤즈랩. 대한민국 No.1 뉴스 아카이브.
       </footer>
     </div>
   );

@@ -1531,11 +1531,11 @@ export default function AdminIssuesPage() {
               <h3 className="text-sm font-semibold mb-3">추가 정보</h3>
 
               <div>
-                <label className="block text-sm font-medium mb-2">Behind Story (최대 1000자)</label>
+                <label className="block text-sm font-medium mb-2">에디터 노트 (최대 1000자)</label>
                 <Textarea
                   value={editBehindStory}
                   onChange={(e) => setEditBehindStory(e.target.value)}
-                  placeholder="Behind Story를 입력하세요"
+                  placeholder="에디터 노트를 입력하세요"
                   maxLength={1000}
                   rows={3}
                 />

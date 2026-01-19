@@ -172,7 +172,7 @@ export function NicknameModal({ open, onSuccess }: NicknameModalProps) {
         <DialogHeader>
           <DialogTitle>닉네임 설정</DialogTitle>
           <p className="text-muted-foreground text-sm">
-            Behind에서 사용할 닉네임을 설정해주세요
+            이슈위키에서 사용할 닉네임을 설정해주세요
           </p>
         </DialogHeader>
 

@@ -78,7 +78,7 @@ export default function AdminLayout({
       {/* Sidebar - Desktop */}
       <aside className="hidden md:flex md:flex-col w-64 bg-gray-800 text-white">
         <div className="p-6 border-b border-gray-700">
-          <h1 className="text-xl font-bold">비하인드 어드민</h1>
+          <h1 className="text-xl font-bold">이슈위키 어드민</h1>
         </div>
 
         <nav className="flex-1 p-4 space-y-2">
@@ -194,7 +194,7 @@ export default function AdminLayout({
 
       {/* Mobile Menu Button */}
       <div className="md:hidden fixed top-0 left-0 right-0 bg-gray-800 text-white p-4 z-50 flex items-center justify-between">
-        <h1 className="text-lg font-bold">비하인드 어드민</h1>
+        <h1 className="text-lg font-bold">이슈위키 어드민</h1>
         <button
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           className="text-white p-2"

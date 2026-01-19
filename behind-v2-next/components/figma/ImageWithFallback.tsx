@@ -42,7 +42,7 @@ export function ImageWithFallback(props: ImageWithFallbackProps) {
     return (
       <Image
         src={resolvedSrc}
-        alt={alt || 'Behind issue thumbnail'}
+        alt={alt || '이슈위키 썸네일'}
         className={className}
         fill
         sizes={sizes || '(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw'}
@@ -58,7 +58,7 @@ export function ImageWithFallback(props: ImageWithFallbackProps) {
     return (
       <Image
         src={resolvedSrc}
-        alt={alt || 'Behind issue thumbnail'}
+        alt={alt || '이슈위키 썸네일'}
         className={className}
         width={width}
         height={height}
@@ -73,7 +73,7 @@ export function ImageWithFallback(props: ImageWithFallbackProps) {
   return (
     <img
       src={resolvedSrc}
-      alt={alt || 'Behind issue thumbnail'}
+      alt={alt || '이슈위키 썸네일'}
       className={className}
       onError={hasValidSrc ? handleError : undefined}
       {...rest}

@@ -18,14 +18,39 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Behind - 모두의 뒷얘기 살롱",
-  description: "지금 가장 뜨거운 이슈의 뒷이야기를 나누는 공간",
+  title: "이슈위키 - 대한민국 No.1 뉴스 아카이브",
+  description: "지금 가장 뜨거운 이슈의 뒷이야기를 나누는 공간, 이슈위키에서 다양한 시각으로 뉴스를 탐색하세요.",
   viewport: {
     width: "device-width",
     initialScale: 1,
     maximumScale: 5,
     userScalable: true,
   },
+  openGraph: {
+    title: "이슈위키 - 대한민국 No.1 뉴스 아카이브",
+    description: "지금 가장 뜨거운 이슈의 뒷이야기를 나누는 공간, 이슈위키에서 다양한 시각으로 뉴스를 탐색하세요.",
+    type: "website",
+    locale: "ko_KR",
+    siteName: "이슈위키",
+    images: [
+      {
+        url: "/issuewiki-og.png",
+        width: 1200,
+        height: 630,
+        alt: "이슈위키 - 대한민국 No.1 뉴스 아카이브",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "이슈위키 - 대한민국 No.1 뉴스 아카이브",
+    description: "지금 가장 뜨거운 이슈의 뒷이야기를 나누는 공간",
+    images: ["/issuewiki-og.png"],
+  },
+  keywords: ["뉴스", "이슈", "아카이브", "이슈위키", "IssueWiki", "뉴스 아카이브", "이슈 정리"],
+  authors: [{ name: "스톤즈랩" }],
+  creator: "스톤즈랩",
+  publisher: "스톤즈랩",
 };
 
 export default function RootLayout({

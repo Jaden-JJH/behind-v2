@@ -30,7 +30,7 @@ export function ReportBanner() {
               </span>
             </div>
             <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-white leading-tight">
-              월 7,000명이 함께하는 이슈 토론, <span className="text-yellow-400">비하인드</span>
+              월 7,000명이 함께하는 이슈 토론, <span className="text-yellow-400">이슈위키</span>
             </h3>
           </div>
 

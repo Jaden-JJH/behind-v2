@@ -4,8 +4,8 @@ import { ChevronLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 export const metadata: Metadata = {
-  title: '개인정보처리방침 - Behind',
-  description: 'Behind 개인정보처리방침',
+  title: '개인정보처리방침 - 이슈위키',
+  description: '이슈위키 개인정보처리방침',
 }
 
 export default function PrivacyPage() {
@@ -22,7 +22,7 @@ export default function PrivacyPage() {
         </div>
 
         <article className="prose prose-slate dark:prose-invert max-w-none">
-          <h1 className="text-3xl font-bold mb-2">Behind 개인정보처리방침</h1>
+          <h1 className="text-3xl font-bold mb-2">이슈위키 개인정보처리방침</h1>
           <p className="text-muted-foreground mb-8">시행일: 2026년 1월 9일</p>
 
           <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-8">

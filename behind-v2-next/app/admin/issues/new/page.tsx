@@ -264,14 +264,14 @@ export default function AdminPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">비하인드</label>
+            <label className="block text-sm font-medium mb-2">에디터 노트</label>
             <textarea
               value={behindStory}
               onChange={(e) => setBehindStory(e.target.value)}
               maxLength={1000}
               rows={5}
               className="w-full px-4 py-2 border rounded-lg"
-              placeholder="내부자의 진짜 이야기나 비하인드 (선택, 최대 1000자)"
+              placeholder="에디터의 심층 분석 또는 추가 정보 (선택, 최대 1000자)"
             />
             <p className="text-xs text-gray-500 mt-1">{behindStory.length}/1000자</p>
             <p className="text-xs text-gray-400 mt-1">입력하지 않으면 이슈 상세 페이지에 표시되지 않습니다</p>
