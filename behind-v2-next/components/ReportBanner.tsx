@@ -41,7 +41,7 @@ export function ReportBanner() {
               className="group bg-yellow-400 text-slate-900 hover:bg-yellow-300 font-bold text-sm sm:text-base px-5 sm:px-8 py-2.5 sm:py-3.5 rounded-xl shadow-xl hover:shadow-yellow-400/30 transition-all duration-300 hover:scale-105 active:scale-95 flex items-center gap-1.5 sm:gap-2 whitespace-nowrap"
             >
               <Send className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-              지금 제보하기
+              이슈 제보하기
             </button>
           </div>
         </div>

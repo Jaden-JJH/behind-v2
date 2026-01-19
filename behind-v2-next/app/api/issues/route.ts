@@ -44,6 +44,7 @@ export async function GET(request: Request) {
       query = query
         .eq('approval_status', 'approved')
         .eq('status', 'active')
+        .eq('visibility', 'active')
         .or(`title.ilike.%${searchQuery}%,preview.ilike.%${searchQuery}%`)
         .order('created_at', { ascending: false })
     }
@@ -51,6 +52,7 @@ export async function GET(request: Request) {
     else if (includeAll) {
       query = query
         .eq('approval_status', 'approved')
+        .eq('visibility', 'active')
         .order('created_at', { ascending: false })
 
       if (!statusParam || statusParam === 'active') {
@@ -62,6 +64,7 @@ export async function GET(request: Request) {
       }
     } else {
       query = query
+        .eq('visibility', 'active')
         .or('show_in_main_hot.eq.true,show_in_main_poll.eq.true')
         .order('show_in_main_hot', { ascending: false, nullsFirst: false })
         .order('created_at', { ascending: false })

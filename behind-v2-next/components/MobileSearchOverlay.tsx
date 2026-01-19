@@ -146,7 +146,7 @@ export function MobileSearchOverlay({
               onChange={handleInputChange}
               onKeyDown={handleKeyDown}
               placeholder="이슈&뉴스 검색"
-              className="w-full h-11 pl-10 pr-10 rounded-full border border-slate-300 bg-white text-base placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-slate-800 transition-all shadow-sm"
+              className="w-full h-11 pl-10 pr-10 rounded-full border border-slate-300 bg-white text-base placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all shadow-sm"
             />
             {query && (
               <button

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { Menu, Search, CircleUser } from "lucide-react";
+import Image from "next/image";
 
 import { useAuth } from "@/hooks/useAuth";
 import { NicknameModal } from "@/components/NicknameModal";
@@ -97,8 +98,15 @@ export function Header() {
 
             <Link
               href="/"
-              className="text-base sm:text-lg md:text-xl font-semibold text-gray-900 hover:text-gray-700 shrink-0"
+              className="flex items-center gap-1.5 text-base sm:text-lg md:text-xl font-semibold text-gray-900 hover:text-gray-700 shrink-0"
             >
+              <Image
+                src="/favicon.svg"
+                alt="이슈위키"
+                width={24}
+                height={24}
+                className="w-5 h-5 sm:w-6 sm:h-6"
+              />
               이슈위키
             </Link>
           </div>
@@ -110,13 +118,14 @@ export function Header() {
 
           {/* 우측: 모바일 검색 + 로그인/마이페이지 */}
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-            {/* 모바일 검색 버튼 */}
+            {/* 모바일 검색 버튼 - 인풋박스 스타일 */}
             <button
               type="button"
-              className="md:hidden rounded-full p-2.5 bg-slate-800 hover:bg-slate-700 min-w-[44px] min-h-[44px] flex items-center justify-center transition-colors shadow-sm"
+              className="md:hidden flex items-center gap-2 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 rounded-full text-slate-500 transition-colors"
               onClick={() => setIsMobileSearchOpen(true)}
             >
-              <Search className="h-5 w-5 text-yellow-400" />
+              <Search className="h-4 w-4" />
+              <span className="text-sm">이슈 검색</span>
             </button>
 
             {/* 로그인/마이페이지 */}
@@ -125,17 +134,20 @@ export function Header() {
                 href="/my"
                 className="group flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-indigo-50 transition-colors"
               >
-                <span className="hidden sm:inline text-base font-medium text-slate-700 group-hover:text-indigo-700">
+                <span className="hidden md:inline text-base font-medium text-slate-700 group-hover:text-indigo-700">
                   {nickname ?? "닉네임 미설정"}
                 </span>
                 <CircleUser className="h-6 w-6 text-indigo-600 group-hover:text-indigo-700" />
               </Link>
             ) : (
-              <LoginDropdown
-                onGoogleSignIn={handleSignIn}
-                onKakaoSignIn={handleKakaoSignIn}
-                loading={loading}
-              />
+              /* PC에서만 로그인 버튼 표시 - 모바일은 햄버거 메뉴에서 로그인 */
+              <div className="hidden md:block">
+                <LoginDropdown
+                  onGoogleSignIn={handleSignIn}
+                  onKakaoSignIn={handleKakaoSignIn}
+                  loading={loading}
+                />
+              </div>
             )}
           </div>
         </div>
