@@ -58,6 +58,9 @@ export default function MyPage() {
   const [showDeleteStep2, setShowDeleteStep2] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
 
+  // 로그아웃 중 상태 (자동 로그인 방지용)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
+
   const fetchProfile = useCallback(async () => {
     try {
       const response = await fetch('/api/my/profile')
@@ -158,7 +161,7 @@ export default function MyPage() {
   }
 
   useEffect(() => {
-    if (loading) return
+    if (loading || isLoggingOut) return
 
     if (!user && !loginAttempted) {
       // 첫 시도: 비로그인 시 로그인 시도
@@ -177,7 +180,7 @@ export default function MyPage() {
       // 로그인 성공 → 프로필 데이터 조회
       fetchProfile()
     }
-  }, [user, loading, loginAttempted])
+  }, [user, loading, loginAttempted, isLoggingOut])
 
   // 로딩 중이거나 로그인 처리 중
   if (loading || isLoading || !user) {
@@ -254,6 +257,7 @@ export default function MyPage() {
             variant="ghost"
             size="sm"
             onClick={async () => {
+              setIsLoggingOut(true)
               await signOut()
               window.location.href = '/'
             }}
