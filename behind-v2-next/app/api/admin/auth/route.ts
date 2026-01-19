@@ -4,6 +4,9 @@ import { withCsrfProtection } from '@/lib/api-helpers'
 import { verifyPassword } from '@/lib/password'
 import { setAdminTokenCookie } from '@/lib/admin-auth'
 
+// Node.js runtime 사용 (bcryptjs, crypto 모듈 필요)
+export const runtime = 'nodejs'
+
 export async function POST(request: Request) {
   return withCsrfProtection(request, async (req) => {
     // Rate Limiting 체크

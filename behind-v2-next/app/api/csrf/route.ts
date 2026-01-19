@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { setCsrfToken } from '@/lib/csrf';
 
+// Node.js runtime 사용 (crypto 모듈 필요)
+export const runtime = 'nodejs'
+
 /**
  * CSRF 토큰 발급 API
  * GET /api/csrf
