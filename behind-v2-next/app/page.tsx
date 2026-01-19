@@ -1,3 +1,4 @@
+import Link from "next/link"
 import { fetchLandingPageData } from "@/lib/server-data-fetchers"
 import { ActiveIssuesList } from "@/components/landing/ActiveIssuesList"
 import { QuickVoteSection } from "@/components/landing/QuickVoteSection"
@@ -53,6 +54,16 @@ export default async function LandingPage() {
 
           {/* 활성 이슈 목록 */}
           <ActiveIssuesList issues={activeIssues} chatStates={chatStates} />
+
+          {/* 전체 이슈 보기 링크 */}
+          <div className="flex justify-end mt-2">
+            <Link
+              href="/issues"
+              className="text-sm text-slate-600 hover:text-indigo-600 transition-colors font-medium"
+            >
+              전체 이슈 보기 →
+            </Link>
+          </div>
 
           {/* 실시간 투표 */}
           <QuickVoteSection pollIssues={pollIssues} />

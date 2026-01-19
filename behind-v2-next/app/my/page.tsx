@@ -41,7 +41,7 @@ interface ProfileData {
 }
 
 export default function MyPage() {
-  const { user, loading, signInWithGoogle } = useAuth()
+  const { user, loading, signInWithGoogle, signOut } = useAuth()
   const router = useRouter()
   const [profileData, setProfileData] = useState<ProfileData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -248,12 +248,22 @@ export default function MyPage() {
           </div>
         </div>
 
-        {/* 회원 탈퇴 버튼 */}
-        <div className="mt-6 pt-6 border-t">
+        {/* 로그아웃 / 회원 탈퇴 버튼 (PC: 우측 정렬) */}
+        <div className="mt-6 pt-6 border-t flex justify-end gap-3">
           <Button
             variant="ghost"
             size="sm"
-            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+            onClick={async () => {
+              await signOut()
+              window.location.href = '/'
+            }}
+          >
+            로그아웃
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-red-600 border-red-300 hover:text-red-700 hover:bg-red-50 hover:border-red-400"
             onClick={() => setShowDeleteStep1(true)}
           >
             회원 탈퇴

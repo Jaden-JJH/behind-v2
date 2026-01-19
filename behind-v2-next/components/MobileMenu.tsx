@@ -221,14 +221,6 @@ export function MobileMenu({
             )}
           </div>
 
-          <Link
-            href="/my/chat-rooms"
-            className="px-4 py-3 text-slate-700 transition-colors hover:bg-slate-100"
-            onClick={onClose}
-          >
-            채팅방
-          </Link>
-
           <a
             href="https://forms.gle/xot7tw9vZ48uhChG7"
             target="_blank"

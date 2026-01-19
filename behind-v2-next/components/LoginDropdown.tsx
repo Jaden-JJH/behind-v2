@@ -3,7 +3,11 @@
 import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { ChevronDown } from "lucide-react";
-import { Button } from "@/components/ui/button";
+
+const LOGIN_PROVIDERS = [
+  { name: "google", logo: "/google-logo.png", alt: "Google" },
+  { name: "kakao", logo: "/kakao-logo.png", alt: "Kakao" },
+];
 
 interface LoginDropdownProps {
   onGoogleSignIn: () => Promise<void>;
@@ -17,7 +21,22 @@ export function LoginDropdown({
   loading = false,
 }: LoginDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [currentLogoIndex, setCurrentLogoIndex] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // 로고 로테이션 (3초마다)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIsAnimating(true);
+      setTimeout(() => {
+        setCurrentLogoIndex((prev) => (prev + 1) % LOGIN_PROVIDERS.length);
+        setIsAnimating(false);
+      }, 300);
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   // 외부 클릭 시 드롭다운 닫기
   useEffect(() => {
@@ -46,18 +65,44 @@ export function LoginDropdown({
 
   return (
     <div ref={containerRef} className="relative">
-      <Button
-        variant="outline"
-        size="sm"
+      <button
+        type="button"
         onClick={() => setIsOpen(!isOpen)}
         disabled={loading}
-        className="flex items-center gap-1.5 min-h-[40px] px-4"
+        className="flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-slate-100 transition-colors"
       >
-        <span className="text-sm">로그인</span>
+        {/* 로고 로테이션 영역 */}
+        <div className="relative w-6 h-6 overflow-hidden">
+          {LOGIN_PROVIDERS.map((provider, index) => (
+            <div
+              key={provider.name}
+              className={`absolute inset-0 transition-all duration-300 ease-in-out ${
+                index === currentLogoIndex
+                  ? isAnimating
+                    ? "-translate-y-full opacity-0"
+                    : "translate-y-0 opacity-100"
+                  : index === (currentLogoIndex + 1) % LOGIN_PROVIDERS.length
+                  ? isAnimating
+                    ? "translate-y-0 opacity-100"
+                    : "translate-y-full opacity-0"
+                  : "translate-y-full opacity-0"
+              }`}
+            >
+              <Image
+                src={provider.logo}
+                alt={provider.alt}
+                width={24}
+                height={24}
+                className="w-6 h-6"
+              />
+            </div>
+          ))}
+        </div>
+        <span className="text-base font-medium text-slate-700">로그인</span>
         <ChevronDown
-          className={`h-4 w-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
+          className={`h-4 w-4 text-slate-500 transition-transform ${isOpen ? "rotate-180" : ""}`}
         />
-      </Button>
+      </button>
 
       {isOpen && (
         <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-slate-200 rounded-lg shadow-lg z-50 overflow-hidden">
