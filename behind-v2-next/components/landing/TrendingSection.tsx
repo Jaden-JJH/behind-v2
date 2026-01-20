@@ -26,6 +26,11 @@ export function TrendingSection({ issues }: TrendingSectionProps) {
     return num.toString()
   }
 
+  // 이슈가 없으면 영역 숨김
+  if (!issues || issues.length === 0) {
+    return null
+  }
+
   return (
     <Card className="bg-white border-slate-200 shadow-sm">
       <CardHeader className="pb-1 sm:pb-2">

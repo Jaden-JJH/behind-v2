@@ -139,16 +139,16 @@ export default function AdminPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium mb-2">제목</label>
-            <input
-              type="text"
+            <textarea
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
               maxLength={50}
-              className="w-full px-4 py-2 border rounded-lg"
-              placeholder="이슈 제목 (5-50자, 예: 아이돌 A씨 계약 분쟁)"
+              rows={2}
+              className="w-full px-4 py-2 border rounded-lg resize-none"
+              placeholder="이슈 제목 (5-50자, 예: 아이돌 A씨 계약 분쟁)&#10;줄바꿈 가능"
             />
-            <p className="text-xs text-gray-500 mt-1">{title.length}/50자</p>
+            <p className="text-xs text-gray-500 mt-1">{title.length}/50자 (줄바꿈 포함)</p>
           </div>
 
           <div>

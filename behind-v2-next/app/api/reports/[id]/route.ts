@@ -1,15 +1,10 @@
-import { createClient } from '@supabase/supabase-js'
-import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 import { createErrorResponse, createSuccessResponse, ErrorCode, validateRequired } from '@/lib/api-error'
 import { sanitizeHtml } from '@/lib/sanitize'
 import { withCsrfProtection } from '@/lib/api-helpers'
-
-// 서버에서만 사용하는 Supabase 클라이언트
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+import { supabaseAdmin } from '@/lib/supabase-admin'
+import { requireAdminAuth } from '@/lib/admin-auth'
 
 export async function PUT(
   request: Request,
@@ -18,11 +13,7 @@ export async function PUT(
   return withCsrfProtection(request, async (req) => {
     try {
       // 1. 어드민 인증 확인
-      const cookieStore = await cookies()
-      const adminAuth = cookieStore.get('admin-auth')
-      if (!adminAuth || adminAuth.value !== 'true') {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-      }
+      await requireAdminAuth()
 
       // 2. ID 추출
       const { id: reportId } = await params
@@ -69,7 +60,7 @@ export async function PUT(
       }
 
       // 7. Supabase update
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdmin
         .from('reports')
         .update({
           title: sanitizedTitle,
@@ -112,17 +103,13 @@ export async function DELETE(
   return withCsrfProtection(request, async (req) => {
     try {
       // 1. 어드민 인증 확인
-      const cookieStore = await cookies()
-      const adminAuth = cookieStore.get('admin-auth')
-      if (!adminAuth || adminAuth.value !== 'true') {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-      }
+      await requireAdminAuth()
 
       // 2. ID 추출
       const { id: reportId } = await params
 
       // 3. 리포트 조회 (visibility 확인)
-      const { data: report, error: fetchError } = await supabase
+      const { data: report, error: fetchError } = await supabaseAdmin
         .from('reports')
         .select('visibility')
         .eq('id', reportId)
@@ -148,7 +135,7 @@ export async function DELETE(
       }
 
       // 5. Supabase delete
-      const { error } = await supabase
+      const { error } = await supabaseAdmin
         .from('reports')
         .delete()
         .eq('id', reportId)
@@ -175,11 +162,7 @@ export async function PATCH(
   return withCsrfProtection(request, async (req) => {
     try {
       // 1. 어드민 인증 확인
-      const cookieStore = await cookies()
-      const adminAuth = cookieStore.get('admin-auth')
-      if (!adminAuth || adminAuth.value !== 'true') {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-      }
+      await requireAdminAuth()
 
       // 2. ID 추출
       const { id: reportId } = await params
@@ -197,7 +180,7 @@ export async function PATCH(
       }
 
       // 5. Supabase update
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdmin
         .from('reports')
         .update({ visibility })
         .eq('id', reportId)
@@ -220,7 +203,10 @@ export async function PATCH(
         return createErrorResponse(ErrorCode.INTERNAL_ERROR, 500, error.message)
       }
 
-      // 7. 성공 응답
+      // 7. 메인 페이지 캐시 무효화
+      revalidatePath('/')
+
+      // 8. 성공 응답
       return createSuccessResponse(data, 200)
     } catch (error) {
       console.error('API error:', error)

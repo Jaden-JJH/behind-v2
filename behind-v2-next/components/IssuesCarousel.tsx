@@ -10,7 +10,16 @@ interface CarouselIssue {
   title: string
   preview: string
   thumbnail: string | null
+  created_at: string
   position: number
+}
+
+function formatDate(dateString: string): string {
+  const date = new Date(dateString)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}.${month}.${day}`
 }
 
 interface IssuesCarouselProps {
@@ -187,17 +196,17 @@ export function IssuesCarousel({ issues }: IssuesCarouselProps) {
               </div>
 
               {/* 제목 */}
-              <h3 className={`font-bold mb-2 line-clamp-2 ${
+              <h3 className={`font-bold line-clamp-2 mb-1 whitespace-pre-line ${
                 idx === 1 ? 'text-xl' : 'text-base'
               }`}>
                 {issue.title}
               </h3>
 
-              {/* 프리뷰 */}
-              <p className={`text-gray-600 line-clamp-2 ${
-                idx === 1 ? 'text-base' : 'text-sm'
+              {/* 게시일 */}
+              <p className={`text-gray-500 text-center ${
+                idx === 1 ? 'text-sm' : 'text-xs'
               }`}>
-                {issue.preview}
+                {formatDate(issue.created_at)}
               </p>
             </div>
           ))}
@@ -268,13 +277,13 @@ export function IssuesCarousel({ issues }: IssuesCarouselProps) {
                 </div>
 
                 {/* 제목 */}
-                <h3 className="text-lg font-bold mb-2 line-clamp-2">
+                <h3 className="text-lg font-bold line-clamp-2 mb-1 whitespace-pre-line">
                   {issue.title}
                 </h3>
 
-                {/* 프리뷰 */}
-                <p className="text-sm text-gray-600 line-clamp-3">
-                  {issue.preview}
+                {/* 게시일 */}
+                <p className="text-xs text-gray-500 text-center">
+                  {formatDate(issue.created_at)}
                 </p>
               </div>
             ))}

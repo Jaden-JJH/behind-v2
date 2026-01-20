@@ -192,25 +192,8 @@ export async function fetchTrendingIssues() {
     console.error('Failed to fetch trending from settings:', err)
   }
 
-  // Fallback: 조회수 기반 정렬
-  const { data: fallbackIssues, error: fallbackError } = await supabase
-    .from('issues')
-    .select('id, display_id, title, view_count')
-    .eq('status', 'active')
-    .order('view_count', { ascending: false })
-    .range(0, 4) // 5개
-
-  if (fallbackError) {
-    console.error('Failed to fetch fallback trending:', fallbackError)
-    return []
-  }
-
-  return (fallbackIssues || []).map((issue) => ({
-    id: issue.id,
-    display_id: issue.display_id,
-    title: issue.title,
-    change: '0'
-  }))
+  // 어드민 설정이 비어있으면 빈 배열 반환 (영역 숨김)
+  return []
 }
 
 /**
@@ -254,7 +237,7 @@ export async function fetchCarouselIssues() {
 
   const { data: issues, error } = await supabase
     .from('issues')
-    .select('id, display_id, title, preview, thumbnail, show_in_carousel_slot1, show_in_carousel_slot2, show_in_carousel_slot3, show_in_carousel_slot4, show_in_carousel_slot5')
+    .select('id, display_id, title, preview, thumbnail, created_at, show_in_carousel_slot1, show_in_carousel_slot2, show_in_carousel_slot3, show_in_carousel_slot4, show_in_carousel_slot5')
     .eq('approval_status', 'approved')
     .eq('visibility', 'active')
     .or('show_in_carousel_slot1.eq.true,show_in_carousel_slot2.eq.true,show_in_carousel_slot3.eq.true,show_in_carousel_slot4.eq.true,show_in_carousel_slot5.eq.true')
@@ -274,11 +257,11 @@ export async function fetchCarouselIssues() {
 
   // 슬롯 순서대로 배열 구성
   const carouselIssues = []
-  if (slot1) carouselIssues.push({ id: slot1.id, display_id: slot1.display_id, title: slot1.title, preview: slot1.preview, thumbnail: slot1.thumbnail, position: 1 })
-  if (slot2) carouselIssues.push({ id: slot2.id, display_id: slot2.display_id, title: slot2.title, preview: slot2.preview, thumbnail: slot2.thumbnail, position: 2 })
-  if (slot3) carouselIssues.push({ id: slot3.id, display_id: slot3.display_id, title: slot3.title, preview: slot3.preview, thumbnail: slot3.thumbnail, position: 3 })
-  if (slot4) carouselIssues.push({ id: slot4.id, display_id: slot4.display_id, title: slot4.title, preview: slot4.preview, thumbnail: slot4.thumbnail, position: 4 })
-  if (slot5) carouselIssues.push({ id: slot5.id, display_id: slot5.display_id, title: slot5.title, preview: slot5.preview, thumbnail: slot5.thumbnail, position: 5 })
+  if (slot1) carouselIssues.push({ id: slot1.id, display_id: slot1.display_id, title: slot1.title, preview: slot1.preview, thumbnail: slot1.thumbnail, created_at: slot1.created_at, position: 1 })
+  if (slot2) carouselIssues.push({ id: slot2.id, display_id: slot2.display_id, title: slot2.title, preview: slot2.preview, thumbnail: slot2.thumbnail, created_at: slot2.created_at, position: 2 })
+  if (slot3) carouselIssues.push({ id: slot3.id, display_id: slot3.display_id, title: slot3.title, preview: slot3.preview, thumbnail: slot3.thumbnail, created_at: slot3.created_at, position: 3 })
+  if (slot4) carouselIssues.push({ id: slot4.id, display_id: slot4.display_id, title: slot4.title, preview: slot4.preview, thumbnail: slot4.thumbnail, created_at: slot4.created_at, position: 4 })
+  if (slot5) carouselIssues.push({ id: slot5.id, display_id: slot5.display_id, title: slot5.title, preview: slot5.preview, thumbnail: slot5.thumbnail, created_at: slot5.created_at, position: 5 })
 
   return carouselIssues
 }
