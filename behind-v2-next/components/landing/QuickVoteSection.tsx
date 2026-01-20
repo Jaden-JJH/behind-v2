@@ -33,8 +33,8 @@ export function QuickVoteSection({ pollIssues }: QuickVoteSectionProps) {
   }
 
   return (
-    <div className="relative mt-4 sm:mt-6 md:mt-8 p-4 sm:p-5 md:p-6 rounded-2xl bg-slate-50 border border-slate-200 shadow-sm">
-      <div className="absolute -top-3 left-6 px-4 py-1.5 bg-slate-800 text-white text-sm font-medium rounded-full shadow-md flex items-center gap-2 animate-pulse">
+    <div className="relative mt-4 sm:mt-6 md:mt-8 p-4 sm:p-5 md:p-6 rounded-2xl bg-slate-50 border border-slate-200">
+      <div className="absolute -top-3 left-6 px-4 py-1.5 bg-slate-800 text-yellow-400 text-sm font-medium rounded-full shadow-md flex items-center gap-2">
         <Flame className="w-4 h-4" />
         <span>실시간 투표 참여하기</span>
       </div>
