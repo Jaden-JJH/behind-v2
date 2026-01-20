@@ -511,7 +511,7 @@ export default function IssueDetailPage() {
 
       <main className="max-w-6xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-5 md:py-8 space-y-4 sm:space-y-5 md:space-y-6">
         {/* 썸네일 이미지 */}
-        <div className="relative w-full aspect-video bg-muted rounded-xl overflow-hidden">
+        <div className="relative w-full max-w-3xl mx-auto aspect-video bg-muted rounded-xl overflow-hidden">
           <ImageWithFallback
             src={issue.thumbnail}
             alt={issue.title}
@@ -542,10 +542,10 @@ export default function IssueDetailPage() {
         ) : (
           <Card>
             <CardHeader>
-              <CardTitle>사건 요약</CardTitle>
+              <CardTitle className="text-lg sm:text-xl font-semibold">사건 요약</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground leading-relaxed">
+              <p className="text-slate-700 text-base sm:text-lg leading-7 sm:leading-8">
                 {issue.summary || issue.preview}
               </p>
             </CardContent>
@@ -556,7 +556,7 @@ export default function IssueDetailPage() {
         {issue.media_embed && (
           <Card>
             <CardHeader>
-              <CardTitle>관련 미디어</CardTitle>
+              <CardTitle className="text-lg sm:text-xl font-semibold">관련 미디어</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {/* 유튜브 임베드 */}
@@ -565,7 +565,7 @@ export default function IssueDetailPage() {
                 if (!videoId) return null;
 
                 return (
-                  <div>
+                  <div className="max-w-2xl mx-auto">
                     <div className="aspect-video rounded-lg overflow-hidden bg-muted">
                       <iframe
                         width="100%"
@@ -615,10 +615,10 @@ export default function IssueDetailPage() {
         {issue.behind_story && (
           <Card>
             <CardHeader>
-              <CardTitle>에디터 노트</CardTitle>
+              <CardTitle className="text-lg sm:text-xl font-semibold">에디터 노트</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground leading-relaxed">
+              <p className="text-slate-700 text-base sm:text-lg leading-7 sm:leading-8">
                 {issue.behind_story}
               </p>
             </CardContent>
@@ -656,7 +656,7 @@ export default function IssueDetailPage() {
         {/* 댓글 */}
         <div id="comments" className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2>댓글</h2>
+            <h2 className="text-lg sm:text-xl font-semibold">댓글</h2>
             <Tabs value={sortBy} onValueChange={(value) => setSortBy(value as 'recent' | 'popular')}>
               <TabsList>
                 <TabsTrigger value="popular">인기순</TabsTrigger>
@@ -812,9 +812,6 @@ export default function IssueDetailPage() {
         />
       )}
 
-      <footer className="py-6 text-center text-slate-500 border-t border-slate-200 bg-white mt-8">
-        © 2026 스톤즈랩. 대한민국 No.1 뉴스 아카이브.
-      </footer>
     </div>
   );
 }

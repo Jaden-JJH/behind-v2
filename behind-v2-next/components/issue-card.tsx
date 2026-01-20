@@ -48,39 +48,44 @@ export function IssueCard({ issue, onOpenIssue, onOpenChat }: IssueCardProps) {
 
   return (
     <Card
-      className="bg-white border-slate-200 hover:border-slate-300 hover:shadow-md transition-all overflow-hidden cursor-pointer sm:cursor-default"
+      className="group bg-white border-slate-200 hover:border-slate-300 transition-all overflow-hidden cursor-pointer"
       onClick={() => onOpenIssue(String(issue.display_id))}
     >
-      <div className="flex gap-3 sm:gap-3.5 md:gap-4 p-4 sm:p-4.5 md:p-5">
+      <div className="flex gap-3 sm:gap-4 md:gap-5 p-4 sm:p-5">
         {/* 썸네일 */}
-        <div className="w-40 h-32 sm:w-44 sm:h-36 md:w-48 md:h-36 flex-shrink-0 rounded-lg overflow-hidden bg-slate-100">
+        <div className="w-36 h-28 sm:w-44 sm:h-32 md:w-48 md:h-36 flex-shrink-0 rounded-xl overflow-hidden bg-slate-100">
           <ImageWithFallback
             src={issue.thumbnail}
             alt={issue.title}
-            className="w-full h-full object-cover hover:scale-105 transition-transform"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
         </div>
 
-        {/* 콘텐츠 영역 - min-w-0 추가로 flex shrink 허용 */}
-        <div className="flex-1 min-w-0 flex flex-col justify-between">
+        {/* 콘텐츠 영역 */}
+        <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
           <div className="space-y-1.5 sm:space-y-2">
-            <h3 className="text-base sm:text-lg md:text-xl font-bold text-slate-900 sm:hover:text-slate-700 transition-colors leading-snug line-clamp-2">
+            <h3 className="text-base sm:text-lg md:text-xl font-bold text-slate-900 group-hover:text-slate-700 transition-colors leading-snug line-clamp-2">
               {issue.title}
             </h3>
-            <p className="text-slate-600 text-xs sm:text-sm md:text-base leading-relaxed line-clamp-2">{issue.preview}</p>
+            <p className="text-slate-500 text-xs sm:text-sm md:text-base leading-relaxed line-clamp-2">
+              {issue.preview}
+            </p>
           </div>
 
-          <div className="flex items-center justify-end gap-4 sm:gap-5 mt-3 sm:mt-4">
-            <span className="flex items-center gap-2">
-              <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400" />
-              <span className="text-sm sm:text-base font-semibold text-slate-500">{issue.commentCount || 0}</span>
+          <div className="flex items-center gap-4 mt-3 sm:mt-auto pt-2">
+            <span className="flex items-center gap-1.5 text-slate-400">
+              <MessageCircle className="w-4 h-4" />
+              <span className="text-sm font-medium">{issue.commentCount || 0}</span>
             </span>
             {issue.viewCount !== undefined && (
-              <span className="flex items-center gap-2">
-                <Eye className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400" />
-                <span className="text-sm sm:text-base font-semibold text-slate-500">{issue.viewCount.toLocaleString()}</span>
+              <span className="flex items-center gap-1.5 text-slate-400">
+                <Eye className="w-4 h-4" />
+                <span className="text-sm font-medium">{issue.viewCount.toLocaleString()}</span>
               </span>
             )}
+            <span className="ml-auto text-slate-300 group-hover:text-slate-500 group-hover:translate-x-0.5 transition-all">
+              →
+            </span>
           </div>
         </div>
       </div>

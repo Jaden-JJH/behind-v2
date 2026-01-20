@@ -16,7 +16,7 @@ export function ArticleTimeline({ articles }: ArticleTimelineProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <CardTitle className="flex items-center gap-2 text-lg sm:text-xl font-semibold">
           <span className="text-2xl">📰</span>
           후속 기사 타임라인
         </CardTitle>

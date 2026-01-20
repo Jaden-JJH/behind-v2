@@ -135,96 +135,108 @@ export function ReportedIssuesSection({ initialIssues }: ReportedIssuesSectionPr
         voteCount={getCuriousCount()}
       />
 
-      <Card className="border-slate-200 bg-slate-50/50 shadow-sm">
-        <CardHeader className="pb-1 sm:pb-2">
-          <CardTitle className="text-base md:text-lg font-semibold text-slate-800 mb-1">제보된 이슈</CardTitle>
-          <p className="text-xs sm:text-sm text-slate-600">궁금해요 수가 목표치에 도달하면 공개됩니다</p>
+      <Card className="border-slate-200 bg-white">
+        <CardHeader className="pb-2 sm:pb-3">
+          <CardTitle className="text-base md:text-lg font-bold text-slate-800">제보된 이슈</CardTitle>
+          <p className="text-xs sm:text-sm text-slate-500">궁금해요 수가 목표치에 도달하면 공개됩니다</p>
         </CardHeader>
         <CardContent>
-          <div className="space-y-2 sm:space-y-2.5">
+          <div className="space-y-2.5">
             {displayIssues.map((r) => {
               const progress = Math.min((r.curious_count / r.threshold) * 100, 100)
+              const isComplete = r.curious_count >= r.threshold
 
               return (
                 <div
                   key={r.id}
-                  className="p-3.5 sm:p-4 rounded-lg bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all group"
+                  className={`relative p-3.5 sm:p-4 rounded-xl border transition-all ${
+                    isComplete
+                      ? 'border-slate-200 bg-slate-50'
+                      : 'border-slate-100 bg-slate-50/50 hover:bg-white hover:border-slate-200'
+                  }`}
                 >
+                  {/* 상태 뱃지 */}
+                  {isComplete && (
+                    <div className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-semibold mb-2 ${
+                      r.approval_status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                      r.approval_status === 'approved' ? 'bg-emerald-100 text-emerald-700' :
+                      'bg-slate-200 text-slate-600'
+                    }`}>
+                      {r.approval_status === 'pending' && '🔍 검토 중'}
+                      {r.approval_status === 'approved' && '✓ 등록 확정'}
+                      {r.approval_status === 'rejected' && '등록 불가'}
+                    </div>
+                  )}
+
+                  {/* 제목 & 시간 */}
+                  <div className="flex items-start justify-between gap-2 mb-3">
+                    <p className="text-sm sm:text-base font-medium text-slate-800 leading-snug flex-1 line-clamp-2">
+                      {r.title}
+                    </p>
+                    <span className="text-xs text-slate-400 flex-shrink-0 whitespace-nowrap">
+                      {formatTime(new Date(r.created_at).getTime())}
+                    </span>
+                  </div>
+
+                  {/* 진행률 바 & 버튼 */}
                   <div className="space-y-2">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-start gap-2 flex-1 min-w-0">
-                        {r.curious_count >= r.threshold && (
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold flex-shrink-0 ${
-                            r.approval_status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                            r.approval_status === 'approved' ? 'bg-blue-100 text-blue-800' :
-                            'bg-gray-100 text-gray-800'
-                          }`}>
-                            {r.approval_status === 'pending' && '검토 중'}
-                            {r.approval_status === 'approved' && '등록 확정'}
-                            {r.approval_status === 'rejected' && '등록 불가'}
-                          </span>
-                        )}
-                        <p className="text-sm sm:text-base font-medium text-slate-900 group-hover:text-slate-700 transition-colors leading-snug flex-1">
-                          {r.title}
-                        </p>
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1">
+                        <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all duration-500 ${
+                              isComplete
+                                ? 'bg-emerald-500'
+                                : progress > 50
+                                ? 'bg-gradient-to-r from-yellow-400 to-amber-500'
+                                : 'bg-slate-400'
+                            }`}
+                            style={{ width: `${progress}%` }}
+                          />
+                        </div>
                       </div>
-                      <span className="text-xs text-slate-500 flex-shrink-0">{formatTime(new Date(r.created_at).getTime())}</span>
+                      <span className={`text-xs font-bold tabular-nums min-w-[48px] text-right ${
+                        isComplete ? 'text-emerald-600' : 'text-slate-600'
+                      }`}>
+                        {r.curious_count}/{r.threshold}
+                      </span>
                     </div>
 
-                    <div className="space-y-1.5">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-xs sm:text-sm text-yellow-700 font-bold">{r.curious_count}/{r.threshold}</span>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleCurious(r.id)}
-                          disabled={curiousLoading[r.id] || r.curious_count >= r.threshold}
-                          className={`h-8 px-3 text-xs font-semibold flex-shrink-0 ${
-                            r.curious_count >= r.threshold
-                              ? 'opacity-50 cursor-not-allowed bg-gray-100 border-gray-300 text-gray-500'
-                              : r.is_curious
-                              ? 'bg-blue-500 text-white border-blue-500 hover:bg-blue-600'
-                              : 'border-yellow-400 text-yellow-700 hover:bg-yellow-50 hover:border-yellow-500'
-                          }`}
-                        >
-                          {curiousLoading[r.id] ? '...' :
-                           r.curious_count >= r.threshold ? '마감' :
-                           r.is_curious ? '궁금해요 ✓' : '궁금해요'}
-                        </Button>
-                      </div>
-                      <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-yellow-500 rounded-full transition-all duration-300"
-                          style={{ width: `${progress}%` }}
-                        />
-                      </div>
-                    </div>
+                    {!isComplete && (
+                      <button
+                        onClick={() => handleCurious(r.id)}
+                        disabled={curiousLoading[r.id]}
+                        className={`w-full py-2 rounded-lg text-sm font-semibold transition-all ${
+                          r.is_curious
+                            ? 'bg-yellow-100 text-yellow-700 border border-yellow-300'
+                            : 'bg-slate-100 text-black hover:bg-yellow-600 active:scale-[0.98]'
+                        }`}
+                      >
+                        {curiousLoading[r.id] ? '...' : r.is_curious ? '궁금해요 ✓' : '궁금해요'}
+                      </button>
+                    )}
                   </div>
                 </div>
               )
             })}
           </div>
 
-          <div className="flex gap-2 mt-3 sm:mt-4">
+          <div className="flex gap-2 mt-4">
             {reportedIssues.length > 3 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="flex-1 text-slate-700 hover:text-slate-800 hover:bg-slate-100 min-h-[44px] text-xs sm:text-sm"
+              <button
                 onClick={() => setShowAllReported(!showAllReported)}
+                className="flex-1 py-2.5 rounded-lg border border-slate-200 bg-white text-slate-600 text-sm font-medium hover:bg-slate-50 transition-all flex items-center justify-center gap-1"
               >
                 {showAllReported ? "접기" : `${reportedIssues.length - 3}개 더보기`}
-                <ChevronDown className={`w-4 h-4 ml-1 transition-transform ${showAllReported ? "rotate-180" : ""}`} />
-              </Button>
+                <ChevronDown className={`w-4 h-4 transition-transform ${showAllReported ? "rotate-180" : ""}`} />
+              </button>
             )}
-            <Button
-              variant="outline"
-              size="sm"
+            <button
               onClick={() => window.location.href = '/reported-issues'}
-              className={`${reportedIssues.length > 3 ? 'flex-1' : 'w-full'} border-slate-300 text-slate-700 hover:bg-slate-100 hover:border-slate-400 min-h-[44px] text-xs sm:text-sm`}
+              className={`${reportedIssues.length > 3 ? 'flex-1' : 'w-full'} py-2.5 rounded-lg border border-slate-200 bg-white text-slate-600 text-sm font-medium hover:bg-slate-50 transition-all`}
             >
               전체보기
-            </Button>
+            </button>
           </div>
         </CardContent>
       </Card>

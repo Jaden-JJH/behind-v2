@@ -203,7 +203,7 @@ export function QuickVote({ pollId, question, options, ctaLabel = "이슈 자세
         <CardHeader>
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1">
-              <CardTitle className="text-base font-semibold text-slate-800">{question}</CardTitle>
+              <CardTitle className="text-lg sm:text-xl font-semibold text-slate-800">{question}</CardTitle>
               <p className="text-slate-500 text-sm flex items-center gap-1.5 mt-1">
                 {toSafeNumber(total).toLocaleString()}명 참여
               </p>
@@ -247,53 +247,73 @@ export function QuickVote({ pollId, question, options, ctaLabel = "이슈 자세
               </div>
             </div>
           ) : !voted ? (
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               {safeOptions.map((option, idx) => {
-                const count = toSafeNumber(counts?.[idx])
                 return (
-                  <Button
+                  <button
                     key={option.id || idx}
-                    variant="outline"
-                    className="w-full justify-center border-slate-300 hover:bg-yellow-50 hover:border-yellow-400"
                     onClick={() => handleVote(idx)}
+                    className="w-full group relative overflow-hidden rounded-xl border-2 border-slate-200 bg-slate-50 px-4 py-3.5 text-left transition-all duration-200 hover:border-yellow-400 hover:bg-yellow-50 active:scale-[0.98]"
                   >
-                    <span className="text-slate-800">{option.label}</span>
-                  </Button>
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium text-slate-700 group-hover:text-slate-900 transition-colors">
+                        {option.label}
+                      </span>
+                      <span className="text-xs text-slate-400 group-hover:text-yellow-600 transition-colors">
+                        투표하기 →
+                      </span>
+                    </div>
+                  </button>
                 )
               })}
               {onCta && (
-                <Button
+                <button
                   onClick={onCta}
-                  variant="secondary"
-                  className="w-full border-slate-300 text-slate-700 hover:bg-slate-100"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 transition-all hover:bg-slate-50 hover:text-slate-800"
                 >
                   {ctaLabel}
-                </Button>
+                </button>
               )}
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               {safeOptions.map((o, idx) => {
                 const c = toSafeNumber(counts?.[idx]);
                 const t = Math.max(1, toSafeNumber(total));
                 const pct = Math.round((c / t) * 100);
                 const chosen = selected === idx;
                 return (
-                  <div key={`res-${idx}`} className={`relative p-3 rounded-lg border-2 transition-all ${chosen ? "border-yellow-400 bg-yellow-50" : "border-slate-200 bg-slate-50"}`}>
-                    <div className="flex justify-between items-center mb-2 relative z-10">
-                      <span className={chosen ? "text-slate-900 font-medium" : "text-slate-700"}>{o.label}</span>
+                  <div
+                    key={`res-${idx}`}
+                    className={`relative overflow-hidden rounded-xl border-2 p-3.5 transition-all ${
+                      chosen
+                        ? "border-yellow-400 bg-gradient-to-r from-yellow-50 to-amber-50"
+                        : "border-slate-200 bg-slate-50"
+                    }`}
+                  >
+                    <div className="flex justify-between items-center mb-2.5 relative z-10">
                       <div className="flex items-center gap-2">
-                        <span className={`${chosen ? "text-yellow-700 font-semibold" : "text-slate-500"} tabular-nums text-sm`}>
+                        {chosen && (
+                          <span className="flex items-center justify-center w-5 h-5 rounded-full bg-yellow-500 text-white text-xs">✓</span>
+                        )}
+                        <span className={chosen ? "text-slate-900 font-semibold" : "text-slate-700 font-medium"}>
+                          {o.label}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className={`${chosen ? "text-yellow-700" : "text-slate-500"} tabular-nums text-sm font-medium`}>
                           {c.toLocaleString()}표
                         </span>
-                        <span className={`${chosen ? "text-yellow-700 font-semibold" : "text-slate-500"} tabular-nums text-sm`}>
+                        <span className={`${chosen ? "text-yellow-700 font-bold" : "text-slate-500 font-medium"} tabular-nums text-sm`}>
                           {pct}%
                         </span>
                       </div>
                     </div>
-                    <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+                    <div className="h-2.5 bg-slate-200/80 rounded-full overflow-hidden">
                       <div
-                        className={`h-2 rounded-full transition-all duration-500 ease-out ${chosen ? "bg-yellow-500" : "bg-slate-400"}`}
+                        className={`h-full rounded-full transition-all duration-700 ease-out ${
+                          chosen ? "bg-gradient-to-r from-yellow-400 to-amber-500" : "bg-slate-400"
+                        }`}
                         style={{ width: `${pct}%` }}
                       />
                     </div>
@@ -301,13 +321,12 @@ export function QuickVote({ pollId, question, options, ctaLabel = "이슈 자세
                 );
               })}
               {onCta && (
-                <Button
+                <button
                   onClick={onCta}
-                  variant="outline"
-                  className="w-full mt-2 border-slate-300 text-slate-700 hover:bg-slate-100"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 transition-all hover:bg-slate-50 hover:text-slate-800 mt-1"
                 >
                   {ctaLabel}
-                </Button>
+                </button>
               )}
             </div>
           )}

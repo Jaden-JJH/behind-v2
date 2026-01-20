@@ -33,12 +33,12 @@ export function QuickVoteSection({ pollIssues }: QuickVoteSectionProps) {
   }
 
   return (
-    <div className="relative mt-4 sm:mt-6 md:mt-8 p-4 sm:p-5 md:p-6 rounded-2xl bg-slate-50 border border-slate-200">
-      <div className="absolute -top-3 left-6 px-4 py-1.5 bg-slate-800 text-yellow-400 text-sm font-medium rounded-full shadow-md flex items-center gap-2">
-        <Flame className="w-4 h-4" />
+    <div className="relative mt-4 sm:mt-6 md:mt-8 p-4 sm:p-5 md:p-6 rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100/80 border border-slate-200/80">
+      <div className="absolute -top-3.5 left-6 px-4 py-2 bg-slate-800 text-yellow-400 text-sm font-semibold rounded-full flex items-center gap-2">
+        <Flame className="w-4 h-4 text-orange-400" />
         <span>실시간 투표 참여하기</span>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-3.5 md:gap-4 mt-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-4 md:gap-5 mt-4">
         {pollIssues.map((issue) => {
           const poll = Array.isArray(issue.poll) ? issue.poll[0] : issue.poll
 

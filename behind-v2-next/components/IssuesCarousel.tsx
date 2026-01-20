@@ -167,7 +167,7 @@ export function IssuesCarousel({ issues }: IssuesCarouselProps) {
         onMouseLeave={() => setIsHovered(false)}
       >
         <div
-          className="grid grid-cols-3 gap-8 px-6 py-6 transition-all duration-700 ease-in-out h-[405px]"
+          className="grid grid-cols-3 gap-8 px-6 pt-6 pb-4 transition-all duration-700 ease-in-out h-[380px]"
           key={currentIndex === 0 ? issues.length - 1 : currentIndex === issues.length + 1 ? 0 : currentIndex - 1}
         >
           {getVisibleIssuesForDesktop().map((issue, idx) => (
@@ -193,21 +193,18 @@ export function IssuesCarousel({ issues }: IssuesCarouselProps) {
                     No Image
                   </div>
                 )}
+                {/* 날짜 오버레이 */}
+                <div className="absolute top-2 left-2 px-2 py-1 bg-black/60 backdrop-blur-sm rounded text-white text-xs font-medium">
+                  {formatDate(issue.created_at)}
+                </div>
               </div>
 
               {/* 제목 */}
-              <h3 className={`font-bold line-clamp-2 mb-1 whitespace-pre-line ${
+              <h3 className={`font-bold line-clamp-2 whitespace-pre-line ${
                 idx === 1 ? 'text-xl' : 'text-base'
               }`}>
                 {issue.title}
               </h3>
-
-              {/* 게시일 */}
-              <p className={`text-gray-500 text-center ${
-                idx === 1 ? 'text-sm' : 'text-xs'
-              }`}>
-                {formatDate(issue.created_at)}
-              </p>
             </div>
           ))}
         </div>
@@ -274,17 +271,16 @@ export function IssuesCarousel({ issues }: IssuesCarouselProps) {
                       No Image
                     </div>
                   )}
+                  {/* 날짜 오버레이 */}
+                  <div className="absolute top-2 left-2 px-2 py-1 bg-black/60 backdrop-blur-sm rounded text-white text-xs font-medium">
+                    {formatDate(issue.created_at)}
+                  </div>
                 </div>
 
                 {/* 제목 */}
-                <h3 className="text-lg font-bold line-clamp-2 mb-1 whitespace-pre-line">
+                <h3 className="text-lg font-bold line-clamp-2 whitespace-pre-line">
                   {issue.title}
                 </h3>
-
-                {/* 게시일 */}
-                <p className="text-xs text-gray-500 text-center">
-                  {formatDate(issue.created_at)}
-                </p>
               </div>
             ))}
           </div>

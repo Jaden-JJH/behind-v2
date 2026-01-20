@@ -12,7 +12,7 @@ export function ReportBanner() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-3 sm:px-4 md:px-6 pt-3 sm:pt-4 md:pt-5 pb-2 sm:pb-3 md:pb-4">
+    <div className="max-w-6xl mx-auto px-3 sm:px-4 md:px-6 pt-2 sm:pt-3 md:pt-5 pb-2 sm:pb-3 md:pb-4">
       <div className="bg-slate-800 rounded-2xl px-6 sm:px-8 md:px-10 py-5 sm:py-5.5 md:py-6 relative overflow-hidden">
         {/* 배경 장식 - 미묘한 패턴 */}
         <div className="absolute inset-0 opacity-5">
