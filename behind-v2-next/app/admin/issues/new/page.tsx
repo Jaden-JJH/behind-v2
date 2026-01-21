@@ -172,10 +172,10 @@ export default function AdminPage() {
               value={preview}
               onChange={(e) => setPreview(e.target.value)}
               required
-              maxLength={100}
+              maxLength={200}
               rows={3}
               className="w-full px-4 py-2 border rounded-lg"
-              placeholder="이슈 요약 (10-100자, 예: 소속사와의 계약 종료 요구)"
+              placeholder="이슈 요약 (10-200자, 예: 소속사와의 계약 종료 요구)"
             />
             <p className="text-xs text-gray-500 mt-1">{preview.length}/100자</p>
           </div>
