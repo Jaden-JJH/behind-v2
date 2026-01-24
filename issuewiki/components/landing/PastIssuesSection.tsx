@@ -1,8 +1,6 @@
 'use client'
 
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Eye, MessageCircle } from "lucide-react"
+import { Eye, MessageCircle, Clock, ChevronRight, Archive } from "lucide-react"
 import { formatDate } from "@/lib/utils"
 
 interface PastIssue {
@@ -19,48 +17,72 @@ interface PastIssuesSectionProps {
 }
 
 export function PastIssuesSection({ issues }: PastIssuesSectionProps) {
+  // 랭킹 뱃지 스타일 - 모든 순위 동일
+  const getRankStyle = () => {
+    return {
+      badge: 'bg-slate-100 text-slate-600 font-semibold',
+      border: 'border-slate-200 hover:border-slate-300',
+      bg: 'bg-white'
+    }
+  }
+
   return (
-    <Card className="mt-6 sm:mt-7 md:mt-8 bg-white border-slate-200">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight text-slate-800">지나간 이슈</CardTitle>
-        <p className="text-xs sm:text-sm text-slate-500">과거 화제가 되었던 이슈들을 다시 살펴보세요</p>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-2">
-          {issues.map((issue, idx) => (
+    <div className="mt-6 sm:mt-7 md:mt-8 rounded-2xl overflow-hidden">
+      {/* 다크 테마 헤더 */}
+      <div className="bg-gradient-to-r from-slate-800 via-slate-800 to-slate-900 px-5 sm:px-6 py-4 sm:py-5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-slate-600 to-slate-700 shadow-lg">
+              <Archive className="w-5 h-5 text-slate-300" />
+            </div>
+            <div>
+              <h2 className="text-lg sm:text-xl font-bold text-white">지나간 이슈</h2>
+              <p className="text-xs sm:text-sm text-slate-400">과거 화제가 되었던 이슈들</p>
+            </div>
+          </div>
+          <button
+            onClick={() => window.location.href = '/issues'}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-slate-700/50 border border-slate-600/50 text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-700 transition-all"
+          >
+            전체보기
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* 이슈 리스트 */}
+      <div className="bg-white border border-t-0 border-slate-200 rounded-b-2xl divide-y divide-slate-100">
+        {issues.map((issue, idx) => {
+          const rankStyle = getRankStyle()
+          return (
             <div
               key={issue.id}
-              className="group relative p-3.5 sm:p-4 rounded-xl border border-slate-200 bg-white hover:border-slate-300 transition-all cursor-pointer"
+              className={`group relative p-4 sm:p-5 cursor-pointer transition-all duration-200 hover:bg-slate-50/80 ${idx === 0 ? 'rounded-t-none' : ''} ${idx === issues.length - 1 ? 'rounded-b-2xl' : ''}`}
               onClick={() => window.location.href = `/issues/${issue.display_id}`}
             >
-              <div className="flex items-start gap-3 sm:gap-3.5">
+              <div className="flex items-center gap-3 sm:gap-4">
                 {/* 순위 뱃지 */}
-                <div className={`flex-shrink-0 w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center font-bold text-sm sm:text-base transition-colors ${
-                  idx === 0
-                    ? 'bg-yellow-100 text-yellow-700 group-hover:bg-yellow-200'
-                    : idx === 1
-                    ? 'bg-slate-200 text-slate-600 group-hover:bg-slate-300'
-                    : idx === 2
-                    ? 'bg-amber-100 text-amber-700 group-hover:bg-amber-200'
-                    : 'bg-slate-100 text-slate-500 group-hover:bg-slate-200'
-                }`}>
+                <div className={`flex-shrink-0 w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center font-bold text-sm sm:text-base transition-transform group-hover:scale-105 ${rankStyle.badge}`}>
                   {idx + 1}
                 </div>
 
                 {/* 콘텐츠 */}
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm sm:text-base font-semibold text-slate-800 group-hover:text-slate-900 transition-colors leading-snug line-clamp-2 mb-2">
+                  <p className="text-sm sm:text-base font-semibold text-slate-800 group-hover:text-slate-900 transition-colors leading-snug line-clamp-2">
                     {issue.title}
                   </p>
-                  <div className="flex items-center gap-4 text-xs sm:text-sm text-slate-500">
-                    <span className="text-slate-400">{formatDate(issue.created_at)}</span>
-                    <div className="flex items-center gap-3">
-                      <span className="flex items-center gap-1">
-                        <Eye className="w-3.5 h-3.5 text-slate-400" />
+                  <div className="flex items-center gap-3 mt-1.5">
+                    <span className="flex items-center gap-1 text-xs sm:text-sm text-slate-400">
+                      <Clock className="w-3 h-3" />
+                      {formatDate(issue.created_at)}
+                    </span>
+                    <div className="flex items-center gap-2.5">
+                      <span className="flex items-center gap-1 text-xs sm:text-sm text-slate-500">
+                        <Eye className="w-3.5 h-3.5" />
                         <span className="font-medium">{issue.view_count.toLocaleString()}</span>
                       </span>
-                      <span className="flex items-center gap-1">
-                        <MessageCircle className="w-3.5 h-3.5 text-slate-400" />
+                      <span className="flex items-center gap-1 text-xs sm:text-sm text-slate-500">
+                        <MessageCircle className="w-3.5 h-3.5" />
                         <span className="font-medium">{issue.comment_count.toLocaleString()}</span>
                       </span>
                     </div>
@@ -68,20 +90,15 @@ export function PastIssuesSection({ issues }: PastIssuesSectionProps) {
                 </div>
 
                 {/* 화살표 */}
-                <span className="text-slate-300 group-hover:text-slate-500 group-hover:translate-x-0.5 transition-all self-center">
-                  →
-                </span>
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-slate-100 group-hover:bg-slate-200 flex items-center justify-center transition-all group-hover:translate-x-0.5">
+                  <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-colors" />
+                </div>
               </div>
             </div>
-          ))}
-        </div>
-        <button
-          onClick={() => window.location.href = '/issues'}
-          className="w-full mt-4 py-3 rounded-xl border border-slate-200 bg-white text-slate-600 font-medium text-sm sm:text-base hover:bg-slate-50 hover:text-slate-800 transition-all"
-        >
-          더 많은 이슈 보기
-        </button>
-      </CardContent>
-    </Card>
+          )
+        })}
+
+      </div>
+    </div>
   )
 }
