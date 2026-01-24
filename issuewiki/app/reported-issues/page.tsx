@@ -2,9 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { ChevronLeft, Heart, ChevronDown } from "lucide-react"
+import { ArrowLeft, Heart } from "lucide-react"
 import { fetchReports, curiousReport } from "@/lib/api-client"
 import { getDeviceHash } from "@/lib/device-hash"
 import { formatTime, maskReporterName } from "@/lib/utils"
@@ -185,86 +183,104 @@ export default function ReportedIssuesPage() {
         onClose={() => setShowLoginPrompt(false)}
         voteCount={getCuriousCount()}
       />
-      <div className="min-h-screen bg-slate-50">
-      <main className="max-w-6xl mx-auto px-3 md:px-4 py-6">
+      <div className="min-h-screen bg-white">
+      <main className="max-w-6xl mx-auto px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-6">
         {/* 헤더 */}
         <div className="mb-6">
-          <div className="flex items-center gap-3 mb-2">
-            <Link href="/issues">
-              <Button variant="ghost" size="sm" className="text-slate-600 hover:text-slate-900">
-                <ChevronLeft className="w-4 h-4 mr-1" />
-                전체 이슈
-              </Button>
-            </Link>
-          </div>
-          <h1 className="text-3xl font-bold text-slate-800 mb-2">제보된 이슈</h1>
-          <p className="text-slate-600">궁금해요 수가 목표치에 도달하면 공개됩니다</p>
+          <Link
+            href="/"
+            className="flex items-center gap-2 text-slate-500 hover:text-slate-700 transition-colors mb-4"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span className="text-sm">홈으로</span>
+          </Link>
+          <h1 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight text-slate-800 mb-1">제보된 이슈</h1>
+          <p className="text-xs sm:text-sm md:text-base text-slate-600">궁금해요 수가 목표치에 도달하면 공개됩니다</p>
         </div>
 
         {/* 필터 & 정렬 */}
-        <div className="mb-6 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-          <div className="flex flex-wrap gap-3">
-            {/* 상태 필터 */}
-            <div className="relative">
-              <select
-                value={filterBy}
-                onChange={(e) => setFilterBy(e.target.value as FilterOption)}
-                className="px-4 py-2 pr-10 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-400 appearance-none cursor-pointer"
-              >
-                <option value="all">전체</option>
-                <option value="pending">검토 중</option>
-                <option value="approved">등록 확정</option>
-                <option value="rejected">등록 불가</option>
-              </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+        <div className="mb-6 space-y-4">
+          {/* 상태 필터 - 칩 스타일 */}
+          <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0 md:overflow-x-visible">
+            <div className="flex gap-2 min-w-max md:flex-wrap md:min-w-0 pb-2 md:pb-0">
+              {[
+                { value: 'all', label: '전체' },
+                { value: 'pending', label: '검토 중' },
+                { value: 'approved', label: '등록 확정' },
+                { value: 'rejected', label: '등록 불가' }
+              ].map(opt => (
+                <button
+                  key={opt.value}
+                  onClick={() => setFilterBy(opt.value as FilterOption)}
+                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all flex-shrink-0 ${
+                    filterBy === opt.value
+                      ? 'bg-slate-800 text-white'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-800'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
             </div>
-
-            {/* 내가 누른 이슈 토글 */}
-            <label className="flex items-center gap-2 px-4 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={showMyCurious}
-                onChange={(e) => setShowMyCurious(e.target.checked)}
-                className="w-4 h-4 text-yellow-500 border-slate-300 rounded focus:ring-slate-400"
-              />
-              내가 궁금해요 누른 이슈만
-            </label>
           </div>
 
-          {/* 정렬 */}
-          <div className="relative">
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as SortOption)}
-              className="px-4 py-2 pr-10 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-400 appearance-none cursor-pointer"
+          {/* 정렬 및 내가 누른 이슈 필터 */}
+          <div className="flex flex-wrap items-center gap-2">
+            {/* 정렬 옵션 */}
+            <div className="flex gap-1.5">
+              {[
+                { value: 'latest', label: '최신순' },
+                { value: 'progress', label: '달성률순' }
+              ].map(opt => (
+                <button
+                  key={opt.value}
+                  onClick={() => setSortBy(opt.value as SortOption)}
+                  className={`px-3 py-1.5 rounded-full text-sm transition-all ${
+                    sortBy === opt.value
+                      ? 'bg-slate-800 text-white font-medium'
+                      : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="w-px h-4 bg-slate-200 mx-2 hidden sm:block" />
+
+            {/* 내가 누른 이슈 토글 */}
+            <button
+              onClick={() => setShowMyCurious(!showMyCurious)}
+              className={`px-3 py-1.5 rounded-full text-sm transition-all ml-auto sm:ml-0 ${
+                showMyCurious
+                  ? 'bg-yellow-500 text-white font-medium'
+                  : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+              }`}
             >
-              <option value="latest">최신순</option>
-              <option value="progress">달성률순</option>
-            </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+              내가 궁금해요 누른
+            </button>
           </div>
         </div>
 
         {/* 카드 리스트 */}
         {loading ? (
-          <div className="text-center py-12">
-            <p className="text-slate-600">로딩 중...</p>
+          <div className="text-center py-16">
+            <p className="text-slate-400 text-base">로딩 중...</p>
           </div>
         ) : reports.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-slate-600 mb-2">
-              {showMyCurious 
-                ? '아직 궁금해요를 누른 이슈가 없습니다.' 
+          <div className="text-center py-16">
+            <p className="text-slate-400 text-base mb-2">
+              {showMyCurious
+                ? '아직 궁금해요를 누른 이슈가 없습니다.'
                 : '해당 조건의 이슈가 없습니다.'}
             </p>
             {showMyCurious && (
-              <Button 
-                variant="outline"
+              <button
                 onClick={() => setShowMyCurious(false)}
-                className="mt-4"
+                className="mt-4 px-4 py-2 bg-slate-800 text-white rounded-full text-sm font-medium hover:bg-slate-700 transition-colors"
               >
                 전체 제보 보기
-              </Button>
+              </button>
             )}
           </div>
         ) : (
@@ -274,72 +290,68 @@ export default function ReportedIssuesPage() {
               const isComplete = report.curious_count >= report.threshold
 
               return (
-                <Card 
+                <div
                   key={report.id}
-                  className={`hover:shadow-lg transition-all ${
-                    report.is_curious ? 'border-yellow-400 border-2' : 'border-slate-200'
+                  className={`bg-white rounded-xl p-4 border transition-colors ${
+                    report.is_curious ? 'border-yellow-400 border-2' : 'border-slate-200 hover:border-slate-300'
                   }`}
                 >
-                  <CardContent className="p-4">
-                    {/* 제보자 & 배지 */}
-                    <div className="flex items-start justify-between gap-2 mb-3">
-                      <p className="text-xs text-slate-500">
-                        제보자: {maskReporterName(report.reporter_name)}
-                      </p>
-                      {isComplete && (
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${getBadgeStyle(report.approval_status)}`}>
-                          {getBadgeText(report.approval_status)}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* 제목 */}
-                    <h3 className="text-base font-semibold text-slate-800 mb-2 line-clamp-2">
-                      {report.title}
-                    </h3>
-
-                    {/* 추가정보 */}
-                    <p className="text-sm text-slate-600 mb-3 line-clamp-1">
-                      {report.description}
+                  {/* 제보자 & 배지 */}
+                  <div className="flex items-start justify-between gap-2 mb-3">
+                    <p className="text-xs text-slate-500">
+                      제보자: {maskReporterName(report.reporter_name)}
                     </p>
+                    {isComplete && (
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getBadgeStyle(report.approval_status)}`}>
+                        {getBadgeText(report.approval_status)}
+                      </span>
+                    )}
+                  </div>
 
-                    {/* 프로그레스 바 */}
-                    <div className="space-y-1.5 mb-3">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-slate-500">{formatTime(new Date(report.created_at).getTime())}</span>
-                        <span className="text-yellow-700 font-semibold">
-                          {report.curious_count}/{report.threshold}
-                        </span>
-                      </div>
-                      <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-yellow-500 rounded-full transition-all duration-300"
-                          style={{ width: `${progress}%` }}
-                        />
-                      </div>
+                  {/* 제목 */}
+                  <h3 className="text-base font-semibold text-slate-800 mb-2 line-clamp-2">
+                    {report.title}
+                  </h3>
+
+                  {/* 추가정보 */}
+                  <p className="text-sm text-slate-500 mb-3 line-clamp-1">
+                    {report.description}
+                  </p>
+
+                  {/* 프로그레스 바 */}
+                  <div className="space-y-1.5 mb-3">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-slate-400">{formatTime(new Date(report.created_at).getTime())}</span>
+                      <span className="text-yellow-700 font-semibold">
+                        {report.curious_count}/{report.threshold}
+                      </span>
                     </div>
+                    <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-yellow-500 rounded-full transition-all duration-300"
+                        style={{ width: `${progress}%` }}
+                      />
+                    </div>
+                  </div>
 
-                    {/* 궁금해요 버튼 */}
-                    <Button
-                        variant={report.is_curious ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => handleCurious(report.id)}
-                        disabled={curiousLoading[report.id] || report.curious_count >= report.threshold}
-                        className={`w-full ${
-                        report.curious_count >= report.threshold
-                            ? 'opacity-50 cursor-not-allowed bg-gray-100 border-gray-300 text-gray-500'
-                            : report.is_curious 
-                            ? 'bg-yellow-500 hover:bg-yellow-600 text-white'
-                            : 'border-yellow-400 text-yellow-700 hover:bg-yellow-50'
-                        }`}
-                    >
-                        <Heart className={`w-4 h-4 mr-1 ${report.is_curious ? 'fill-current' : ''}`} />
-                        {curiousLoading[report.id] ? '...' : 
-                        report.curious_count >= report.threshold ? '마감' :
+                  {/* 궁금해요 버튼 */}
+                  <button
+                    onClick={() => handleCurious(report.id)}
+                    disabled={curiousLoading[report.id] || report.curious_count >= report.threshold}
+                    className={`w-full flex items-center justify-center gap-1 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                      report.curious_count >= report.threshold
+                        ? 'opacity-50 cursor-not-allowed bg-slate-100 text-slate-400'
+                        : report.is_curious
+                          ? 'bg-yellow-500 hover:bg-yellow-600 text-white'
+                          : 'border border-yellow-400 text-yellow-700 hover:bg-yellow-50'
+                    }`}
+                  >
+                    <Heart className={`w-4 h-4 ${report.is_curious ? 'fill-current' : ''}`} />
+                    {curiousLoading[report.id] ? '...' :
+                      report.curious_count >= report.threshold ? '마감' :
                         report.is_curious ? '궁금해요 ✓' : '궁금해요'}
-                    </Button>
-                  </CardContent>
-                </Card>
+                  </button>
+                </div>
               )
             })}
           </div>
