@@ -33,7 +33,7 @@ export default function MyCuriousPage() {
 
   return (
     <div className="p-6 text-center">
-      <p className="text-gray-500">리다이렉트 중...</p>
+      <p className="text-slate-500">리다이렉트 중...</p>
     </div>
   )
 }

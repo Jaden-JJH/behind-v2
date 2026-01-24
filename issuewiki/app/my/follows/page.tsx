@@ -84,9 +84,9 @@ export default function MyFollowsPage() {
     return (
       <div className="p-6">
         <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-          <div className="h-32 bg-gray-200 rounded"></div>
-          <div className="h-32 bg-gray-200 rounded"></div>
+          <div className="h-8 bg-slate-200 rounded w-1/4"></div>
+          <div className="h-32 bg-slate-200 rounded"></div>
+          <div className="h-32 bg-slate-200 rounded"></div>
         </div>
       </div>
     )
@@ -94,7 +94,7 @@ export default function MyFollowsPage() {
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">팔로우한 이슈</h1>
+      <h1 className="text-2xl font-bold text-slate-900 mb-6">팔로우한 이슈</h1>
 
       {/* 필터 버튼 */}
       <div className="flex gap-2 mb-6">
@@ -133,8 +133,8 @@ export default function MyFollowsPage() {
       {/* 로딩 상태 */}
       {isLoading && (
         <div className="space-y-4">
-          <div className="h-32 bg-gray-200 rounded animate-pulse"></div>
-          <div className="h-32 bg-gray-200 rounded animate-pulse"></div>
+          <div className="h-32 bg-slate-200 rounded animate-pulse"></div>
+          <div className="h-32 bg-slate-200 rounded animate-pulse"></div>
         </div>
       )}
 
@@ -174,7 +174,7 @@ export default function MyFollowsPage() {
       {/* 팔로우 이슈 목록 */}
       {!error && !isLoading && apiResponse && apiResponse.data && (!apiResponse.data.follows || apiResponse.data.follows.length === 0) ? (
         <Card className="p-12 text-center">
-          <p className="text-gray-500">팔로우한 이슈가 없습니다.</p>
+          <p className="text-slate-500">팔로우한 이슈가 없습니다.</p>
         </Card>
       ) : !error && !isLoading && apiResponse && apiResponse.data ? (
         <>
@@ -182,7 +182,7 @@ export default function MyFollowsPage() {
             {apiResponse.data.follows.map((follow) => (
               <Card
                 key={follow.id}
-                className="hover:shadow-lg transition-shadow cursor-pointer"
+                className="border border-slate-200 hover:border-slate-300 transition-colors cursor-pointer"
                 onClick={() => router.push(`/issues/${follow.display_id}`)}
               >
                 <div className="flex gap-4 p-4">
@@ -206,13 +206,13 @@ export default function MyFollowsPage() {
                           진행중
                         </span>
                       ) : (
-                        <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-600 rounded">
+                        <span className="px-2 py-1 text-xs font-medium bg-slate-100 text-slate-600 rounded">
                           종료
                         </span>
                       )}
                     </div>
                     <p className="text-slate-600 text-sm mb-3 line-clamp-1">{follow.preview}</p>
-                    <div className="flex items-center gap-4 text-xs text-gray-500">
+                    <div className="flex items-center gap-4 text-xs text-slate-500">
                       <span>팔로우: {formatDate(follow.follow_created_at)}</span>
                       <span>•</span>
                       <span>댓글 {follow.comment_count}</span>
@@ -234,7 +234,7 @@ export default function MyFollowsPage() {
               >
                 이전
               </Button>
-              <span className="px-4 py-2 text-sm text-gray-700">
+              <span className="px-4 py-2 text-sm text-slate-700">
                 {page} / {apiResponse.data.pagination.totalPages}
               </span>
               <Button

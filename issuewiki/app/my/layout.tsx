@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 
@@ -15,11 +15,11 @@ export default function MyLayout({
   const isActive = (path: string) => pathname === path
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-white">
       {/* Sidebar - Desktop */}
-      <aside className="hidden md:flex md:flex-col w-64 bg-white border-r border-gray-200">
-        <div className="p-6 border-b border-gray-200">
-          <h1 className="text-xl font-bold text-gray-900">마이페이지</h1>
+      <aside className="hidden md:flex md:flex-col w-64 bg-white border-r border-slate-200">
+        <div className="p-6 border-b border-slate-200">
+          <h1 className="text-xl font-bold text-slate-900">마이페이지</h1>
         </div>
 
         <nav className="flex-1 p-4 space-y-1">
@@ -28,8 +28,8 @@ export default function MyLayout({
             href="/my"
             className={`flex items-center px-4 py-3 rounded-lg transition-colors ${
               isActive('/my')
-                ? 'bg-yellow-50 text-slate-900 font-medium'
-                : 'text-gray-700 hover:bg-gray-100'
+                ? 'bg-slate-100 text-slate-900 font-medium'
+                : 'text-slate-600 hover:bg-slate-50 hover:text-slate-800'
             }`}
           >
             <span className="mr-3">🏠</span>
@@ -41,8 +41,8 @@ export default function MyLayout({
             href="/my/votes"
             className={`flex items-center px-4 py-3 rounded-lg transition-colors ${
               isActive('/my/votes')
-                ? 'bg-yellow-50 text-slate-900 font-medium'
-                : 'text-gray-700 hover:bg-gray-100'
+                ? 'bg-slate-100 text-slate-900 font-medium'
+                : 'text-slate-600 hover:bg-slate-50 hover:text-slate-800'
             }`}
           >
             <span className="mr-3">🗳️</span>
@@ -54,8 +54,8 @@ export default function MyLayout({
             href="/my/comments"
             className={`flex items-center px-4 py-3 rounded-lg transition-colors ${
               isActive('/my/comments')
-                ? 'bg-yellow-50 text-slate-900 font-medium'
-                : 'text-gray-700 hover:bg-gray-100'
+                ? 'bg-slate-100 text-slate-900 font-medium'
+                : 'text-slate-600 hover:bg-slate-50 hover:text-slate-800'
             }`}
           >
             <span className="mr-3">💬</span>
@@ -67,8 +67,8 @@ export default function MyLayout({
             href="/my/follows"
             className={`flex items-center px-4 py-3 rounded-lg transition-colors ${
               isActive('/my/follows')
-                ? 'bg-yellow-50 text-slate-900 font-medium'
-                : 'text-gray-700 hover:bg-gray-100'
+                ? 'bg-slate-100 text-slate-900 font-medium'
+                : 'text-slate-600 hover:bg-slate-50 hover:text-slate-800'
             }`}
           >
             <span className="mr-3">⭐</span>
@@ -80,8 +80,8 @@ export default function MyLayout({
             href="/my/chat-rooms"
             className={`flex items-center px-4 py-3 rounded-lg transition-colors ${
               isActive('/my/chat-rooms')
-                ? 'bg-yellow-50 text-slate-900 font-medium'
-                : 'text-gray-700 hover:bg-gray-100'
+                ? 'bg-slate-100 text-slate-900 font-medium'
+                : 'text-slate-600 hover:bg-slate-50 hover:text-slate-800'
             }`}
           >
             <span className="mr-3">💬</span>
@@ -93,8 +93,8 @@ export default function MyLayout({
             href="/my/curious"
             className={`flex items-center px-4 py-3 rounded-lg transition-colors ${
               isActive('/my/curious')
-                ? 'bg-yellow-50 text-slate-900 font-medium'
-                : 'text-gray-700 hover:bg-gray-100'
+                ? 'bg-slate-100 text-slate-900 font-medium'
+                : 'text-slate-600 hover:bg-slate-50 hover:text-slate-800'
             }`}
           >
             <span className="mr-3">❓</span>
@@ -104,11 +104,11 @@ export default function MyLayout({
       </aside>
 
       {/* Mobile Menu Button */}
-      <div className="md:hidden fixed top-16 left-0 right-0 bg-white border-b border-gray-200 p-4 z-40 flex items-center justify-between">
-        <h1 className="text-lg font-bold text-gray-900">마이페이지</h1>
+      <div className="md:hidden fixed top-16 left-0 right-0 bg-white border-b border-slate-200 p-4 z-40 flex items-center justify-between">
+        <h1 className="text-lg font-bold text-slate-900">마이페이지</h1>
         <button
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="text-gray-700 p-2"
+          className="text-slate-700 p-2"
         >
           {isMobileMenuOpen ? '✕' : '☰'}
         </button>
@@ -124,8 +124,8 @@ export default function MyLayout({
               onClick={() => setIsMobileMenuOpen(false)}
               className={`flex items-center px-4 py-3 rounded-lg transition-colors ${
                 isActive('/my')
-                  ? 'bg-yellow-50 text-slate-900 font-medium'
-                  : 'text-gray-700 hover:bg-gray-100'
+                  ? 'bg-slate-100 text-slate-900 font-medium'
+                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-800'
               }`}
             >
               <span className="mr-3">🏠</span>
@@ -138,8 +138,8 @@ export default function MyLayout({
               onClick={() => setIsMobileMenuOpen(false)}
               className={`flex items-center px-4 py-3 rounded-lg transition-colors ${
                 isActive('/my/votes')
-                  ? 'bg-yellow-50 text-slate-900 font-medium'
-                  : 'text-gray-700 hover:bg-gray-100'
+                  ? 'bg-slate-100 text-slate-900 font-medium'
+                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-800'
               }`}
             >
               <span className="mr-3">🗳️</span>
@@ -152,8 +152,8 @@ export default function MyLayout({
               onClick={() => setIsMobileMenuOpen(false)}
               className={`flex items-center px-4 py-3 rounded-lg transition-colors ${
                 isActive('/my/comments')
-                  ? 'bg-yellow-50 text-slate-900 font-medium'
-                  : 'text-gray-700 hover:bg-gray-100'
+                  ? 'bg-slate-100 text-slate-900 font-medium'
+                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-800'
               }`}
             >
               <span className="mr-3">💬</span>
@@ -166,8 +166,8 @@ export default function MyLayout({
               onClick={() => setIsMobileMenuOpen(false)}
               className={`flex items-center px-4 py-3 rounded-lg transition-colors ${
                 isActive('/my/follows')
-                  ? 'bg-yellow-50 text-slate-900 font-medium'
-                  : 'text-gray-700 hover:bg-gray-100'
+                  ? 'bg-slate-100 text-slate-900 font-medium'
+                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-800'
               }`}
             >
               <span className="mr-3">⭐</span>
@@ -180,8 +180,8 @@ export default function MyLayout({
               onClick={() => setIsMobileMenuOpen(false)}
               className={`flex items-center px-4 py-3 rounded-lg transition-colors ${
                 isActive('/my/chat-rooms')
-                  ? 'bg-yellow-50 text-slate-900 font-medium'
-                  : 'text-gray-700 hover:bg-gray-100'
+                  ? 'bg-slate-100 text-slate-900 font-medium'
+                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-800'
               }`}
             >
               <span className="mr-3">💬</span>
@@ -194,8 +194,8 @@ export default function MyLayout({
               onClick={() => setIsMobileMenuOpen(false)}
               className={`flex items-center px-4 py-3 rounded-lg transition-colors ${
                 isActive('/my/curious')
-                  ? 'bg-yellow-50 text-slate-900 font-medium'
-                  : 'text-gray-700 hover:bg-gray-100'
+                  ? 'bg-slate-100 text-slate-900 font-medium'
+                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-800'
               }`}
             >
               <span className="mr-3">❓</span>

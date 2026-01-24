@@ -103,9 +103,9 @@ export default function MyChatRoomsPage() {
     return (
       <div className="p-6">
         <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-          <div className="h-32 bg-gray-200 rounded"></div>
-          <div className="h-32 bg-gray-200 rounded"></div>
+          <div className="h-8 bg-slate-200 rounded w-1/4"></div>
+          <div className="h-32 bg-slate-200 rounded"></div>
+          <div className="h-32 bg-slate-200 rounded"></div>
         </div>
       </div>
     )
@@ -113,13 +113,13 @@ export default function MyChatRoomsPage() {
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">참여한 채팅방</h1>
+      <h1 className="text-2xl font-bold text-slate-900 mb-6">참여한 채팅방</h1>
 
       {/* 로딩 상태 */}
       {isLoading && (
         <div className="space-y-4">
-          <div className="h-32 bg-gray-200 rounded animate-pulse"></div>
-          <div className="h-32 bg-gray-200 rounded animate-pulse"></div>
+          <div className="h-32 bg-slate-200 rounded animate-pulse"></div>
+          <div className="h-32 bg-slate-200 rounded animate-pulse"></div>
         </div>
       )}
 
@@ -159,8 +159,8 @@ export default function MyChatRoomsPage() {
       {/* 채팅방 목록 */}
       {!error && !isLoading && apiResponse?.data && (!apiResponse.data.chatRooms || apiResponse.data.chatRooms.length === 0) ? (
         <Card className="p-12 text-center">
-          <MessageCircle className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-          <p className="text-gray-500">참여한 채팅방이 없습니다.</p>
+          <MessageCircle className="w-12 h-12 mx-auto mb-4 text-slate-400" />
+          <p className="text-slate-500">참여한 채팅방이 없습니다.</p>
         </Card>
       ) : !error && !isLoading && apiResponse?.data ? (
         <>
@@ -168,7 +168,7 @@ export default function MyChatRoomsPage() {
             {apiResponse.data.chatRooms.map((chatRoom, index) => (
               <Card
                 key={`${chatRoom.room_id}-${index}`}
-                className="hover:shadow-lg transition-shadow cursor-pointer"
+                className="border border-slate-200 hover:border-slate-300 transition-colors cursor-pointer"
                 onClick={() => router.push(`/chat/${chatRoom.issue_id}`)}
               >
                 <div className="flex gap-4 p-4">
@@ -187,13 +187,13 @@ export default function MyChatRoomsPage() {
                       <h3 className="text-lg font-bold text-slate-900 leading-snug">
                         {chatRoom.issue.title}
                       </h3>
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <div className="flex items-center gap-2 text-sm text-slate-600">
                         <Users className="w-4 h-4" />
                         <span>{chatRoom.active_member_count}/{chatRoom.capacity}</span>
                       </div>
                     </div>
                     <p className="text-slate-600 text-sm mb-3 line-clamp-1">{chatRoom.issue.preview}</p>
-                    <div className="flex items-center gap-4 text-xs text-gray-500">
+                    <div className="flex items-center gap-4 text-xs text-slate-500">
                       <span>마지막 활동: {formatTime(chatRoom.last_seen)}</span>
                       <span>•</span>
                       <span>참여일: {formatDate(chatRoom.joined_at)}</span>
@@ -215,7 +215,7 @@ export default function MyChatRoomsPage() {
               >
                 이전
               </Button>
-              <span className="px-4 py-2 text-sm text-gray-700">
+              <span className="px-4 py-2 text-sm text-slate-700">
                 {page} / {apiResponse.data.pagination.totalPages}
               </span>
               <Button

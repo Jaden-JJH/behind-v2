@@ -187,11 +187,11 @@ export default function MyPage() {
     return (
       <div className="p-6">
         <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
+          <div className="h-8 bg-slate-200 rounded w-1/4 mb-6"></div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-            <div className="h-32 bg-gray-200 rounded"></div>
-            <div className="h-32 bg-gray-200 rounded"></div>
-            <div className="h-32 bg-gray-200 rounded"></div>
+            <div className="h-32 bg-slate-200 rounded"></div>
+            <div className="h-32 bg-slate-200 rounded"></div>
+            <div className="h-32 bg-slate-200 rounded"></div>
           </div>
         </div>
       </div>
@@ -201,7 +201,7 @@ export default function MyPage() {
   if (!profileData) {
     return (
       <div className="p-6">
-        <p className="text-gray-500">프로필 정보를 불러올 수 없습니다.</p>
+        <p className="text-slate-500">프로필 정보를 불러올 수 없습니다.</p>
       </div>
     )
   }
@@ -218,16 +218,16 @@ export default function MyPage() {
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">대시보드</h1>
+      <h1 className="text-2xl font-bold text-slate-900 mb-6">대시보드</h1>
 
       {/* 계정 정보 */}
       <Card className="p-6 mb-8">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">계정 정보</h2>
+        <h2 className="text-lg font-semibold text-slate-900 mb-4">계정 정보</h2>
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-gray-600">닉네임</span>
+            <span className="text-slate-600">닉네임</span>
             <div className="flex items-center gap-2">
-              <span className="font-medium text-gray-900">{profileData.nickname || '알 수 없음'}</span>
+              <span className="font-medium text-slate-900">{profileData.nickname || '알 수 없음'}</span>
               <Button
                 variant="outline"
                 size="sm"
@@ -242,12 +242,12 @@ export default function MyPage() {
             </div>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-gray-600">이메일</span>
-            <span className="font-medium text-gray-900">{profileData.email || '알 수 없음'}</span>
+            <span className="text-slate-600">이메일</span>
+            <span className="font-medium text-slate-900">{profileData.email || '알 수 없음'}</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-gray-600">가입일</span>
-            <span className="font-medium text-gray-900">{formattedDate}</span>
+            <span className="text-slate-600">가입일</span>
+            <span className="font-medium text-slate-900">{formattedDate}</span>
           </div>
         </div>
 
@@ -276,30 +276,30 @@ export default function MyPage() {
       </Card>
 
       {/* 활동 통계 */}
-      <h2 className="text-lg font-semibold text-gray-900 mb-4">활동 통계</h2>
+      <h2 className="text-lg font-semibold text-slate-900 mb-4">활동 통계</h2>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => router.push('/my/votes')}>
+        <Card className="p-6 border border-slate-200 hover:border-slate-300 transition-colors cursor-pointer" onClick={() => router.push('/my/votes')}>
           <div className="flex items-center justify-between mb-2">
             <span className="text-2xl">🗳️</span>
             <span className="text-3xl font-bold text-yellow-600">{stats.vote_count}</span>
           </div>
-          <p className="text-gray-600 text-sm">참여한 투표</p>
+          <p className="text-slate-600 text-sm">참여한 투표</p>
         </Card>
 
-        <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => router.push('/my/comments')}>
+        <Card className="p-6 border border-slate-200 hover:border-slate-300 transition-colors cursor-pointer" onClick={() => router.push('/my/comments')}>
           <div className="flex items-center justify-between mb-2">
             <span className="text-2xl">💬</span>
             <span className="text-3xl font-bold text-yellow-600">{stats.comment_count}</span>
           </div>
-          <p className="text-gray-600 text-sm">작성한 댓글</p>
+          <p className="text-slate-600 text-sm">작성한 댓글</p>
         </Card>
 
-        <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => router.push('/my/curious')}>
+        <Card className="p-6 border border-slate-200 hover:border-slate-300 transition-colors cursor-pointer" onClick={() => router.push('/my/curious')}>
           <div className="flex items-center justify-between mb-2">
             <span className="text-2xl">❓</span>
             <span className="text-3xl font-bold text-yellow-600">{stats.curious_count}</span>
           </div>
-          <p className="text-gray-600 text-sm">궁금해요 누른 제보</p>
+          <p className="text-slate-600 text-sm">궁금해요 누른 제보</p>
         </Card>
       </div>
 
@@ -398,7 +398,7 @@ export default function MyPage() {
           </AlertDialogHeader>
           
           <div className="space-y-3">
-            <p className="text-base font-semibold text-gray-900">
+            <p className="text-base font-semibold text-slate-900">
               정말로 탈퇴하시겠습니까?
             </p>
             <p className="text-sm text-muted-foreground">
