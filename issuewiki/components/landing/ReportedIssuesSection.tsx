@@ -1,12 +1,12 @@
 'use client'
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ChevronDown } from "lucide-react"
 import { formatTime } from "@/lib/utils"
 import { getDeviceHash } from "@/lib/device-hash"
-import { curiousReport } from "@/lib/api-client"
+import { curiousReport, fetchReports } from "@/lib/api-client"
 import { useAuth } from "@/hooks/useAuth"
 import { LoginPrompt } from "@/components/LoginPrompt"
 import { showSuccess, showError } from "@/lib/toast-utils"
@@ -64,11 +64,44 @@ export function ReportedIssuesSection({ initialIssues }: ReportedIssuesSectionPr
   const [reportedIssues, setReportedIssues] = useState(initialIssues)
   const [curiousLoading, setCuriousLoading] = useState<Record<string, boolean>>({})
   const [showLoginPrompt, setShowLoginPrompt] = useState(false)
+  const hasFetchedCuriousStatus = useRef(false)
+
+  // 클라이언트에서 마운트 후 is_curious 상태 업데이트
+  useEffect(() => {
+    // 이미 fetch 했으면 스킵
+    if (hasFetchedCuriousStatus.current) return
+    hasFetchedCuriousStatus.current = true
+
+    const updateCuriousStatus = async () => {
+      try {
+        const deviceHash = getDeviceHash()
+        const response = await fetchReports({
+          visibility: 'active',
+          device_hash: deviceHash
+        })
+
+        if (response.data) {
+          // 서버에서 받은 is_curious 상태로 업데이트
+          const curiousMap = new Map(response.data.map((r: any) => [r.id, r.is_curious]))
+          setReportedIssues(prev => prev.map(r => ({
+            ...r,
+            is_curious: curiousMap.get(r.id) ?? r.is_curious
+          })))
+        }
+      } catch (err) {
+        console.error('Failed to fetch curious status:', err)
+      }
+    }
+
+    updateCuriousStatus()
+  }, [])
 
   // 로그인 시 카운트 초기화
-  if (user && typeof window !== 'undefined') {
-    resetCuriousCount()
-  }
+  useEffect(() => {
+    if (user) {
+      resetCuriousCount()
+    }
+  }, [user])
 
   const handleCurious = async (reportId: string) => {
     setCuriousLoading(prev => ({ ...prev, [reportId]: true }))
@@ -103,20 +136,28 @@ export function ReportedIssuesSection({ initialIssues }: ReportedIssuesSectionPr
       }
 
     } catch (err: any) {
-      // 에러 시 롤백
-      setReportedIssues(prev => prev.map(r =>
-        r.id === reportId
-          ? { ...r, curious_count: r.curious_count - 1, is_curious: false }
-          : r
-      ))
-
       if (err.status === 409 || err.code === 'ALREADY_CURIOUS') {
+        // 이미 누른 경우: 롤백하지 않고 is_curious만 true로 유지, count는 롤백
+        setReportedIssues(prev => prev.map(r =>
+          r.id === reportId
+            ? { ...r, curious_count: r.curious_count - 1, is_curious: true }
+            : r
+        ))
         showError('이미 궁금해요를 누르셨습니다.')
-      } else if (err.status === 429 || err.code === 'RATE_LIMIT_EXCEEDED') {
-        showError('너무 많은 요청입니다. 잠시 후 다시 시도해주세요.')
       } else {
-        console.error('Curious error:', err)
-        showError('오류가 발생했습니다.')
+        // 다른 에러: 완전 롤백
+        setReportedIssues(prev => prev.map(r =>
+          r.id === reportId
+            ? { ...r, curious_count: r.curious_count - 1, is_curious: false }
+            : r
+        ))
+
+        if (err.status === 429 || err.code === 'RATE_LIMIT_EXCEEDED') {
+          showError('너무 많은 요청입니다. 잠시 후 다시 시도해주세요.')
+        } else {
+          console.error('Curious error:', err)
+          showError('오류가 발생했습니다.')
+        }
       }
     } finally {
       setCuriousLoading(prev => ({ ...prev, [reportId]: false }))
@@ -205,10 +246,10 @@ export function ReportedIssuesSection({ initialIssues }: ReportedIssuesSectionPr
                     {!isComplete && (
                       <button
                         onClick={() => handleCurious(r.id)}
-                        disabled={curiousLoading[r.id]}
+                        disabled={curiousLoading[r.id] || r.is_curious}
                         className={`w-full py-2 rounded-lg text-sm font-semibold transition-all ${
                           r.is_curious
-                            ? 'bg-yellow-100 text-yellow-700 border border-yellow-300'
+                            ? 'bg-yellow-100 text-yellow-700 border border-yellow-300 cursor-default'
                             : 'bg-slate-100 text-black hover:bg-yellow-600 active:scale-[0.98]'
                         }`}
                       >
