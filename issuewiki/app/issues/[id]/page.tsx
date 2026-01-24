@@ -2,13 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Eye, Users, ThumbsUp, ThumbsDown, Flag, ExternalLink, MoreVertical, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Eye, Users, ThumbsUp, ThumbsDown, Flag, MoreVertical, AlertTriangle, MessageCircle } from "lucide-react";
 import { ImageWithFallback } from "@/components/figma/ImageWithFallback";
 import { QuickVote } from "@/components/quick-vote";
 import { IssueFollowButton } from "@/components/issue-follow-button";
@@ -402,9 +398,9 @@ export default function IssueDetailPage() {
   // 로딩 상태
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
-          <div className="text-lg text-muted-foreground">로딩 중...</div>
+          <div className="text-lg text-slate-500">로딩 중...</div>
         </div>
       </div>
     );
@@ -413,13 +409,16 @@ export default function IssueDetailPage() {
   // 에러 상태
   if (error || !issue) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
-          <div className="text-lg text-muted-foreground mb-4">{error || '이슈를 찾을 수 없습니다'}</div>
-          <Button onClick={() => router.push('/')}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
+          <div className="text-lg text-slate-500 mb-4">{error || '이슈를 찾을 수 없습니다'}</div>
+          <button
+            onClick={() => router.push('/')}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-slate-800 text-white rounded-full text-sm font-medium hover:bg-slate-700 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
             홈으로 돌아가기
-          </Button>
+          </button>
         </div>
       </div>
     );
@@ -437,27 +436,34 @@ export default function IssueDetailPage() {
   const joinLabel = isChatFull ? '정원 마감' : chatError ? '입장 불가' : '채팅방 입장';
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b bg-card sticky top-0 z-10">
-        <div className="max-w-6xl mx-auto px-3 sm:px-4 md:px-6 py-3 sm:py-3.5 md:py-4">
-          <Button variant="ghost" onClick={() => router.push('/')} className="mb-3 -ml-2">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            목록으로
-          </Button>
+    <div className="min-h-screen bg-white">
+      {/* 헤더 */}
+      <header className="border-b border-slate-200 bg-white sticky top-0 z-10">
+        <div className="max-w-6xl mx-auto px-3 sm:px-4 md:px-6 py-3 sm:py-4">
+          <button
+            onClick={() => router.push('/')}
+            className="flex items-center gap-2 text-slate-500 hover:text-slate-700 transition-colors mb-4"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span className="text-sm">목록으로</span>
+          </button>
+
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
             <div className="flex-1">
               <div className="flex items-start justify-between gap-2">
-                <h1 className="mb-2 flex-1 text-base sm:text-lg md:text-xl font-bold">{issue.title}</h1>
+                <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-slate-900 leading-tight">
+                  {issue.title}
+                </h1>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm">
-                      <MoreVertical className="w-4 h-4" />
-                    </Button>
+                    <button className="p-2 text-slate-400 hover:text-slate-600 transition-colors">
+                      <MoreVertical className="w-5 h-5" />
+                    </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem
                       onClick={() => handleOpenReport('issue', issue.id)}
-                      className="text-destructive focus:text-destructive"
+                      className="text-red-600 focus:text-red-600"
                     >
                       <Flag className="w-4 h-4 mr-2" />
                       신고하기
@@ -465,9 +471,10 @@ export default function IssueDetailPage() {
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
-              <div className="flex items-center gap-2 sm:gap-3 text-muted-foreground flex-wrap">
-                <span className="flex items-center gap-1 text-xs sm:text-sm">
-                  <Users className="w-3.5 h-3.5" />
+
+              <div className="flex items-center gap-3 mt-2 text-slate-500 flex-wrap">
+                <span className="flex items-center gap-1.5 text-sm">
+                  <Users className="w-4 h-4" />
                   {chatStatusLabel}
                 </span>
                 {isChatFull && !chatError && (
@@ -477,41 +484,41 @@ export default function IssueDetailPage() {
                 )}
                 {issue.view_count > 0 && (
                   <>
-                    <Separator orientation="vertical" className="h-4" />
-                    <span className="flex items-center gap-1 text-xs sm:text-sm">
-                      <Eye className="w-3.5 h-3.5" />
-                      조회수 {issue.view_count}
+                    <span className="w-px h-3 bg-slate-300" />
+                    <span className="flex items-center gap-1.5 text-sm">
+                      <Eye className="w-4 h-4" />
+                      {issue.view_count.toLocaleString()}
                     </span>
                   </>
                 )}
               </div>
             </div>
+
             <div className="flex items-center gap-2">
               <IssueFollowButton issueId={issue.id} />
-              <div className="flex flex-col items-end gap-1">
-                <Button
-                  disabled={joinDisabled}
-                  className="min-w-[120px]"
-                  onClick={() => {
-                    if (!joinDisabled) {
-                      router.push(`/chat/${issue.id}`);
-                    }
-                  }}
-                >
-                  {joinLabel}
-                </Button>
-                {isChatFull && (
-                  <span className="text-xs text-rose-500">정원이 가득 찼습니다.</span>
-                )}
-              </div>
+              <button
+                disabled={joinDisabled}
+                onClick={() => {
+                  if (!joinDisabled) {
+                    router.push(`/chat/${issue.id}`);
+                  }
+                }}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors min-w-[120px] ${
+                  joinDisabled
+                    ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                    : 'bg-slate-800 text-white hover:bg-slate-700'
+                }`}
+              >
+                {joinLabel}
+              </button>
             </div>
           </div>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-5 md:py-8 space-y-4 sm:space-y-5 md:space-y-6">
+      <main className="max-w-6xl mx-auto px-3 sm:px-4 md:px-6 py-6 sm:py-8 space-y-6 sm:space-y-8">
         {/* 썸네일 이미지 */}
-        <div className="relative w-full max-w-3xl mx-auto aspect-video bg-muted rounded-xl overflow-hidden">
+        <div className="relative w-full max-w-3xl mx-auto aspect-video bg-slate-100 rounded-2xl overflow-hidden">
           <ImageWithFallback
             src={issue.thumbnail}
             alt={issue.title}
@@ -521,44 +528,36 @@ export default function IssueDetailPage() {
 
         {/* 블라인드 처리 알림 또는 사건 요약 */}
         {issue.is_blinded ? (
-          <Card className="bg-yellow-50 border-yellow-200">
-            <CardContent className="p-6">
-              <div className="flex items-start gap-4">
-                <AlertTriangle className="w-12 h-12 text-yellow-600 flex-shrink-0 mt-1" />
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-yellow-900 mb-2">
-                    블라인드 처리된 콘텐츠
-                  </h3>
-                  <p className="text-yellow-800 leading-relaxed mb-2">
-                    이 이슈는 신고 누적으로 인해 관리자에 의해 블라인드 처리되었습니다.
-                  </p>
-                  <p className="text-sm text-yellow-700">
-                    처리 시간: {issue.blinded_at ? new Date(issue.blinded_at).toLocaleString('ko-KR') : '정보 없음'}
-                  </p>
-                </div>
+          <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-6">
+            <div className="flex items-start gap-4">
+              <AlertTriangle className="w-10 h-10 text-yellow-600 flex-shrink-0" />
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-yellow-900 mb-2">
+                  블라인드 처리된 콘텐츠
+                </h3>
+                <p className="text-yellow-800 leading-relaxed mb-2">
+                  이 이슈는 신고 누적으로 인해 관리자에 의해 블라인드 처리되었습니다.
+                </p>
+                <p className="text-sm text-yellow-700">
+                  처리 시간: {issue.blinded_at ? new Date(issue.blinded_at).toLocaleString('ko-KR') : '정보 없음'}
+                </p>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         ) : (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg sm:text-xl font-semibold">사건 요약</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-slate-700 text-base sm:text-lg leading-7 sm:leading-8">
-                {issue.summary || issue.preview}
-              </p>
-            </CardContent>
-          </Card>
+          <section className="bg-white border border-slate-200 rounded-2xl p-6">
+            <h2 className="text-lg sm:text-xl font-bold text-slate-900 mb-4">사건 요약</h2>
+            <p className="text-slate-600 text-base sm:text-lg leading-7 sm:leading-8">
+              {issue.summary || issue.preview}
+            </p>
+          </section>
         )}
 
         {/* 관련 미디어 */}
         {issue.media_embed && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg sm:text-xl font-semibold">관련 미디어</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+          <section className="bg-white border border-slate-200 rounded-2xl p-6">
+            <h2 className="text-lg sm:text-xl font-bold text-slate-900 mb-4">관련 미디어</h2>
+            <div className="space-y-4">
               {/* 유튜브 임베드 */}
               {issue.media_embed.youtube && (() => {
                 const videoId = extractYouTubeId(issue.media_embed.youtube);
@@ -566,7 +565,7 @@ export default function IssueDetailPage() {
 
                 return (
                   <div className="max-w-2xl mx-auto">
-                    <div className="aspect-video rounded-lg overflow-hidden bg-muted">
+                    <div className="aspect-video rounded-xl overflow-hidden bg-slate-100">
                       <iframe
                         width="100%"
                         height="100%"
@@ -583,46 +582,38 @@ export default function IssueDetailPage() {
 
               {/* 뉴스 기사 */}
               {issue.media_embed.news && 'url' in issue.media_embed.news && (
-                <div className="border rounded-lg p-4 bg-card hover:bg-accent/50 transition-colors">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <p className="text-sm text-muted-foreground mb-1">
-                        {issue.media_embed.news.source}
-                      </p>
-                      <h3 className="font-semibold text-base mb-2 line-clamp-2">
-                        {issue.media_embed.news.title}
-                      </h3>
-                      <a
-                        href={issue.media_embed.news.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm text-primary hover:underline inline-flex items-center gap-1"
-                      >
-                        기사 전문 보기
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                        </svg>
-                      </a>
-                    </div>
-                  </div>
+                <div className="border border-slate-200 rounded-xl p-4 hover:bg-slate-50 transition-colors">
+                  <p className="text-sm text-slate-500 mb-1">
+                    {issue.media_embed.news.source}
+                  </p>
+                  <h3 className="font-semibold text-slate-900 text-base mb-2 line-clamp-2">
+                    {issue.media_embed.news.title}
+                  </h3>
+                  <a
+                    href={issue.media_embed.news.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-slate-600 hover:text-slate-900 inline-flex items-center gap-1 transition-colors"
+                  >
+                    기사 전문 보기
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                  </a>
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </section>
         )}
 
         {/* 에디터 노트 */}
         {issue.behind_story && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg sm:text-xl font-semibold">에디터 노트</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-slate-700 text-base sm:text-lg leading-7 sm:leading-8">
-                {issue.behind_story}
-              </p>
-            </CardContent>
-          </Card>
+          <section className="bg-white border border-slate-200 rounded-2xl p-6">
+            <h2 className="text-lg sm:text-xl font-bold text-slate-900 mb-4">에디터 노트</h2>
+            <p className="text-slate-600 text-base sm:text-lg leading-7 sm:leading-8">
+              {issue.behind_story}
+            </p>
+          </section>
         )}
 
         {/* 후속 기사 타임라인 */}
@@ -646,62 +637,84 @@ export default function IssueDetailPage() {
             }}
           />
         ) : (
-          <Card>
-            <CardContent className="p-6 text-center text-muted-foreground">
-              투표가 없습니다
-            </CardContent>
-          </Card>
+          <div className="bg-slate-50 rounded-2xl p-8 text-center">
+            <p className="text-slate-400">투표가 없습니다</p>
+          </div>
         )}
 
         {/* 댓글 */}
-        <div id="comments" className="space-y-4">
+        <section id="comments" className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg sm:text-xl font-semibold">댓글</h2>
-            <Tabs value={sortBy} onValueChange={(value) => setSortBy(value as 'recent' | 'popular')}>
-              <TabsList>
-                <TabsTrigger value="popular">인기순</TabsTrigger>
-                <TabsTrigger value="recent">최신순</TabsTrigger>
-              </TabsList>
-            </Tabs>
+            <div className="flex items-center gap-2">
+              <MessageCircle className="w-5 h-5 text-slate-700" />
+              <h2 className="text-lg sm:text-xl font-bold text-slate-900">댓글</h2>
+              <span className="text-slate-400 text-sm">({comments.length})</span>
+            </div>
+            <div className="flex gap-1">
+              <button
+                onClick={() => setSortBy('popular')}
+                className={`px-3 py-1.5 rounded-full text-sm transition-all ${
+                  sortBy === 'popular'
+                    ? 'bg-slate-800 text-white font-medium'
+                    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                }`}
+              >
+                인기순
+              </button>
+              <button
+                onClick={() => setSortBy('recent')}
+                className={`px-3 py-1.5 rounded-full text-sm transition-all ${
+                  sortBy === 'recent'
+                    ? 'bg-slate-800 text-white font-medium'
+                    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                }`}
+              >
+                최신순
+              </button>
+            </div>
           </div>
 
           {/* 댓글 작성 */}
           {!user ? (
-            <Card>
-              <CardContent className="p-6 text-center space-y-4">
-                <p className="text-muted-foreground">
-                  로그인하고 댓글을 남겨보세요
-                </p>
-                <Button onClick={() => signInWithGoogle(window.location.pathname)} disabled={authLoading}>
-                  구글로 로그인
-                </Button>
-              </CardContent>
-            </Card>
+            <div className="bg-slate-50 rounded-2xl p-6 text-center">
+              <p className="text-slate-500 mb-4">
+                로그인하고 댓글을 남겨보세요
+              </p>
+              <button
+                onClick={() => signInWithGoogle(window.location.pathname)}
+                disabled={authLoading}
+                className="px-4 py-2 bg-slate-800 text-white rounded-full text-sm font-medium hover:bg-slate-700 transition-colors disabled:opacity-50"
+              >
+                구글로 로그인
+              </button>
+            </div>
           ) : (
-            <Card>
-              <CardContent className="p-4 sm:p-5 md:p-6">
-                <Textarea
-                  value={commentBody}
-                  onChange={(e) => setCommentBody(e.target.value)}
-                  placeholder="댓글을 남겨보세요"
-                  className="min-h-[100px] sm:min-h-[120px] md:min-h-[140px] mb-3 sm:mb-3.5 md:mb-4 resize-none text-sm sm:text-base"
+            <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5">
+              <Textarea
+                value={commentBody}
+                onChange={(e) => setCommentBody(e.target.value)}
+                placeholder="댓글을 남겨보세요"
+                className="min-h-[100px] mb-3 resize-none text-sm sm:text-base border-slate-200 focus:border-slate-400 focus:ring-slate-400 rounded-xl"
+                disabled={submitting}
+              />
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs sm:text-sm text-slate-400">
+                  {user.user_metadata?.nickname || '익명'} · 커뮤니티 가이드라인 준수
+                </p>
+                <button
+                  onClick={handleSubmitComment}
                   disabled={submitting}
-                />
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-xs sm:text-sm text-muted-foreground">
-                    {user.user_metadata?.nickname || '익명'} · 커뮤니티 가이드라인 준수
-                  </p>
-                  <Button onClick={handleSubmitComment} disabled={submitting} className="flex-shrink-0">
-                    {submitting ? '등록 중...' : '등록'}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+                  className="px-4 py-2 bg-slate-800 text-white rounded-full text-sm font-medium hover:bg-slate-700 transition-colors disabled:opacity-50"
+                >
+                  {submitting ? '등록 중...' : '등록'}
+                </button>
+              </div>
+            </div>
           )}
 
           {/* 댓글 목록 */}
           {commentsLoading && (
-            <div className="text-center py-8 text-sm sm:text-base text-muted-foreground">
+            <div className="text-center py-8 text-sm sm:text-base text-slate-400">
               댓글을 불러오는 중...
             </div>
           )}
@@ -713,88 +726,92 @@ export default function IssueDetailPage() {
           )}
 
           {!commentsLoading && !commentsError && comments.length === 0 && (
-            <div className="text-center py-8 text-sm sm:text-base text-muted-foreground">
+            <div className="text-center py-8 text-sm sm:text-base text-slate-400">
               첫 댓글을 남겨보세요!
             </div>
           )}
 
           {!commentsLoading && !commentsError && comments.length > 0 && (
-            <div className="space-y-3 sm:space-y-3.5 md:space-y-4">
+            <div className="space-y-3">
               {comments.map((c) => (
-                <Card key={c.id}>
-                  <CardContent className="p-4 sm:p-5 md:p-6">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center gap-3">
-                        <Avatar className="w-8 h-8">
-                          <AvatarFallback>{c.user_nick.slice(-1)}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          {c.user_nick ? (
-                            <button
-                              onClick={() => setSelectedNickname(c.user_nick)}
-                              className="text-sm hover:underline cursor-pointer text-left bg-transparent border-none p-0"
-                            >
-                              {c.user_nick}
-                            </button>
-                          ) : (
-                            <p className="text-sm text-muted-foreground">익명</p>
-                          )}
-                          <p className="text-xs text-muted-foreground">
-                            {formatTime(c.created_at)}
-                          </p>
-                        </div>
+                <div key={c.id} className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="w-9 h-9 bg-slate-100">
+                        <AvatarFallback className="bg-slate-100 text-slate-600 text-sm">
+                          {c.user_nick?.slice(-1) || '?'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        {c.user_nick ? (
+                          <button
+                            onClick={() => setSelectedNickname(c.user_nick)}
+                            className="text-sm font-medium text-slate-800 hover:underline"
+                          >
+                            {c.user_nick}
+                          </button>
+                        ) : (
+                          <p className="text-sm text-slate-400">익명</p>
+                        )}
+                        <p className="text-xs text-slate-400">
+                          {formatTime(c.created_at)}
+                        </p>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleOpenReport('comment', c.id)}
-                      >
-                        <Flag className="w-4 h-4" />
-                      </Button>
                     </div>
-                    {c.is_blinded ? (
-                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-2 md:mb-3">
-                        <div className="flex items-center gap-2 text-yellow-700">
-                          <AlertTriangle className="w-4 h-4" />
-                          <span className="text-sm font-medium">
-                            블라인드 처리된 댓글입니다
-                          </span>
-                        </div>
+                    <button
+                      onClick={() => handleOpenReport('comment', c.id)}
+                      className="p-1.5 text-slate-300 hover:text-slate-500 transition-colors"
+                    >
+                      <Flag className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  {c.is_blinded ? (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3 mb-3">
+                      <div className="flex items-center gap-2 text-yellow-700">
+                        <AlertTriangle className="w-4 h-4" />
+                        <span className="text-sm font-medium">
+                          블라인드 처리된 댓글입니다
+                        </span>
                       </div>
-                    ) : (
-                      <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mb-3 sm:mb-3.5 md:mb-4">{c.body}</p>
-                    )}
-                    <div className="flex items-center gap-2 sm:gap-2.5 md:gap-3">
-                      <Button
-                        variant={voteStates[c.id] === 'up' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => handleVote(c.id, 'up')}
-                        disabled={votingCommentId === c.id}
-                        className="min-h-[44px]"
-                      >
-                        <ThumbsUp className="w-4 h-4 sm:w-4.5 sm:h-4.5 mr-1.5" />
-                        {c.up}
-                      </Button>
-                      <Button
-                        variant={voteStates[c.id] === 'down' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => handleVote(c.id, 'down')}
-                        disabled={votingCommentId === c.id}
-                        className="min-h-[44px]"
-                      >
-                        <ThumbsDown className="w-4 h-4 sm:w-4.5 sm:h-4.5 mr-1.5" />
-                        {c.down}
-                      </Button>
-                      <Button variant="ghost" size="sm" className="min-h-[44px]">
-                        답글
-                      </Button>
                     </div>
-                  </CardContent>
-                </Card>
+                  ) : (
+                    <p className="text-sm sm:text-base text-slate-600 leading-relaxed mb-4">
+                      {c.body}
+                    </p>
+                  )}
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleVote(c.id, 'up')}
+                      disabled={votingCommentId === c.id}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-all ${
+                        voteStates[c.id] === 'up'
+                          ? 'bg-slate-800 text-white'
+                          : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                      }`}
+                    >
+                      <ThumbsUp className="w-4 h-4" />
+                      {c.up}
+                    </button>
+                    <button
+                      onClick={() => handleVote(c.id, 'down')}
+                      disabled={votingCommentId === c.id}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-all ${
+                        voteStates[c.id] === 'down'
+                          ? 'bg-slate-800 text-white'
+                          : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                      }`}
+                    >
+                      <ThumbsDown className="w-4 h-4" />
+                      {c.down}
+                    </button>
+                  </div>
+                </div>
               ))}
             </div>
           )}
-        </div>
+        </section>
       </main>
 
       <UserProfileDrawer
