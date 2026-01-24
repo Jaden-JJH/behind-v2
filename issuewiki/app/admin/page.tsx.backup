@@ -1,0 +1,184 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+
+export default function AdminPage() {
+  const router = useRouter()
+  const [title, setTitle] = useState('')
+  const [preview, setPreview] = useState('')
+  const [thumbnail, setThumbnail] = useState('')
+  const [capacity, setCapacity] = useState('30')
+  const [pollQuestion, setPollQuestion] = useState('')
+  const [option1, setOption1] = useState('')
+  const [option2, setOption2] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [message, setMessage] = useState('')
+
+  useEffect(() => {
+    // 인증 확인
+    fetch('/api/admin/check')
+      .then(res => {
+        if (!res.ok) router.push('/admin/login')
+      })
+  }, [router])
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setMessage('')
+
+    try {
+      const response = await fetch('/api/admin/issues', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title,
+          preview,
+          thumbnail,
+          capacity: parseInt(capacity),
+          pollQuestion,
+          options: [option1, option2]
+        })
+      })
+
+      if (response.ok) {
+        setMessage('✅ 이슈가 성공적으로 등록되었습니다!')
+        // 폼 초기화
+        setTitle('')
+        setPreview('')
+        setThumbnail('')
+        setCapacity('30')
+        setPollQuestion('')
+        setOption1('')
+        setOption2('')
+      } else {
+        const error = await response.json()
+        setMessage('❌ ' + (error.error || '등록 실패'))
+      }
+    } catch (error) {
+      setMessage('❌ 오류 발생: ' + error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-100 py-8">
+      <div className="max-w-3xl mx-auto bg-white p-8 rounded-lg shadow-md">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold">이슈 등록</h1>
+          <button
+            onClick={() => router.push('/admin/login')}
+            className="text-sm text-gray-600 hover:text-gray-800"
+          >
+            로그아웃
+          </button>
+        </div>
+
+        {message && (
+          <div className={`mb-4 p-4 rounded ${message.includes('✅') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+            {message}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-2">제목</label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              required
+              className="w-full px-4 py-2 border rounded-lg"
+              placeholder="이슈 제목을 입력하세요"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2">미리보기 텍스트</label>
+            <textarea
+              value={preview}
+              onChange={(e) => setPreview(e.target.value)}
+              required
+              rows={3}
+              className="w-full px-4 py-2 border rounded-lg"
+              placeholder="이슈 미리보기 텍스트"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2">썸네일 URL</label>
+            <input
+              type="text"
+              value={thumbnail}
+              onChange={(e) => setThumbnail(e.target.value)}
+              className="w-full px-4 py-2 border rounded-lg"
+              placeholder="https://example.com/image.jpg"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2">채팅방 정원</label>
+            <input
+              type="number"
+              value={capacity}
+              onChange={(e) => setCapacity(e.target.value)}
+              required
+              min="10"
+              max="100"
+              className="w-full px-4 py-2 border rounded-lg"
+            />
+          </div>
+
+          <hr className="my-6" />
+          <h2 className="text-xl font-bold mb-4">투표 설정</h2>
+
+          <div>
+            <label className="block text-sm font-medium mb-2">투표 질문</label>
+            <input
+              type="text"
+              value={pollQuestion}
+              onChange={(e) => setPollQuestion(e.target.value)}
+              required
+              className="w-full px-4 py-2 border rounded-lg"
+              placeholder="당신의 의견은?"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2">선택지 1</label>
+            <input
+              type="text"
+              value={option1}
+              onChange={(e) => setOption1(e.target.value)}
+              required
+              className="w-full px-4 py-2 border rounded-lg"
+              placeholder="예: 찬성"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2">선택지 2</label>
+            <input
+              type="text"
+              value={option2}
+              onChange={(e) => setOption2(e.target.value)}
+              required
+              className="w-full px-4 py-2 border rounded-lg"
+              placeholder="예: 반대"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 disabled:bg-gray-400"
+          >
+            {loading ? '등록 중...' : '이슈 등록'}
+          </button>
+        </form>
+      </div>
+    </div>
+  )
+}

@@ -1,0 +1,344 @@
+'use client'
+import { handleApiResponse } from '@/lib/toast-utils';
+import { csrfFetch } from '@/lib/csrf-client';
+import { useEffect, useMemo, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAuth } from '@/hooks/useAuth';
+import { LoginPrompt } from '@/components/LoginPrompt';
+import { ReportModal } from '@/components/ReportModal';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { MoreVertical, Flag, AlertTriangle } from "lucide-react";
+import { generateUUID } from '@/lib/uuid';
+
+/** =========================
+ *  Utils
+ *  ========================= */
+const toSafeNumber = (v: unknown): number => {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : 0;
+};
+
+const normalizeOptions = (options: Array<{id?: string, label?: string, count?: number}>): Array<{id: string, label: string, count: number}> => {
+  const arr = Array.isArray(options) ? options.filter(Boolean) : [];
+  const filled = arr.map((o, i) => ({ id: o.id ?? `temp-${i}`, label: o.label ?? `옵션 ${i + 1}`, count: toSafeNumber(o.count) }));
+  while (filled.length < 2) filled.push({ id: `temp-${filled.length}`, label: `옵션 ${filled.length + 1}`, count: 0 });
+  return filled.slice(0, 2);
+};
+
+const initCountsFromOptions = (options: Array<{label?: string, count?: number}>): number[] => normalizeOptions(options).map((o) => toSafeNumber(o.count));
+
+const incrementAtIndex = (arr: number[], idx: number): number[] => {
+  const base = Array.isArray(arr) ? Array.from(arr) : [];
+  const i = Number(idx);
+  if (!Number.isInteger(i) || i < 0 || i >= base.length) return base;
+  base[i] = toSafeNumber(base[i]) + 1;
+  return base;
+};
+
+// Storage helpers
+const voteKey = (pollId: string): string => `bh_voted_${encodeURIComponent(pollId)}`;
+
+const getStoredVote = (pollId: string): number | null => {
+  if (typeof window === "undefined") return null;
+  try {
+    const v = localStorage.getItem(voteKey(pollId));
+    return v == null ? null : Number(v);
+  } catch {
+    return null;
+  }
+};
+
+const setStoredVote = (pollId: string, idx: number): void => {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(voteKey(pollId), String(idx));
+  } catch {}
+};
+
+// Device hash 생성
+const getDeviceHash = (): string => {
+  if (typeof window === "undefined") return "";
+  let hash = localStorage.getItem('bh_device_hash');
+  if (!hash) {
+    hash = generateUUID();
+    localStorage.setItem('bh_device_hash', hash);
+  }
+  return hash;
+};
+
+// 투표 횟수 관리
+const VOTE_COUNT_KEY = 'bh_vote_count';
+
+const getVoteCount = (): number => {
+  if (typeof window === "undefined") return 0;
+  try {
+    const count = localStorage.getItem(VOTE_COUNT_KEY);
+    return count ? Number.parseInt(count, 10) : 0;
+  } catch {
+    return 0;
+  }
+};
+
+const incrementVoteCount = (): number => {
+  if (typeof window === "undefined") return 0;
+  try {
+    const current = getVoteCount();
+    const newCount = current + 1;
+    localStorage.setItem(VOTE_COUNT_KEY, String(newCount));
+    return newCount;
+  } catch {
+    return 0;
+  }
+};
+
+const resetVoteCount = (): void => {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.removeItem(VOTE_COUNT_KEY);
+  } catch {}
+};
+
+/** =========================
+ *  QuickVote - 투표 컴포넌트
+ *  ========================= */
+interface QuickVoteProps {
+  pollId: string;
+  question: string;
+  options: Array<{id: string, label: string, count: number}>;
+  ctaLabel?: string;
+  onCta?: () => void;
+  isBlinded?: boolean;
+  blindedAt?: string;
+}
+
+export function QuickVote({ pollId, question, options, ctaLabel = "이슈 자세히 보기", onCta, isBlinded, blindedAt }: QuickVoteProps) {
+  const { user, signInWithGoogle } = useAuth();
+  const safeOptions = useMemo(() => normalizeOptions(options), [options]);
+  const [counts, setCounts] = useState(() => initCountsFromOptions(safeOptions));
+  const [selected, setSelected] = useState<number | null>(null);
+  const [voted, setVoted] = useState(false);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const [reportModalOpen, setReportModalOpen] = useState(false);
+
+  useEffect(() => {
+    const saved = getStoredVote(pollId || question || "");
+    if (saved != null && Number.isInteger(saved)) {
+      setSelected(saved);
+      setVoted(true);
+    }
+  }, [pollId, question]);
+
+  // 로그인 시 투표 카운트 초기화
+  useEffect(() => {
+    if (user) {
+      resetVoteCount();
+    }
+  }, [user]);
+
+  const total = (Array.isArray(counts) ? counts : []).reduce((a, b) => toSafeNumber(a) + toSafeNumber(b), 0);
+
+  const handleVote = async (idx: number) => {
+    if (voted) return;
+
+    // 비로그인 사용자: 투표 횟수 체크
+    if (!user) {
+      const currentCount = getVoteCount();
+      
+      // 3번째 투표부터 로그인 팝업 표시
+      if (currentCount >= 2) {
+        setShowLoginPrompt(true);
+        // 팝업 표시 후에도 투표는 진행 (옵션 A 정책)
+      }
+    }
+
+    const selectedOption = safeOptions[idx];
+    const cleanPollId = pollId.replace(/^poll_/, '');
+
+    try {
+      // API 호출
+      const response = await csrfFetch('/api/vote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          pollId: cleanPollId,
+          optionId: selectedOption?.id,
+          deviceHash: getDeviceHash()
+        })
+      });
+
+      // 공통 응답 핸들러 사용 (429 에러 자동 처리)
+      await handleApiResponse(response);
+
+      // 성공 시 로컬 상태 업데이트
+      setCounts((prev) => incrementAtIndex(prev, idx));
+      setSelected(idx);
+      setVoted(true);
+      setStoredVote(pollId || question || "", idx);
+
+      // 비로그인 사용자: 투표 카운트 증가 (최대 3까지)
+      if (!user) {
+        const currentCount = getVoteCount();
+        if (currentCount < 3) {
+          incrementVoteCount();
+        }
+      }
+
+    } catch (error: any) {
+      // handleApiResponse에서 이미 토스트 표시됨
+      // 중복 투표는 409 에러로 처리됨
+      console.error('투표 API 오류:', error);
+    }
+  };
+
+  return (
+    <>
+      <LoginPrompt
+        open={showLoginPrompt}
+        onClose={() => setShowLoginPrompt(false)}
+        voteCount={getVoteCount()}
+      />
+
+      <Card className="bg-white border-slate-200 shadow-sm">
+        <CardHeader>
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex-1">
+              <CardTitle className="text-lg sm:text-xl font-semibold text-slate-800">{question}</CardTitle>
+              <p className="text-slate-500 text-sm flex items-center gap-1.5 mt-1">
+                {toSafeNumber(total).toLocaleString()}명 참여
+              </p>
+            </div>
+            {!isBlinded && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                    <MoreVertical className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem
+                    onClick={() => setReportModalOpen(true)}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    <Flag className="w-4 h-4 mr-2" />
+                    신고하기
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent>
+          {isBlinded ? (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <div className="flex items-center gap-3 text-yellow-700">
+                <AlertTriangle className="w-6 h-6" />
+                <div>
+                  <p className="font-medium mb-1">블라인드 처리된 투표입니다</p>
+                  <p className="text-sm text-yellow-600">
+                    이 투표는 신고 누적으로 인해 관리자에 의해 블라인드 처리되었습니다.
+                  </p>
+                  {blindedAt && (
+                    <p className="text-xs text-yellow-600 mt-1">
+                      처리 시간: {new Date(blindedAt).toLocaleString('ko-KR')}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : !voted ? (
+            <div className="space-y-2.5">
+              {safeOptions.map((option, idx) => {
+                return (
+                  <button
+                    key={option.id || idx}
+                    onClick={() => handleVote(idx)}
+                    className="w-full group relative overflow-hidden rounded-xl border-2 border-slate-200 bg-white px-4 py-3.5 text-left transition-all duration-200 hover:border-yellow-400 hover:bg-yellow-50 active:scale-[0.98]"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium text-slate-700 group-hover:text-slate-900 transition-colors">
+                        {option.label}
+                      </span>
+                      <span className="text-xs text-slate-400 group-hover:text-yellow-600 transition-colors">
+                        투표하기 →
+                      </span>
+                    </div>
+                  </button>
+                )
+              })}
+              {onCta && (
+                <button
+                  onClick={onCta}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 transition-all hover:bg-slate-50 hover:text-slate-800"
+                >
+                  {ctaLabel}
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-2.5">
+              {safeOptions.map((o, idx) => {
+                const c = toSafeNumber(counts?.[idx]);
+                const t = Math.max(1, toSafeNumber(total));
+                const pct = Math.round((c / t) * 100);
+                const chosen = selected === idx;
+                return (
+                  <div
+                    key={`res-${idx}`}
+                    className={`relative overflow-hidden rounded-xl border-2 p-3.5 transition-all ${
+                      chosen
+                        ? "border-yellow-400 bg-gradient-to-r from-yellow-50 to-amber-50"
+                        : "border-slate-200 bg-white"
+                    }`}
+                  >
+                    <div className="flex justify-between items-center mb-2.5 relative z-10">
+                      <div className="flex items-center gap-2">
+                        {chosen && (
+                          <span className="flex items-center justify-center w-5 h-5 rounded-full bg-yellow-500 text-white text-xs">✓</span>
+                        )}
+                        <span className={chosen ? "text-slate-900 font-semibold" : "text-slate-700 font-medium"}>
+                          {o.label}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className={`${chosen ? "text-yellow-700" : "text-slate-500"} tabular-nums text-sm font-medium`}>
+                          {c.toLocaleString()}표
+                        </span>
+                        <span className={`${chosen ? "text-yellow-700 font-bold" : "text-slate-500 font-medium"} tabular-nums text-sm`}>
+                          {pct}%
+                        </span>
+                      </div>
+                    </div>
+                    <div className="h-2.5 bg-slate-200/80 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all duration-700 ease-out ${
+                          chosen ? "bg-gradient-to-r from-yellow-400 to-amber-500" : "bg-slate-400"
+                        }`}
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+              {onCta && (
+                <button
+                  onClick={onCta}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 transition-all hover:bg-slate-50 hover:text-slate-800 mt-1"
+                >
+                  {ctaLabel}
+                </button>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <ReportModal
+        open={reportModalOpen}
+        onOpenChange={setReportModalOpen}
+        contentType="poll"
+        contentId={pollId.replace(/^poll_/, '')}
+      />
+    </>
+  );
+}

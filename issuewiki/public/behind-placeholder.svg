@@ -1,0 +1,15 @@
+<svg width="320" height="200" viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="behindGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4338CA" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#6366F1" stop-opacity="0.85"/>
+    </linearGradient>
+  </defs>
+  <rect width="320" height="200" rx="20" fill="url(#behindGradient)"/>
+  <g fill="#FFFFFF" fill-opacity="0.9">
+    <path d="M80 120V80H110C120.5 80 127 86 127 96C127 103 122.5 108 114.5 109.5C121.5 111.5 126 116.5 126 124C126 135.5 117.5 140 105.5 140H80ZM95.5 105.5H105.5C109 105.5 111.5 103.5 111.5 100C111.5 96.5 109 94.5 105.5 94.5H95.5V105.5ZM95.5 126H106.5C110.5 126 113 123.5 113 119.5C113 115.5 110.5 113 106.5 113H95.5V126Z"/>
+    <path d="M137 140V80H152V105.5H169.5V80H184.5V140H169.5V120H152V140H137Z"/>
+    <path d="M206 140V94.5H191.5V80H235.5V94.5H221V140H206Z"/>
+  </g>
+  <text x="50%" y="170" text-anchor="middle" fill="#E0E7FF" font-family="Helvetica, Arial, sans-serif" font-size="22" letter-spacing="4">BEHIND</text>
+</svg>

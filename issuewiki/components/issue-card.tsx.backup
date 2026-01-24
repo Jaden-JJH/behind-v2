@@ -1,0 +1,91 @@
+'use client'
+
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { MessageCircle, Users, Eye } from "lucide-react";
+import { ImageWithFallback } from "@/components/figma/ImageWithFallback";
+
+/** =========================
+ *  IssueCard - 레딧 스타일 이슈 카드
+ *  ========================= */
+interface Issue {
+  id: string;
+  title: string;
+  preview: string;
+  thumbnail?: string;
+  upvotes?: number;
+  commentCount?: number;
+  participants: number;
+  capacity: number;
+  liveViewers?: number;
+}
+
+interface IssueCardProps {
+  issue: Issue;
+  onOpenIssue: (id: string) => void;
+  onOpenChat: (id: string) => void;
+}
+
+export function IssueCard({ issue, onOpenIssue, onOpenChat }: IssueCardProps) {
+  // 추후 투표 기능 구현 시 사용
+  // const [upvotes, setUpvotes] = useState(issue.upvotes || 0);
+  // const [voted, setVoted] = useState<'up' | 'down' | null>(null);
+
+  return (
+    <Card className="bg-white border-slate-200 hover:border-slate-300 hover:shadow-md transition-all overflow-hidden">
+      <div className="flex gap-4 p-4">
+        {/* 썸네일 */}
+        {issue.thumbnail && (
+          <div className="w-48 h-32 flex-shrink-0 rounded-lg overflow-hidden bg-slate-100 cursor-pointer" onClick={() => onOpenIssue(issue.id)}>
+            <ImageWithFallback
+              src={issue.thumbnail}
+              alt={issue.title}
+              className="w-full h-full object-cover hover:scale-105 transition-transform"
+            />
+          </div>
+        )}
+
+        {/* 콘텐츠 영역 */}
+        <div className="flex-1 flex flex-col justify-between">
+          <div className="space-y-2">
+            <h3
+              className="text-lg font-bold text-slate-900 cursor-pointer hover:text-indigo-600 transition-colors leading-snug"
+              onClick={() => onOpenIssue(issue.id)}
+            >
+              {issue.title}
+            </h3>
+            <p className="text-slate-600 text-base leading-relaxed line-clamp-2">{issue.preview}</p>
+          </div>
+
+          <div className="flex items-center justify-between mt-4">
+            <div className="flex items-center gap-4 text-sm text-slate-600">
+              <span className="flex items-center gap-1.5">
+                <MessageCircle className="w-4 h-4" />
+                <span className="font-medium">{issue.commentCount || 0}</span>
+              </span>
+              <span className="flex items-center gap-1.5">
+                <Users className="w-4 h-4" />
+                <span className="font-medium">{issue.participants}/{issue.capacity}</span>
+              </span>
+              {issue.liveViewers && (
+                <span className="flex items-center gap-1.5">
+                  <Eye className="w-4 h-4" />
+                  <span className="font-medium">{issue.liveViewers}</span>
+                </span>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" className="border-slate-300 text-slate-700 hover:bg-slate-100" onClick={() => onOpenIssue(issue.id)}>
+                자세히
+              </Button>
+              <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white" onClick={() => onOpenChat(issue.id)}>
+                채팅 입장
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Card>
+  );
+}
