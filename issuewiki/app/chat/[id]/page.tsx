@@ -70,9 +70,9 @@ export default function ChatRoom() {
   const authGuard = (() => {
     if (authLoading) {
       return (
-        <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="min-h-screen bg-white flex items-center justify-center">
           <div className="text-center">
-            <p className="text-muted-foreground">로딩 중...</p>
+            <p className="text-slate-500">로딩 중...</p>
           </div>
         </div>
       )
@@ -80,21 +80,24 @@ export default function ChatRoom() {
 
     if (!user) {
       return (
-        <div className="min-h-screen bg-background">
-          <header className="border-b bg-card sticky top-0 z-10">
+        <div className="min-h-screen bg-white">
+          <header className="border-b border-slate-200 bg-white sticky top-0 z-10">
             <div className="max-w-6xl mx-auto px-4 py-4">
-              <Button variant="ghost" onClick={() => router.push("/")} className="mb-2 -ml-2">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                목록으로
-              </Button>
+              <button
+                onClick={() => router.push("/")}
+                className="flex items-center gap-2 text-slate-500 hover:text-slate-700 transition-colors mb-4"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span className="text-sm">목록으로</span>
+              </button>
             </div>
           </header>
           <main className="max-w-6xl mx-auto px-4 py-6">
             <Card>
               <CardContent className="p-8 text-center space-y-4">
-                <MessageCircle className="w-16 h-16 mx-auto text-muted-foreground opacity-50" />
+                <MessageCircle className="w-16 h-16 mx-auto text-slate-500 opacity-50" />
                 <h2 className="text-xl font-semibold">로그인이 필요합니다</h2>
-                <p className="text-muted-foreground">채팅방에 입장하려면 로그인이 필요합니다.</p>
+                <p className="text-slate-500">채팅방에 입장하려면 로그인이 필요합니다.</p>
                 <Button onClick={() => signInWithGoogle(`/chat/${issueId}`)}>
                   Google 로그인
                 </Button>
@@ -334,28 +337,31 @@ export default function ChatRoom() {
         : '참여자 수 확인 중'
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b bg-card sticky top-0 z-10">
+    <div className="min-h-screen bg-white">
+      <header className="border-b border-slate-200 bg-white sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-4 py-4">
-          <Button variant="ghost" onClick={() => router.push('/')} className="mb-2 -ml-2">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            목록으로
-          </Button>
+          <button
+            onClick={() => router.push('/')}
+            className="flex items-center gap-2 text-slate-500 hover:text-slate-700 transition-colors mb-4"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span className="text-sm">목록으로</span>
+          </button>
           <div className="flex items-center justify-between gap-4">
             <div className="flex-1 min-w-0">
-              <h1 className="truncate text-lg font-semibold text-foreground">{headerTitle}</h1>
+              <h1 className="truncate text-lg font-semibold text-slate-900">{headerTitle}</h1>
               {headerSubtitle && (
-                <p className="text-sm text-muted-foreground truncate mt-1">{headerSubtitle}</p>
+                <p className="text-sm text-slate-500 truncate mt-1">{headerSubtitle}</p>
               )}
-              <div className="flex items-center gap-3 mt-2 text-muted-foreground flex-wrap">
+              <div className="flex items-center gap-3 mt-2 text-slate-500 flex-wrap">
                 <span className="flex items-center gap-2 text-sm">
                   <Users className="w-3.5 h-3.5" />
-                  <span className="font-medium text-foreground">{occupancyLabel}</span>
+                  <span className="font-medium text-slate-900">{occupancyLabel}</span>
                 </span>
                 <Separator orientation="vertical" className="h-4" />
                 <span className="truncate text-sm">
                   내 닉네임:
-                  <strong className="text-foreground ml-1">
+                  <strong className="text-slate-900 ml-1">
                     {user?.user_metadata?.nickname || "설정 중"}
                   </strong>
                 </span>
@@ -370,7 +376,7 @@ export default function ChatRoom() {
           <CardContent className="p-0">
             <div ref={scrollerRef} className="h-[500px] overflow-y-auto p-4 space-y-3">
               {joinError ? (
-                <div className="flex flex-col items-center justify-center h-full text-muted-foreground text-center space-y-2">
+                <div className="flex flex-col items-center justify-center h-full text-slate-500 text-center space-y-2">
                   <MessageCircle className="w-12 h-12 mb-3 opacity-50" />
                   <p>{joinError}</p>
                   {isFull && (
@@ -378,7 +384,7 @@ export default function ChatRoom() {
                   )}
                 </div>
               ) : messages.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                <div className="flex flex-col items-center justify-center h-full text-slate-500">
                   <MessageCircle className="w-12 h-12 mb-3 opacity-50" />
                   <p>아직 메시지가 없습니다.</p>
                   <p className="text-sm">첫 메시지를 남겨보세요!</p>
@@ -390,29 +396,29 @@ export default function ChatRoom() {
                   return (
                     <div key={m.id} className={`flex gap-2 ${isOwn ? "flex-row-reverse" : ""}`}>
                       <Avatar className="w-8 h-8 flex-shrink-0">
-                        <AvatarFallback className={isOwn ? "bg-slate-700 text-white" : "bg-muted"}>
+                        <AvatarFallback className={isOwn ? "bg-slate-700 text-white" : "bg-slate-100"}>
                           {m.authorNick?.slice(-2)}
                         </AvatarFallback>
                       </Avatar>
                       <div className={`flex flex-col gap-1 max-w-[70%] ${isOwn ? "items-end" : ""}`}>
                         {!isOwn && (
-                          <span className="text-sm text-muted-foreground px-1">
+                          <span className="text-sm text-slate-500 px-1">
                             {m.authorNick ? (
                               <button
                                 onClick={() => setSelectedNickname(m.authorNick)}
-                                className="text-sm text-muted-foreground px-1 hover:underline cursor-pointer bg-transparent border-none p-0"
+                                className="text-sm text-slate-500 px-1 hover:underline cursor-pointer bg-transparent border-none p-0"
                               >
                                 {m.authorNick}
                               </button>
                             ) : (
-                              <span className="text-sm text-muted-foreground px-1">익명</span>
+                              <span className="text-sm text-slate-500 px-1">익명</span>
                             )}
                           </span>
                         )}
-                        <div className={`rounded-2xl px-4 py-2 ${isOwn ? "bg-slate-700 text-white" : "bg-muted"}`}>
+                        <div className={`rounded-2xl px-4 py-2 ${isOwn ? "bg-slate-700 text-white" : "bg-slate-100"}`}>
                           <p className="break-words">{m.body}</p>
                         </div>
-                        <span className="text-xs text-muted-foreground px-1">{formatTime(m.createdAt)}</span>
+                        <span className="text-xs text-slate-500 px-1">{formatTime(m.createdAt)}</span>
                       </div>
                     </div>
                   )
