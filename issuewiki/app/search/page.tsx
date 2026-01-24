@@ -77,20 +77,19 @@ function SearchContent() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-white">
       {/* 검색 헤더 */}
       <div className="bg-white border-b border-slate-200">
         <div className="max-w-4xl mx-auto px-4 py-6">
-          <div className="flex items-center gap-4 mb-4">
-            <button
-              type="button"
-              onClick={() => router.back()}
-              className="p-2 -ml-2 hover:bg-slate-100 rounded-lg"
-            >
-              <ArrowLeft className="h-5 w-5 text-slate-700" />
-            </button>
-            <h1 className="text-xl font-bold text-slate-900">검색</h1>
-          </div>
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="flex items-center gap-2 text-slate-500 hover:text-slate-700 transition-colors mb-4"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span className="text-sm">뒤로가기</span>
+          </button>
+          <h1 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight text-slate-800 mb-4">검색</h1>
 
           <form onSubmit={handleSubmit} className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 pointer-events-none" />
@@ -127,7 +126,7 @@ function SearchContent() {
                   <li key={result.id}>
                     <Link
                       href={`/issues/${result.display_id}`}
-                      className="block bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow border border-slate-100"
+                      className="block bg-white rounded-xl p-4 border border-slate-200 hover:border-slate-300 transition-colors"
                     >
                       <div className="flex items-start gap-3">
                         <span className="text-xs px-2 py-1 rounded-full bg-slate-100 text-slate-700 shrink-0 font-medium">
@@ -182,7 +181,7 @@ export default function SearchPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="min-h-screen bg-white flex items-center justify-center">
           <Loader2 className="h-8 w-8 text-slate-500 animate-spin" />
         </div>
       }
