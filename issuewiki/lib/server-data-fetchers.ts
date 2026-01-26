@@ -526,6 +526,38 @@ export async function fetchAllIssuesWithChat() {
 }
 
 /**
+ * 이슈 검색 (검색 페이지용)
+ */
+export async function searchIssues(query: string, limit = 50) {
+  if (!query || query.trim().length === 0) {
+    return []
+  }
+
+  const supabase = getSupabaseClient()
+  const searchQuery = query.trim()
+
+  const { data, error } = await supabase
+    .from('issues')
+    .select('id, display_id, title, preview, category, created_at, view_count')
+    .eq('approval_status', 'approved')
+    .eq('status', 'active')
+    .eq('visibility', 'active')
+    .or(`title.ilike.%${searchQuery}%,preview.ilike.%${searchQuery}%`)
+    .order('created_at', { ascending: false })
+    .limit(limit)
+
+  if (error) {
+    console.error('Failed to search issues:', error)
+    return []
+  }
+
+  return (data || []).map((issue) => ({
+    ...issue,
+    category: normalizeCategory(issue.category)
+  }))
+}
+
+/**
  * 메인 페이지 전체 데이터 병렬 조회
  */
 export async function fetchLandingPageData(deviceHash?: string, userId?: string) {

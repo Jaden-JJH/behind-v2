@@ -1,192 +1,54 @@
-"use client";
+import { Metadata } from 'next'
+import { searchIssues } from '@/lib/server-data-fetchers'
+import { SearchClient } from '@/components/search/SearchClient'
 
-import { useState, useEffect, useCallback, Suspense } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
-import Link from "next/link";
-import { Search, ArrowLeft, Loader2 } from "lucide-react";
+// 검색 결과가 없는 기본 페이지는 정적 생성
+// 검색어가 있으면 동적으로 렌더링
+export const revalidate = 60
 
-interface SearchResult {
-  id: string;
-  display_id: number;
-  title: string;
-  preview: string;
-  category: string;
-  created_at: string;
-  view_count: number;
+interface PageProps {
+  searchParams: Promise<{ q?: string }>
 }
 
-function SearchContent() {
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const initialQuery = searchParams.get("q") || "";
+/**
+ * 동적 메타데이터 생성 (SEO)
+ */
+export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
+  const { q } = await searchParams
 
-  const [query, setQuery] = useState(initialQuery);
-  const [results, setResults] = useState<SearchResult[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [hasSearched, setHasSearched] = useState(false);
-
-  // 검색 실행
-  const performSearch = useCallback(async (searchQuery: string) => {
-    if (!searchQuery.trim()) {
-      setResults([]);
-      setHasSearched(false);
-      return;
+  if (q) {
+    return {
+      title: `"${q}" 검색 결과 | 이슈위키`,
+      description: `"${q}"에 대한 이슈위키 검색 결과입니다.`,
+      openGraph: {
+        title: `"${q}" 검색 결과 | 이슈위키`,
+        description: `"${q}"에 대한 이슈위키 검색 결과입니다.`,
+        siteName: '이슈위키',
+      },
     }
+  }
 
-    setIsLoading(true);
-    setHasSearched(true);
-    try {
-      const response = await fetch(
-        `/api/issues?search=${encodeURIComponent(searchQuery)}&limit=50`
-      );
-      const data = await response.json();
-      if (data.success) {
-        setResults(data.data);
-      }
-    } catch (error) {
-      console.error("Search error:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  // 초기 검색 실행
-  useEffect(() => {
-    if (initialQuery) {
-      performSearch(initialQuery);
-    }
-  }, [initialQuery, performSearch]);
-
-  // 검색 제출
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (query.trim()) {
-      router.push(`/search?q=${encodeURIComponent(query.trim())}`);
-      performSearch(query.trim());
-    }
-  };
-
-  // 날짜 포맷
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("ko-KR", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  };
-
-  return (
-    <div className="min-h-screen bg-white">
-      {/* 검색 헤더 */}
-      <div className="bg-white border-b border-slate-200">
-        <div className="max-w-4xl mx-auto px-4 py-6">
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="flex items-center gap-2 text-slate-500 hover:text-slate-700 transition-colors mb-4"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span className="text-sm">뒤로가기</span>
-          </button>
-          <h1 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight text-slate-800 mb-4">검색</h1>
-
-          <form onSubmit={handleSubmit} className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 pointer-events-none" />
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="이슈&뉴스 검색"
-              className="w-full h-12 pl-12 pr-4 rounded-xl border border-slate-200 bg-slate-50 text-base placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent"
-              autoFocus
-            />
-          </form>
-        </div>
-      </div>
-
-      {/* 검색 결과 */}
-      <div className="max-w-4xl mx-auto px-4 py-6">
-        {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 text-slate-500 animate-spin" />
-          </div>
-        ) : hasSearched ? (
-          <>
-            <div className="mb-4">
-              <p className="text-sm text-slate-600">
-                <span className="font-medium">&quot;{initialQuery}&quot;</span> 검색 결과{" "}
-                <span className="font-medium text-slate-800">{results.length}</span>건
-              </p>
-            </div>
-
-            {results.length > 0 ? (
-              <ul className="space-y-3">
-                {results.map((result) => (
-                  <li key={result.id}>
-                    <Link
-                      href={`/issues/${result.display_id}`}
-                      className="block bg-white rounded-xl p-4 border border-slate-200 hover:border-slate-300 transition-colors"
-                    >
-                      <div className="flex items-start gap-3">
-                        <span className="text-xs px-2 py-1 rounded-full bg-slate-100 text-slate-700 shrink-0 font-medium">
-                          {result.category}
-                        </span>
-                        <div className="min-w-0 flex-1">
-                          <h2 className="text-base font-semibold text-slate-900 line-clamp-2 mb-1">
-                            {result.title}
-                          </h2>
-                          <p className="text-sm text-slate-600 line-clamp-2 mb-2">
-                            {result.preview}
-                          </p>
-                          <div className="flex items-center gap-3 text-xs text-slate-400">
-                            <span>{formatDate(result.created_at)}</span>
-                            <span>조회 {result.view_count.toLocaleString()}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <div className="text-center py-12">
-                <div className="w-16 h-16 mx-auto mb-4 bg-slate-100 rounded-full flex items-center justify-center">
-                  <Search className="h-8 w-8 text-slate-400" />
-                </div>
-                <p className="text-slate-600 mb-2">검색 결과가 없습니다</p>
-                <p className="text-sm text-slate-400">
-                  다른 검색어로 다시 시도해보세요
-                </p>
-              </div>
-            )}
-          </>
-        ) : (
-          <div className="text-center py-12">
-            <div className="w-16 h-16 mx-auto mb-4 bg-slate-100 rounded-full flex items-center justify-center">
-              <Search className="h-8 w-8 text-slate-400" />
-            </div>
-            <p className="text-slate-600 mb-2">이슈와 뉴스를 검색해보세요</p>
-            <p className="text-sm text-slate-400">
-              관심 있는 키워드를 입력하면 관련 이슈를 찾아드립니다
-            </p>
-          </div>
-        )}
-      </div>
-    </div>
-  );
+  return {
+    title: '검색 | 이슈위키',
+    description: '이슈위키에서 관심 있는 이슈와 뉴스를 검색하세요.',
+    openGraph: {
+      title: '검색 | 이슈위키',
+      description: '이슈위키에서 관심 있는 이슈와 뉴스를 검색하세요.',
+      siteName: '이슈위키',
+    },
+  }
 }
 
-export default function SearchPage() {
-  return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen bg-white flex items-center justify-center">
-          <Loader2 className="h-8 w-8 text-slate-500 animate-spin" />
-        </div>
-      }
-    >
-      <SearchContent />
-    </Suspense>
-  );
+/**
+ * 검색 페이지 (Server Component)
+ * SEO를 위해 검색어가 있으면 서버에서 결과를 페칭하여 HTML에 포함
+ */
+export default async function SearchPage({ searchParams }: PageProps) {
+  const { q } = await searchParams
+  const query = q || ''
+
+  // 검색어가 있으면 서버에서 초기 검색 실행
+  const results = query ? await searchIssues(query) : []
+
+  return <SearchClient initialQuery={query} initialResults={results} />
 }
