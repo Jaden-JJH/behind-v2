@@ -33,7 +33,7 @@ export async function GET() {
       <pubDate>${pubDate}</pubDate>
       <guid isPermaLink="true">${baseUrl}/issues/${issue.display_id}</guid>
       ${issue.category ? `<category><![CDATA[${issue.category}]]></category>` : ''}
-      ${issue.thumbnail ? `<enclosure url="${issue.thumbnail}" type="image/jpeg" />` : ''}
+      ${issue.thumbnail ? `<enclosure url="${issue.thumbnail}" type="image/jpeg" length="0" />` : ''}
     </item>`
     }).join('')
 
