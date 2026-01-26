@@ -1,6 +1,10 @@
 import { MetadataRoute } from 'next'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 
+// sitemap을 요청 시마다 동적으로 생성 (최신 이슈 포함)
+export const dynamic = 'force-dynamic'
+export const revalidate = 3600 // 1시간마다 재검증
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://issuewiki.com'
 
@@ -46,7 +50,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // 동적 이슈 페이지
   try {
-    const { data: issues } = await supabaseAdmin
+    const { data: issues, error } = await supabaseAdmin
       .from('issues')
       .select('display_id, updated_at')
       .eq('approval_status', 'approved')
@@ -54,6 +58,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .eq('visibility', 'active')
       .order('updated_at', { ascending: false })
       .limit(1000)
+
+    if (error) {
+      console.error('Failed to fetch issues for sitemap:', error)
+      return staticPages
+    }
 
     const issuePages: MetadataRoute.Sitemap = (issues || []).map((issue) => ({
       url: `${baseUrl}/issues/${issue.display_id}`,
