@@ -19,6 +19,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.9,
     },
     {
+      url: `${baseUrl}/reported-issues`,
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/search`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.5,
+    },
+    {
       url: `${baseUrl}/terms`,
       lastModified: new Date(),
       changeFrequency: 'monthly',
@@ -36,13 +48,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     const { data: issues } = await supabaseAdmin
       .from('issues')
-      .select('id, updated_at')
-      .eq('status', 'published')
+      .select('display_id, updated_at')
+      .eq('approval_status', 'approved')
+      .eq('status', 'active')
+      .eq('visibility', 'active')
       .order('updated_at', { ascending: false })
       .limit(1000)
 
     const issuePages: MetadataRoute.Sitemap = (issues || []).map((issue) => ({
-      url: `${baseUrl}/issues/${issue.id}`,
+      url: `${baseUrl}/issues/${issue.display_id}`,
       lastModified: new Date(issue.updated_at),
       changeFrequency: 'daily' as const,
       priority: 0.8,
