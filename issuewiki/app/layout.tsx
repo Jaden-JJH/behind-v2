@@ -26,6 +26,11 @@ export const metadata: Metadata = {
     maximumScale: 5,
     userScalable: true,
   },
+  verification: {
+    other: {
+      'naver-site-verification': '2d6f9cfd814eb672ae82b58955ba054bdd0be398',
+    },
+  },
   openGraph: {
     title: "이슈위키 - 대한민국 No.1 뉴스 아카이브",
     description: "지금 가장 뜨거운 이슈의 뒷이야기를 나누는 공간, 이슈위키에서 다양한 시각으로 뉴스를 탐색하세요.",
