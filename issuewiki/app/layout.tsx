@@ -56,6 +56,11 @@ export const metadata: Metadata = {
   authors: [{ name: "스톤즈랩" }],
   creator: "스톤즈랩",
   publisher: "스톤즈랩",
+  alternates: {
+    types: {
+      'application/rss+xml': '/rss.xml',
+    },
+  },
 };
 
 export default function RootLayout({
