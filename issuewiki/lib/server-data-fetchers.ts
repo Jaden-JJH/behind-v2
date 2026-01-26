@@ -363,8 +363,14 @@ export async function fetchChatRoomStates(issueIds: string[]) {
 /**
  * 이슈 상세 정보 조회 (상세 페이지용)
  */
-export async function fetchIssueDetail(issueId: string) {
+export async function fetchIssueDetail(displayId: string) {
   const supabase = getSupabaseClient()
+
+  // 숫자인지 확인
+  const displayIdNum = parseInt(displayId, 10)
+  if (isNaN(displayIdNum)) {
+    return null
+  }
 
   const { data, error } = await supabase
     .from('issues')
@@ -385,7 +391,7 @@ export async function fetchIssueDetail(issueId: string) {
         )
       )
     `)
-    .eq('display_id', issueId)
+    .eq('display_id', displayIdNum)
     .single()
 
   if (error) {
@@ -393,21 +399,50 @@ export async function fetchIssueDetail(issueId: string) {
     return null
   }
 
-  return data
+  // 노출 중지된 이슈는 접근 차단
+  if (data?.visibility === 'paused') {
+    return null
+  }
+
+  return {
+    ...data,
+    category: normalizeCategory(data.category)
+  }
+}
+
+/**
+ * 조회수 증가 (서버 컴포넌트용)
+ */
+export async function incrementIssueViewCount(issueId: string) {
+  // 서버 컴포넌트에서는 service role key 사용 불가
+  // 대신 API 라우트를 호출하거나, edge function 사용
+  // 여기서는 간단히 anon key로 시도 (RLS 정책에 따라 동작)
+  const supabase = getSupabaseClient()
+
+  try {
+    // RPC 함수로 조회수 증가 (원자적 연산)
+    const { error } = await supabase.rpc('increment_view_count', { issue_id: issueId })
+    if (error) {
+      console.error('Failed to increment view count:', error)
+    }
+  } catch (error) {
+    console.error('Failed to increment view count:', error)
+  }
 }
 
 /**
  * 이슈 상세 페이지 전체 데이터 조회
  */
-export async function fetchIssueDetailPageData(issueId: string) {
-  const [issue, articles] = await Promise.all([
-    fetchIssueDetail(issueId),
-    fetchIssueArticles(issueId)
-  ])
+export async function fetchIssueDetailPageData(displayId: string) {
+  // 먼저 이슈 조회
+  const issue = await fetchIssueDetail(displayId)
 
   if (!issue) {
     return null
   }
+
+  // issue.id (UUID)로 후속 기사 조회
+  const articles = await fetchIssueArticles(issue.id)
 
   // 채팅방 상태 조회
   const chatStates = await fetchChatRoomStates([issue.id])
