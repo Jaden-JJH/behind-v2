@@ -2,6 +2,7 @@ import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { fetchIssueDetailPageData } from '@/lib/server-data-fetchers'
 import { IssueDetailClient } from '@/components/issues/IssueDetailClient'
+import { ArticleJsonLd } from '@/components/seo/JsonLd'
 
 // 60초마다 재검증
 export const revalidate = 60
@@ -60,12 +61,23 @@ export default async function IssueDetailPage({ params }: PageProps) {
   }
 
   const { issue, articles, chatState } = data
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://issuewiki.com'
 
   return (
-    <IssueDetailClient
-      issue={issue}
-      articles={articles}
-      initialChatState={chatState}
-    />
+    <>
+      <ArticleJsonLd
+        title={issue.title}
+        description={issue.summary || issue.preview || ''}
+        url={`${baseUrl}/issues/${issue.display_id}`}
+        image={issue.thumbnail}
+        datePublished={issue.created_at}
+        category={issue.category}
+      />
+      <IssueDetailClient
+        issue={issue}
+        articles={articles}
+        initialChatState={chatState}
+      />
+    </>
   )
 }

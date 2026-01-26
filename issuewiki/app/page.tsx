@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { fetchLandingPageData } from "@/lib/server-data-fetchers"
+import { WebSiteJsonLd } from "@/components/seo/JsonLd"
 import { createClient } from "@/lib/supabase/server"
 import { ActiveIssuesList } from "@/components/landing/ActiveIssuesList"
 import { QuickVoteSection } from "@/components/landing/QuickVoteSection"
@@ -123,9 +124,11 @@ export default async function LandingPage() {
   )
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* 롤링 배너 */}
-      <RollingBanner issues={bannerIssues} />
+    <>
+      <WebSiteJsonLd />
+      <div className="min-h-screen bg-white">
+        {/* 롤링 배너 */}
+        <RollingBanner issues={bannerIssues} />
 
       {/* 캐러셀 */}
       <IssuesCarousel issues={carouselIssues} />
@@ -133,8 +136,9 @@ export default async function LandingPage() {
       {/* 제보하기 배너 */}
       <ReportBanner />
 
-      {/* 모바일: 탭 네비게이션 / 데스크톱: 기존 그리드 레이아웃 */}
-      <MobileTabsWrapper tabs={mobileTabs} desktopContent={desktopContent} />
-    </div>
+        {/* 모바일: 탭 네비게이션 / 데스크톱: 기존 그리드 레이아웃 */}
+        <MobileTabsWrapper tabs={mobileTabs} desktopContent={desktopContent} />
+      </div>
+    </>
   )
 }
