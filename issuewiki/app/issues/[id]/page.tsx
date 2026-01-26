@@ -451,7 +451,7 @@ export default function IssueDetailPage() {
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
             <div className="flex-1">
               <div className="flex items-start justify-between gap-2">
-                <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-slate-900 leading-tight">
+                <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-slate-900 leading-tight whitespace-pre-line">
                   {issue.title}
                 </h1>
                 <DropdownMenu>
@@ -547,7 +547,7 @@ export default function IssueDetailPage() {
         ) : (
           <section className="bg-white border border-slate-200 rounded-2xl p-6">
             <h2 className="text-lg sm:text-xl font-bold text-slate-900 mb-4">사건 요약</h2>
-            <p className="text-slate-600 text-base sm:text-lg leading-7 sm:leading-8">
+            <p className="text-slate-600 text-base sm:text-lg leading-7 sm:leading-8 whitespace-pre-line">
               {issue.summary || issue.preview}
             </p>
           </section>
@@ -610,7 +610,7 @@ export default function IssueDetailPage() {
         {issue.behind_story && (
           <section className="bg-white border border-slate-200 rounded-2xl p-6">
             <h2 className="text-lg sm:text-xl font-bold text-slate-900 mb-4">에디터 노트</h2>
-            <p className="text-slate-600 text-base sm:text-lg leading-7 sm:leading-8">
+            <p className="text-slate-600 text-base sm:text-lg leading-7 sm:leading-8 whitespace-pre-line">
               {issue.behind_story}
             </p>
           </section>

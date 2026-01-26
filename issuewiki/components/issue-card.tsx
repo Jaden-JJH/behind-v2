@@ -64,10 +64,10 @@ export function IssueCard({ issue, onOpenIssue, onOpenChat }: IssueCardProps) {
         {/* 콘텐츠 영역 */}
         <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
           <div className="space-y-1.5 sm:space-y-2">
-            <h3 className="text-base sm:text-lg md:text-xl font-bold text-slate-900 group-hover:text-slate-700 transition-colors leading-snug line-clamp-2">
+            <h3 className="text-base sm:text-lg md:text-xl font-bold text-slate-900 group-hover:text-slate-700 transition-colors leading-snug line-clamp-2 whitespace-pre-line">
               {issue.title}
             </h3>
-            <p className="text-slate-500 text-xs sm:text-sm md:text-base leading-relaxed line-clamp-2">
+            <p className="text-slate-500 text-xs sm:text-sm md:text-base leading-relaxed line-clamp-2 whitespace-pre-line">
               {issue.preview}
             </p>
           </div>

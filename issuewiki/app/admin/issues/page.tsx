@@ -1509,11 +1509,12 @@ export default function AdminIssuesPage() {
             {/* 기본 정보 */}
             <div>
               <label className="block text-sm font-medium mb-2">제목 (5-100자)</label>
-              <Input
+              <Textarea
                 value={editTitle}
                 onChange={(e) => setEditTitle(e.target.value)}
-                placeholder="제목을 입력하세요"
+                placeholder="제목을 입력하세요 (줄바꿈 가능)"
                 maxLength={100}
+                rows={2}
               />
               <p className="text-xs text-gray-500 mt-1">{editTitle.length}/100자</p>
             </div>
