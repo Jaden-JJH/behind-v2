@@ -52,11 +52,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     const { data: issues, error } = await supabaseAdmin
       .from('issues')
-      .select('display_id, updated_at')
+      .select('display_id, created_at')
       .eq('approval_status', 'approved')
       .eq('status', 'active')
       .eq('visibility', 'active')
-      .order('updated_at', { ascending: false })
+      .order('created_at', { ascending: false })
       .limit(1000)
 
     if (error) {
@@ -66,7 +66,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     const issuePages: MetadataRoute.Sitemap = (issues || []).map((issue) => ({
       url: `${baseUrl}/issues/${issue.display_id}`,
-      lastModified: new Date(issue.updated_at),
+      lastModified: new Date(issue.created_at),
       changeFrequency: 'daily' as const,
       priority: 0.8,
     }))
