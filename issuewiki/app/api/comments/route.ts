@@ -11,12 +11,6 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
-// 댓글수 업데이트용 (관리자 권한)
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
-
 // 댓글 조회 (GET)
 export async function GET(request: Request) {
   try {
@@ -144,29 +138,8 @@ export async function POST(request: Request) {
         return createErrorResponse(ErrorCode.COMMENT_CREATE_FAILED, 500, error.message)
       }
 
-      // 이슈의 댓글 수 증가
-      try {
-        const { data: issueData, error: selectError } = await supabaseAdmin
-          .from('issues')
-          .select('comment_count')
-          .eq('id', issueId)
-          .single()
-
-        if (selectError) {
-          console.error('Failed to fetch issue comment_count:', selectError)
-        } else if (issueData) {
-          const { error: updateError } = await supabaseAdmin
-            .from('issues')
-            .update({ comment_count: (issueData.comment_count || 0) + 1 })
-            .eq('id', issueId)
-
-          if (updateError) {
-            console.error('Failed to update comment_count:', updateError)
-          }
-        }
-      } catch (error) {
-        console.error('Unexpected error updating comment_count:', error)
-      }
+      // 댓글 수 증가는 DB 트리거(increment_issue_comment_count)가 자동으로 처리함
+      // 수동 업데이트 제거 - 이중 증가 버그 방지
 
       return createSuccessResponse({
         ...data,
