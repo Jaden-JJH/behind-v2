@@ -66,15 +66,26 @@ export function ReportedIssuesSection({ initialIssues }: ReportedIssuesSectionPr
   const [showLoginPrompt, setShowLoginPrompt] = useState(false)
   const hasFetchedCuriousStatus = useRef(false)
 
-  // 클라이언트에서 마운트 후 is_curious 상태 업데이트
+  // 클라이언트에서 마운트 후 is_curious 상태 업데이트 (필요한 경우만)
   useEffect(() => {
     // 이미 fetch 했으면 스킵
     if (hasFetchedCuriousStatus.current) return
+
+    // deviceHash 쿠키 확인
+    const hasDeviceHashCookie = document.cookie.includes('device_hash=')
+
+    // 서버에서 이미 deviceHash로 조회했으면 스킵
+    if (hasDeviceHashCookie) {
+      hasFetchedCuriousStatus.current = true
+      return
+    }
+
+    // 첫 방문 또는 쿠키 없음 - deviceHash 생성 후 상태 업데이트
     hasFetchedCuriousStatus.current = true
 
     const updateCuriousStatus = async () => {
       try {
-        const deviceHash = getDeviceHash()
+        const deviceHash = getDeviceHash() // 이 시점에 쿠키도 생성됨
         const response = await fetchReports({
           visibility: 'active',
           device_hash: deviceHash
