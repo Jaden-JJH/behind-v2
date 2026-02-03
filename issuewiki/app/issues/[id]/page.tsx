@@ -29,15 +29,40 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const title = `${issue.title} | 이슈위키`
   const description = issue.summary || issue.preview || '이슈위키에서 최신 이슈를 확인하세요.'
 
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://issuewiki.com'
+  const canonicalUrl = `${baseUrl}/issues/${id}`
+
   return {
     title,
     description,
+    // SEO 최적화: robots 설정
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        'max-video-preview': -1,
+        'max-image-preview': 'large',
+        'max-snippet': -1,
+      },
+    },
+    // canonical URL 명시
+    alternates: {
+      canonical: canonicalUrl,
+    },
+    // 구조화된 데이터를 위한 추가 정보
+    authors: [{ name: '이슈위키' }],
+    keywords: [issue.title, '이슈', '뉴스', '아카이브', issue.category].filter(Boolean),
     openGraph: {
       title,
       description,
       type: 'article',
+      url: canonicalUrl,
       images: issue.thumbnail ? [{ url: issue.thumbnail }] : [],
       siteName: '이슈위키',
+      publishedTime: issue.created_at,
+      locale: 'ko_KR',
     },
     twitter: {
       card: 'summary_large_image',

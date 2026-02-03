@@ -26,7 +26,7 @@ export function ArticleJsonLd({
 }: ArticleJsonLdProps) {
   const jsonLd = {
     '@context': 'https://schema.org',
-    '@type': 'Article',
+    '@type': 'NewsArticle',  // Article → NewsArticle로 변경 (SEO 개선)
     headline: title,
     description: description,
     url: url,
@@ -36,19 +36,25 @@ export function ArticleJsonLd({
     author: {
       '@type': 'Organization',
       name: authorName,
+      url: 'https://issuewiki.com',
     },
     publisher: {
       '@type': 'Organization',
       name: '이슈위키',
+      url: 'https://issuewiki.com',
       logo: {
         '@type': 'ImageObject',
-        url: 'https://issuewiki.com/issuewiki-logo.png',
+        url: 'https://issuewiki.com/icon.svg',
+        width: 60,
+        height: 60,
       },
     },
     mainEntityOfPage: {
       '@type': 'WebPage',
       '@id': url,
     },
+    // SEO 개선: 추가 필드
+    inLanguage: 'ko-KR',
     ...(category && { articleSection: category }),
   }
 
