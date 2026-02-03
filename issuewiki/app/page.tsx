@@ -1,143 +1,90 @@
-import Link from "next/link"
-import { fetchLandingPageData } from "@/lib/server-data-fetchers"
+import { Suspense } from "react"
+import { fetchBannerIssues, fetchCarouselIssues } from "@/lib/server-data-fetchers"
 import { WebSiteJsonLd } from "@/components/seo/JsonLd"
-import { createClient } from "@/lib/supabase/server"
-import { ActiveIssuesList } from "@/components/landing/ActiveIssuesList"
-import { QuickVoteSection } from "@/components/landing/QuickVoteSection"
-import { PastIssuesSection } from "@/components/landing/PastIssuesSection"
-import { TrendingSection } from "@/components/landing/TrendingSection"
-import { ReportedIssuesSection } from "@/components/landing/ReportedIssuesSection"
 import { RollingBanner } from "@/components/RollingBanner"
 import { IssuesCarousel } from "@/components/IssuesCarousel"
 import { ReportBanner } from "@/components/ReportBanner"
-import { MobileTabsWrapper } from "@/components/landing/MobileTabsWrapper"
+import { MainContentSection } from "@/components/landing/MainContentSection"
+import { SidebarSection } from "@/components/landing/SidebarSection"
+import { MobileMainContent } from "@/components/landing/MobileMainContent"
+import { MobileTrendingContent } from "@/components/landing/MobileTrendingContent"
+import { MobileReportedContent } from "@/components/landing/MobileReportedContent"
+import { MainContentSkeleton, SidebarSkeleton } from "@/components/landing/LoadingSkeleton"
 
 /**
  * 메인 랜딩 페이지 (Server Component)
- * 모든 데이터를 서버에서 병렬로 페칭하여 초기 로딩 속도 개선
+ * Streaming & Suspense를 활용한 점진적 로딩으로 초기 렌더링 속도 개선
  * 캐싱: 60초마다 페이지 재생성 (ISR)
  */
 export const revalidate = 60 // 60초마다 재검증
 
 export default async function LandingPage() {
-  // 현재 로그인한 사용자 확인
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  // 서버에서 병렬로 모든 데이터 페칭 (userId 전달하여 is_curious 체크)
-  const {
-    activeIssues,
-    pollIssues,
-    pastIssues,
-    trendingIssues,
-    reportedIssues,
-    bannerIssues,
-    carouselIssues,
-    chatStates
-  } = await fetchLandingPageData(undefined, user?.id)
-
-  // 모바일 탭 콘텐츠 정의
-  const mobileMainContent = (
-    <div className="space-y-4">
-      <div className="flex items-end justify-between">
-        <div>
-          <h2 className="text-lg font-bold tracking-tight text-slate-800 mb-1">
-            지금 가장 뜨거운 토픽
-          </h2>
-          <p className="text-xs text-slate-600">
-            실시간으로 가장 많은 관심을 받고 있는 이슈를 확인하세요
-          </p>
-        </div>
-        <Link
-          href="/issues"
-          className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-slate-100 text-sm font-medium text-slate-600 hover:bg-slate-200 hover:text-slate-800 transition-all"
-        >
-          전체보기
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
-        </Link>
-      </div>
-      <ActiveIssuesList issues={activeIssues} chatStates={chatStates} />
-      <QuickVoteSection pollIssues={pollIssues} />
-    </div>
-  )
-
-  const mobileTrendingContent = (
-    <TrendingSection issues={trendingIssues} />
-  )
-
-  const mobileReportedContent = (
-    <ReportedIssuesSection initialIssues={reportedIssues} />
-  )
-
-  const mobileTabs = [
-    { id: 'main', label: '메인', content: mobileMainContent },
-    { id: 'trending', label: '실시간 인기', content: mobileTrendingContent },
-    { id: 'reported', label: '제보된 이슈', content: mobileReportedContent },
-  ]
-
-  // 데스크톱 콘텐츠 (기존 레이아웃)
-  const desktopContent = (
-    <main className="max-w-6xl mx-auto px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-6 grid md:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
-      {/* 메인 컨텐츠 */}
-      <section className="md:col-span-2 space-y-3 sm:space-y-4 md:space-y-6">
-        <div className="mb-4 flex items-end justify-between">
-          <div>
-            <h2 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight text-slate-800 mb-1">
-              지금 가장 뜨거운 토픽
-            </h2>
-            <p className="text-xs sm:text-sm md:text-base text-slate-600">
-              실시간으로 가장 많은 관심을 받고 있는 이슈를 확인하세요
-            </p>
-          </div>
-          <Link
-            href="/issues"
-            className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-slate-100 text-sm font-medium text-slate-600 hover:bg-slate-200 hover:text-slate-800 transition-all"
-          >
-            전체보기
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </Link>
-        </div>
-
-        {/* 활성 이슈 목록 */}
-        <ActiveIssuesList issues={activeIssues} chatStates={chatStates} />
-
-        {/* 실시간 투표 */}
-        <QuickVoteSection pollIssues={pollIssues} />
-
-        {/* 지나간 이슈 */}
-        <PastIssuesSection issues={pastIssues} />
-      </section>
-
-      {/* 사이드바 */}
-      <aside className="space-y-4 sm:space-y-5 md:space-y-6">
-        {/* 실시간 인기 이슈 */}
-        <TrendingSection issues={trendingIssues} />
-
-        {/* 제보된 이슈 */}
-        <ReportedIssuesSection initialIssues={reportedIssues} />
-      </aside>
-    </main>
-  )
+  // 중요 콘텐츠만 먼저 로드 (배너, 캐러셀)
+  const [bannerIssues, carouselIssues] = await Promise.all([
+    fetchBannerIssues(),
+    fetchCarouselIssues()
+  ])
 
   return (
     <>
       <WebSiteJsonLd />
       <div className="min-h-screen bg-white">
-        {/* 롤링 배너 */}
+        {/* 즉시 로드: 롤링 배너 */}
         <RollingBanner issues={bannerIssues} />
 
-      {/* 캐러셀 */}
-      <IssuesCarousel issues={carouselIssues} />
+        {/* 즉시 로드: 캐러셀 */}
+        <IssuesCarousel issues={carouselIssues} />
 
-      {/* 제보하기 배너 */}
-      <ReportBanner />
+        {/* 즉시 로드: 제보하기 배너 */}
+        <ReportBanner />
 
-        {/* 모바일: 탭 네비게이션 / 데스크톱: 기존 그리드 레이아웃 */}
-        <MobileTabsWrapper tabs={mobileTabs} desktopContent={desktopContent} />
+        {/* 모바일: 탭 네비게이션 */}
+        <div className="md:hidden">
+          <div className="sticky top-[60px] z-20 bg-white border-b border-slate-200">
+            <div className="flex overflow-x-auto scrollbar-hide">
+              <a href="#mobile-main" className="flex-1 min-w-[80px] px-4 py-3 text-sm font-medium whitespace-nowrap text-slate-900 border-b-2 border-slate-900">
+                메인
+              </a>
+              <a href="#mobile-trending" className="flex-1 min-w-[80px] px-4 py-3 text-sm font-medium whitespace-nowrap text-slate-500 hover:text-slate-700">
+                실시간 인기
+              </a>
+              <a href="#mobile-reported" className="flex-1 min-w-[80px] px-4 py-3 text-sm font-medium whitespace-nowrap text-slate-500 hover:text-slate-700">
+                제보된 이슈
+              </a>
+            </div>
+          </div>
+
+          <div className="px-3 py-4 space-y-6">
+            <div id="mobile-main">
+              <Suspense fallback={<MainContentSkeleton />}>
+                <MobileMainContent />
+              </Suspense>
+            </div>
+            <div id="mobile-trending">
+              <Suspense fallback={<SidebarSkeleton />}>
+                <MobileTrendingContent />
+              </Suspense>
+            </div>
+            <div id="mobile-reported">
+              <Suspense fallback={<SidebarSkeleton />}>
+                <MobileReportedContent />
+              </Suspense>
+            </div>
+          </div>
+        </div>
+
+        {/* 데스크톱: 그리드 레이아웃 */}
+        <main className="hidden md:grid max-w-6xl mx-auto px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-6 md:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+          {/* 메인 콘텐츠 - Suspense로 감싸서 스트리밍 */}
+          <Suspense fallback={<MainContentSkeleton />}>
+            <MainContentSection />
+          </Suspense>
+
+          {/* 사이드바 - Suspense로 감싸서 스트리밍 */}
+          <Suspense fallback={<SidebarSkeleton />}>
+            <SidebarSection />
+          </Suspense>
+        </main>
       </div>
     </>
   )
